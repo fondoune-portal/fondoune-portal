@@ -15,13 +15,13 @@
    Reemplaza los valores de abajo con los de tu proyecto
    Firebase Console → Configuración del proyecto → SDK
    ════════════════════════════════════════════════════ */
-var firebaseConfig = {
-  apiKey: "AIzaSyC_ESTE_ES_TU_API_KEY_REAL",
-  authDomain: "fondoune-portal.firebaseapp.com",
-  projectId: "fondoune-portal",
-  storageBucket: "fondoune-portal.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abc123def456ghi789"
+var FIREBASE_CONFIG = {
+  apiKey:            "REEMPLAZAR_API_KEY",
+  authDomain:        "REEMPLAZAR.firebaseapp.com",
+  projectId:         "REEMPLAZAR_PROJECT_ID",
+  storageBucket:     "REEMPLAZAR.appspot.com",
+  messagingSenderId: "REEMPLAZAR",
+  appId:             "REEMPLAZAR"
 };
 
 /* Inicializar Firebase si la config es válida */
@@ -634,14 +634,6 @@ var APP = (function () {
     $id('toastOverlay').classList.remove('show');
   }
 
-  function toggleRut(checkbox, inputId) {
-    var inp = $id(inputId);
-    if (!inp) return;
-    inp.disabled = checkbox.checked;
-    inp.value = checkbox.checked ? 'No aplica' : '';
-    inp.style.opacity = checkbox.checked ? '.4' : '1';
-  }
-
   /* ── Generar ── */
   function generar() {
     var rad = val('radicado'), nom = val('nombreTitular'), ced = val('cedula');
@@ -763,16 +755,18 @@ var APP = (function () {
     selTipo('compra');
   }());
 
-  function toggleRut(checkbox, inputId) {
-    var inp = document.getElementById(inputId);
-    if (!inp) return;
-    inp.disabled = checkbox.checked;
-    inp.value = checkbox.checked ? 'No aplica' : '';
-    inp.style.opacity = checkbox.checked ? '.4' : '1';
-  }
-
   return { selTipo:selTipo, generar:generar, limpiar:limpiar, cerrarToast:cerrarToast };
 }());
+
+/* ── toggleRut — global para que funcione desde el HTML ── */
+function toggleRut(checkbox, inputId) {
+  var inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.disabled = checkbox.checked;
+  inp.value = checkbox.checked ? 'No aplica' : '';
+  inp.style.opacity = checkbox.checked ? '.4' : '1';
+  inp.style.background = checkbox.checked ? '#f0f0f0' : '';
+}
 
 /* ══ MÓDULO PQRS ══ */
 var PQRS = (function() {
