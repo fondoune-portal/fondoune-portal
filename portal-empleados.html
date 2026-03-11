@@ -856,7 +856,7 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
 <!-- ══════════════════════════════════════
      OVERLAY RECUPERAR CONTRASEÑA (independiente)
      ══════════════════════════════════════ -->
-<div class="login-overlay" id="recoverOverlay" style="display:none;z-index:10000;">
+<div class="login-overlay oculto" id="recoverOverlay" style="z-index:10000;">
   <div class="login-bg">
     <div class="login-bg-grid"></div>
     <div class="login-bg-circle"></div>
@@ -1610,31 +1610,7 @@ function cerrarSesion() {
   document.getElementById('loginUser').focus();
 }
 
-/* ── INIT SEGURIDAD (se ejecuta antes que todo) ── */
-(function initSeguridad() {
-  sincronizarUsuariosEnMemoria();
-
-  // Siempre ocultar recoverOverlay al cargar la página
-  var recOv = document.getElementById('recoverOverlay');
-  if (recOv) recOv.classList.add('oculto');
-
-  var sess = verificarSesion();
-  if (sess) {
-    // Sesión válida — ocultar overlay de login con clase
-    var overlay = document.getElementById('loginOverlay');
-    overlay.classList.add('oculto');
-    setTimeout(function() {
-      document.getElementById('sessionUser').textContent = '● ' + sess.nombre + ' (' + sess.rol + ')';
-      document.getElementById('sessionBar').classList.add('show');
-      actualizarNavAdmin();
-      if (sess.rol === 'Administrador') renderUsrTable();
-    }, 100);
-  } else {
-    document.getElementById('loginUser').focus();
-    var b = estaBlockeado();
-    if (b) iniciarCountdown(b.hasta);
-  }
-})();
+/* ── INIT SEGURIDAD — movido al final del script principal ── */
 </script>
 
 <script>
@@ -2536,11 +2512,8 @@ function confirmarEliminarUsuario(login) {
    ═══════════════════════════════════════════════════════ */
 
 function mostrarRecuperar() {
-  // Ocultar login, mostrar recover (ambos son overlays full-screen)
-  var loginOv   = document.getElementById('loginOverlay');
+  // El recoverOverlay se muestra ENCIMA del loginOverlay — nunca ocultamos el login
   var recoverOv = document.getElementById('recoverOverlay');
-
-  loginOv.classList.add('oculto');
 
   recoverOv.classList.remove('oculto');
   recoverOv.style.opacity = '0';
@@ -2560,7 +2533,6 @@ function mostrarRecuperar() {
 }
 
 function ocultarRecuperar() {
-  var loginOv   = document.getElementById('loginOverlay');
   var recoverOv = document.getElementById('recoverOverlay');
 
   recoverOv.style.opacity = '0';
@@ -2568,11 +2540,6 @@ function ocultarRecuperar() {
   setTimeout(function(){
     recoverOv.classList.add('oculto');
     recoverOv.style.opacity = '';
-    // Mostrar login de nuevo
-    loginOv.classList.remove('oculto');
-    loginOv.style.opacity = '0';
-    loginOv.style.transition = 'opacity .3s ease';
-    setTimeout(function(){ loginOv.style.opacity = '1'; }, 10);
     document.getElementById('loginUser').focus();
   }, 300);
 }
@@ -2722,6 +2689,25 @@ window.addEventListener('resize', function() {
   } else {
     arrancarApp();
   }
+
+  /* ── INIT SEGURIDAD — aquí todas las funciones ya están definidas ── */
+  (function initSeguridad() {
+    sincronizarUsuariosEnMemoria();
+
+    // Siempre ocultar recoverOverlay al cargar
+    var recOv = document.getElementById('recoverOverlay');
+    if (recOv) recOv.classList.add('oculto');
+
+    // SEGURIDAD: siempre eliminar sesión previa al abrir el portal
+    // Nunca auto-login — el usuario SIEMPRE debe ingresar sus credenciales
+    localStorage.removeItem(SEC.SESS_KEY);
+
+    // Mostrar pantalla de login
+    document.getElementById('loginUser').focus();
+    var b = estaBlockeado();
+    if (b) iniciarCountdown(b.hasta);
+  })();
+
 }());
 </script>
 </body>
