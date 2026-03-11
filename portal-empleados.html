@@ -272,7 +272,11 @@ tbody tr:hover{background:#F7FAFD;}
   padding: 20px;
   transition: opacity .4s ease;
 }
-.login-overlay.hidden { opacity: 0; pointer-events: none; }
+.login-overlay.oculto {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
 
 /* Fondo animado */
 .login-bg {
@@ -1555,22 +1559,16 @@ function loginExitoso(usuario, datosUsuario) {
   localStorage.removeItem(SEC.BLOCK_KEY);
   actualizarDots();
 
-  // Animar salida del overlay
   var overlay = document.getElementById('loginOverlay');
+  overlay.style.transition = 'opacity .4s ease';
   overlay.style.opacity = '0';
-  overlay.style.transform = 'scale(1.02)';
-  overlay.style.transition = 'all .4s ease';
-
   setTimeout(function() {
-    overlay.style.display = 'none';
+    overlay.classList.add('oculto');
+    overlay.style.opacity = '';
     document.getElementById('sessionUser').textContent = '● ' + datosUsuario.nombre + ' (' + datosUsuario.rol + ')';
     document.getElementById('sessionBar').classList.add('show');
-    // Mostrar opciones de admin si aplica
     actualizarNavAdmin();
-    if (datosUsuario.rol === 'Administrador') {
-      renderUsrTable();
-    }
-    // Registrar en auditoría
+    if (datosUsuario.rol === 'Administrador') renderUsrTable();
     registrarAudit('Inicio de sesión', { id: 'auth', radicado: 'LOGIN', nombreTitular: datosUsuario.nombre });
   }, 400);
 }
@@ -1579,14 +1577,12 @@ function loginFallido(usuario) {
   intentosFallidos++;
   actualizarDots();
   var restantes = SEC.MAX_INTENTOS - intentosFallidos;
-
   if (intentosFallidos >= SEC.MAX_INTENTOS) {
     bloquear();
     mostrarError('Acceso bloqueado por ' + SEC.BLOQUEO_MIN + ' minutos.');
   } else {
     mostrarError('Credenciales incorrectas. Te quedan ' + restantes + ' intento' + (restantes !== 1 ? 's' : '') + '.');
   }
-  // Limpiar contraseña
   document.getElementById('loginPass').value = '';
   document.getElementById('loginPass').focus();
 }
@@ -1596,33 +1592,37 @@ function cerrarSesion() {
   if (!confirm('¿Cerrar sesión? Serás redirigido a la pantalla de inicio.')) return;
   registrarAudit('Cierre de sesión', { id: 'auth', radicado: 'LOGOUT', nombreTitular: document.getElementById('sessionUser').textContent });
   localStorage.removeItem(SEC.SESS_KEY);
-  // Limpiar campos y mostrar overlay
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
   document.getElementById('loginError').classList.remove('show');
   intentosFallidos = 0;
   actualizarDots();
+  // Asegurarse que recoverOverlay también esté oculto
+  var recOv = document.getElementById('recoverOverlay');
+  recOv.classList.add('oculto');
+  recOv.style.opacity = '';
+  // Mostrar login con animación
   var overlay = document.getElementById('loginOverlay');
-  overlay.style.display = 'flex';
+  overlay.classList.remove('oculto');
   overlay.style.opacity = '0';
-  overlay.style.transform = 'scale(.98)';
-  setTimeout(function() {
-    overlay.style.opacity = '1';
-    overlay.style.transform = 'scale(1)';
-  }, 10);
+  overlay.style.transition = 'opacity .35s ease';
+  setTimeout(function() { overlay.style.opacity = '1'; }, 10);
   document.getElementById('loginUser').focus();
 }
 
 /* ── INIT SEGURIDAD (se ejecuta antes que todo) ── */
 (function initSeguridad() {
-  // Sincronizar usuarios guardados en localStorage con USUARIOS en memoria
   sincronizarUsuariosEnMemoria();
+
+  // Siempre ocultar recoverOverlay al cargar la página
+  var recOv = document.getElementById('recoverOverlay');
+  if (recOv) recOv.classList.add('oculto');
 
   var sess = verificarSesion();
   if (sess) {
-    // Sesión válida — ocultar overlay directamente
+    // Sesión válida — ocultar overlay de login con clase
     var overlay = document.getElementById('loginOverlay');
-    overlay.style.display = 'none';
+    overlay.classList.add('oculto');
     setTimeout(function() {
       document.getElementById('sessionUser').textContent = '● ' + sess.nombre + ' (' + sess.rol + ')';
       document.getElementById('sessionBar').classList.add('show');
@@ -1630,9 +1630,7 @@ function cerrarSesion() {
       if (sess.rol === 'Administrador') renderUsrTable();
     }, 100);
   } else {
-    // Sin sesión — mostrar login, ocultar contenido
     document.getElementById('loginUser').focus();
-    // Verificar si hay bloqueo activo
     var b = estaBlockeado();
     if (b) iniciarCountdown(b.hasta);
   }
@@ -2538,28 +2536,45 @@ function confirmarEliminarUsuario(login) {
    ═══════════════════════════════════════════════════════ */
 
 function mostrarRecuperar() {
-  // Mostrar overlay independiente de recuperación
-  var ov = document.getElementById('recoverOverlay');
-  ov.style.display = 'flex';
-  ov.style.opacity = '0';
-  setTimeout(function(){ ov.style.opacity = '1'; ov.style.transition = 'opacity .3s ease'; }, 10);
+  // Ocultar login, mostrar recover (ambos son overlays full-screen)
+  var loginOv   = document.getElementById('loginOverlay');
+  var recoverOv = document.getElementById('recoverOverlay');
 
-  // Reset completo del formulario
+  loginOv.classList.add('oculto');
+
+  recoverOv.classList.remove('oculto');
+  recoverOv.style.opacity = '0';
+  recoverOv.style.transition = 'opacity .3s ease';
+  setTimeout(function(){ recoverOv.style.opacity = '1'; }, 10);
+
+  // Reset formulario al paso 1
   document.getElementById('recoverStep1').style.display = 'block';
   document.getElementById('recoverStep2').style.display = 'none';
   document.getElementById('recAdminUser').value = '';
   document.getElementById('recAdminPass').value = '';
   document.getElementById('recoverOk').style.display = 'none';
   document.getElementById('recoverError1').classList.remove('show');
-  document.getElementById('recoverError2').classList.remove('show');
+  var err2 = document.getElementById('recoverError2');
+  if (err2) err2.classList.remove('show');
   setTimeout(function(){ document.getElementById('recAdminUser').focus(); }, 200);
 }
 
 function ocultarRecuperar() {
-  var ov = document.getElementById('recoverOverlay');
-  ov.style.opacity = '0';
-  ov.style.transition = 'opacity .3s ease';
-  setTimeout(function(){ ov.style.display = 'none'; }, 300);
+  var loginOv   = document.getElementById('loginOverlay');
+  var recoverOv = document.getElementById('recoverOverlay');
+
+  recoverOv.style.opacity = '0';
+  recoverOv.style.transition = 'opacity .3s ease';
+  setTimeout(function(){
+    recoverOv.classList.add('oculto');
+    recoverOv.style.opacity = '';
+    // Mostrar login de nuevo
+    loginOv.classList.remove('oculto');
+    loginOv.style.opacity = '0';
+    loginOv.style.transition = 'opacity .3s ease';
+    setTimeout(function(){ loginOv.style.opacity = '1'; }, 10);
+    document.getElementById('loginUser').focus();
+  }, 300);
 }
 
 function verificarAdminRecuperar() {
