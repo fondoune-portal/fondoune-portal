@@ -43,25 +43,32 @@ window._fbDB = null;
 </script>
 <style>
 :root {
-  --fu-dark:    #1C2B3A;
-  --fu-blue:    #1A4D7C;
-  --fu-blue-lt: #EBF2FA;
-  --fu-gold:    #D4881E;
-  --fu-gold-lt: #FEF5E7;
-  --fu-gold-med:#E8A020;
-  --bg:         #F4F6F9;
+  /* ── Paleta FondoUne oficial (naranja + rojo + blanco) ── */
+  --fu-dark:    #2D1A0E;
+  --fu-orange:  #E8511A;
+  --fu-orange-d:#C94010;
+  --fu-orange-lt:#FFF0EA;
+  --fu-red:     #C0392B;
+  --fu-red-lt:  #FDECEA;
+  /* aliases para compatibilidad */
+  --fu-blue:    #E8511A;
+  --fu-blue-lt: #FFF0EA;
+  --fu-gold:    #E8511A;
+  --fu-gold-lt: #FFF0EA;
+  --fu-gold-med:#C94010;
+  --bg:         #FDF6F3;
   --surface:    #FFFFFF;
-  --border:     #D6DDE8;
-  --border-lt:  #EBF0F6;
-  --text:       #1C2B3A;
-  --muted:      #5F7189;
-  --muted-lt:   #8FA3B8;
+  --border:     #F0D8CC;
+  --border-lt:  #FAF0EC;
+  --text:       #2D1A0E;
+  --muted:      #7A5540;
+  --muted-lt:   #C4A090;
   --ok:         #0D7A4E;
   --ok-lt:      #E8F8F0;
   --err:        #C0392B;
   --err-lt:     #FDECEA;
-  --shadow-sm:  0 1px 4px rgba(28,43,58,.08);
-  --shadow-md:  0 4px 20px rgba(28,43,58,.10);
+  --shadow-sm:  0 1px 4px rgba(45,26,14,.08);
+  --shadow-md:  0 4px 20px rgba(45,26,14,.10);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
