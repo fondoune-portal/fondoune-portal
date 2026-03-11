@@ -2150,13 +2150,25 @@ function cerrarModalBtn(){ $id('modalOverlay').classList.remove('show'); }
 /* ═══ ELIMINAR ═══ */
 function eliminarSolicitud(id){
   if(!confirm('¿Eliminar esta solicitud? Esta acción no se puede deshacer.')) return;
-  var db=cargarDB();
-  var sol=db.find(function(s){return s.id===id;});
-  if(sol) registrarAudit('Solicitud eliminada',sol);
-  db=db.filter(function(s){return s.id!==id;});
+
+  // 1. Auditoría antes de borrar
+  var db = cargarDB();
+  var sol = db.find(function(s){ return s.id === id; });
+  if(sol) registrarAudit('Solicitud eliminada', sol);
+
+  // 2. Eliminar del localStorage
+  db = db.filter(function(s){ return s.id !== id; });
   guardarDB(db);
+
+  // 3. Eliminar de Firebase Firestore (si está conectado)
+  if(window._fbDB){
+    window._fbDB.collection('solicitudes').doc(id).delete()
+      .then(function(){ console.log('✅ Eliminado de Firebase:', id); })
+      .catch(function(e){ console.warn('⚠️ Error al eliminar de Firebase:', e); });
+  }
+
   recargar();
-  showToast('Solicitud eliminada','🗑');
+  showToast('Solicitud eliminada', '🗑');
 }
 
 /* ═══ GENERAR DOCX ═══ */
