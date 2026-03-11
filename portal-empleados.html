@@ -656,6 +656,108 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
   .login-card { padding: 22px 16px; }
   .login-btn { height: 46px; }
 }
+
+/* ══════════════════════════════════════
+   PANEL USUARIOS & MODALES ADMIN
+   ══════════════════════════════════════ */
+
+/* Modal genérico reutilizable */
+.adm-overlay {
+  position: fixed; inset: 0; background: rgba(15,25,35,.65);
+  z-index: 800; display: flex; align-items: center; justify-content: center;
+  padding: 20px; opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+}
+.adm-overlay.show { opacity: 1; pointer-events: all; }
+.adm-modal {
+  background: #fff; border-radius: 18px; width: 100%; max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  transform: scale(.96) translateY(8px);
+  transition: transform .28s cubic-bezier(.34,1.2,.64,1);
+  overflow: hidden;
+}
+.adm-overlay.show .adm-modal { transform: scale(1) translateY(0); }
+.adm-head {
+  background: var(--dark); padding: 18px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.adm-head-title { font-family:'Outfit',sans-serif; font-weight:700; font-size:16px; color:#fff; display:flex; align-items:center; gap:10px; }
+.adm-close { width:30px; height:30px; background:rgba(255,255,255,.1); border:none; border-radius:7px; color:#fff; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+.adm-close:hover { background:rgba(255,255,255,.2); }
+.adm-body { padding: 24px; }
+.adm-footer { padding: 14px 24px; border-top: 1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; background: var(--bg); }
+
+/* Campos del modal */
+.adm-field { margin-bottom: 16px; }
+.adm-label { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; display:flex; align-items:center; gap:6px; }
+.adm-input {
+  width: 100%; height: 40px; padding: 0 14px;
+  border: 1.5px solid var(--border); border-radius: 9px;
+  font-family: 'Inter',sans-serif; font-size: 13.5px; color: var(--text);
+  background: #fff; outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.adm-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,136,30,.12); }
+.adm-input.err { border-color: var(--err); box-shadow: 0 0 0 3px rgba(185,28,28,.1); }
+.adm-select {
+  width: 100%; height: 40px; padding: 0 34px 0 14px;
+  border: 1.5px solid var(--border); border-radius: 9px;
+  font-family: 'Inter',sans-serif; font-size: 13.5px; color: var(--text);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%235F7189' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E") no-repeat right 12px center;
+  -webkit-appearance: none; outline: none; cursor: pointer; transition: border-color .15s;
+}
+.adm-select:focus { border-color: var(--gold); }
+.adm-msg { font-size: 12.5px; margin-top: 8px; padding: 8px 12px; border-radius: 7px; display: none; }
+.adm-msg.ok  { display:block; background: var(--ok-lt); color: var(--ok); }
+.adm-msg.err { display:block; background: var(--err-lt); color: var(--err); }
+.adm-pass-wrap { position: relative; }
+.adm-pass-wrap .adm-input { padding-right: 40px; }
+.adm-pass-eye { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--muted); padding:4px; }
+.adm-pass-eye:hover { color: var(--text); }
+.adm-hint { font-size: 11.5px; color: var(--muted); margin-top: 5px; line-height:1.4; }
+
+/* Tabla de usuarios */
+.usr-table { width:100%; border-collapse:collapse; font-size:13px; }
+.usr-table th { background:var(--bg); padding:10px 14px; text-align:left; font-family:'Outfit',sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); border-bottom:2px solid var(--border); }
+.usr-table td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+.usr-table tr:last-child td { border-bottom:none; }
+.usr-table tbody tr { transition:background .15s; }
+.usr-table tbody tr:hover { background:var(--bg); }
+.usr-name { font-weight:600; color:var(--text); }
+.usr-login { font-family:'Outfit',sans-serif; font-size:11px; color:var(--muted); background:var(--bg); padding:2px 8px; border-radius:5px; display:inline-block; margin-top:2px; }
+.rol-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:6px; font-family:'Outfit',sans-serif; font-size:10.5px; font-weight:700; }
+.rol-admin  { background:rgba(212,136,30,.12); color:#8B5A10; border:1px solid rgba(212,136,30,.25); }
+.rol-asesor { background:var(--blue-lt); color:var(--blue); border:1px solid rgba(26,77,124,.2); }
+.usr-actions { display:flex; gap:6px; }
+.usr-btn { height:28px; padding:0 10px; border-radius:6px; border:1.5px solid var(--border); background:#fff; cursor:pointer; font-size:11.5px; font-weight:600; transition:all .15s; display:inline-flex; align-items:center; gap:5px; color:var(--muted); }
+.usr-btn:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-lt); }
+.usr-btn.danger:hover { border-color:var(--err); color:var(--err); background:var(--err-lt); }
+.usr-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+/* Nav item solo para admin */
+.nav-item.admin-only { display: none; }
+
+/* Recuperar contraseña en login */
+.login-forgot {
+  text-align: center; margin-top: 14px;
+}
+.login-forgot-btn {
+  background: none; border: none; color: rgba(255,255,255,.4);
+  font-size: 12px; cursor: pointer; font-family:'Inter',sans-serif;
+  transition: color .15s; padding: 4px 8px; border-radius: 5px;
+}
+.login-forgot-btn:hover { color: var(--gold); background: rgba(212,136,30,.1); }
+
+/* Panel recuperar contraseña (dentro del login overlay) */
+.recover-panel {
+  display: none; animation: fadeIn .25s ease both;
+}
+.recover-panel.show { display: block; }
+.login-form-panel { display: block; }
+.login-form-panel.hidden { display: none; }
+.recover-title { font-family:'Outfit',sans-serif; font-size:20px; font-weight:700; color:#fff; margin-bottom:6px; }
+.recover-sub { font-size:13px; color:rgba(255,255,255,.45); margin-bottom:24px; }
+.recover-back { background:none; border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.6); font-size:12px; cursor:pointer; font-family:'Inter',sans-serif; padding:6px 14px; border-radius:7px; margin-bottom:20px; transition:all .15s; display:inline-flex; align-items:center; gap:6px; }
+.recover-back:hover { background:rgba(255,255,255,.07); color:#fff; }
 </style>
 </head>
 <body>
@@ -669,7 +771,7 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
     <div class="login-bg-circle"></div>
     <div class="login-bg-circle"></div>
   </div>
-  <div class="login-card">
+  <div class="login-card" id="loginCard">
     <div class="login-logo">
       <div class="login-logo-mark">
         <svg viewBox="0 0 20 20" fill="none"><path d="M4 3h12v3H7.5v3.5H14v3H7.5V17H4V3z" fill="#fff"/></svg>
@@ -736,12 +838,99 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
       <div class="attempt-dot" id="dot5"></div>
     </div>
 
+    <!-- Olvidé mi contraseña -->
+    <div class="login-forgot">
+      <button class="login-forgot-btn" onclick="mostrarRecuperar()">🔑 ¿Olvidaste tu contraseña?</button>
+    </div>
+
     <div class="login-footer">
-      🔒 Área restringida · Solo personal autorizado FondoUne<br>
-      Si olvidaste tus credenciales, contacta al administrador.
+      🔒 Área restringida · Solo personal autorizado FondoUne
     </div>
   </div>
-</div>
+
+  <!-- ══ PANEL RECUPERAR CONTRASEÑA ══ -->
+  <div class="login-card recover-panel" id="recoverPanel">
+    <div class="login-logo">
+      <div class="login-logo-mark">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M4 3h12v3H7.5v3.5H14v3H7.5V17H4V3z" fill="#fff"/></svg>
+      </div>
+      <div>
+        <div class="login-logo-name">Fondo<span>Une</span></div>
+        <div class="login-logo-tag">Fondo de Empleados</div>
+      </div>
+    </div>
+
+    <button class="recover-back" onclick="ocultarRecuperar()">← Volver al inicio</button>
+
+    <div class="recover-title">🔑 Restablecer Contraseña</div>
+    <div class="recover-sub">Solo el administrador puede restablecer contraseñas. Ingresa las credenciales de admin para continuar.</div>
+
+    <!-- Paso 1: verificar admin -->
+    <div id="recoverStep1">
+      <div class="login-field">
+        <div class="login-label">🛡️ Usuario administrador</div>
+        <div class="login-input-wrap">
+          <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input class="login-input" id="recAdminUser" type="text" placeholder="Usuario admin" autocomplete="off">
+        </div>
+      </div>
+      <div class="login-field">
+        <div class="login-label">🔒 Contraseña de admin</div>
+        <div class="login-input-wrap">
+          <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input class="login-input" id="recAdminPass" type="password" placeholder="••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')verificarAdminRecuperar()">
+          <button class="login-eye" onclick="togglePassField('recAdminPass')" tabindex="-1">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="login-error" id="recoverError1" style="margin-bottom:12px;">
+        <span>⚠</span><span id="recoverError1Msg">Credenciales incorrectas.</span>
+      </div>
+      <button class="login-btn" onclick="verificarAdminRecuperar()">Verificar administrador</button>
+    </div>
+
+    <!-- Paso 2: elegir usuario y nueva contraseña -->
+    <div id="recoverStep2" style="display:none;">
+      <div class="login-field">
+        <div class="login-label">👤 Usuario a restablecer</div>
+        <select class="login-input" id="recTargetUser" style="cursor:pointer;padding:0 12px;">
+          <option value="">Seleccionar usuario…</option>
+        </select>
+      </div>
+      <div class="login-field">
+        <div class="login-label">🔐 Nueva contraseña</div>
+        <div class="login-input-wrap">
+          <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input class="login-input" id="recNewPass" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+          <button class="login-eye" onclick="togglePassField('recNewPass')" tabindex="-1">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="login-field">
+        <div class="login-label">🔐 Confirmar nueva contraseña</div>
+        <div class="login-input-wrap">
+          <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input class="login-input" id="recConfPass" type="password" placeholder="Repite la contraseña" autocomplete="new-password" onkeydown="if(event.key==='Enter')ejecutarRestablecimiento()">
+          <button class="login-eye" onclick="togglePassField('recConfPass')" tabindex="-1">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="login-error" id="recoverError2" style="margin-bottom:12px;">
+        <span>⚠</span><span id="recoverError2Msg"></span>
+      </div>
+      <div style="background:rgba(13,122,78,.15);border:1px solid rgba(13,122,78,.3);border-radius:9px;padding:10px 14px;font-size:12.5px;color:#6EE7B7;margin-bottom:16px;display:none;" id="recoverOk">
+        ✅ Contraseña restablecida correctamente. Ya puedes iniciar sesión.
+      </div>
+      <button class="login-btn" onclick="ejecutarRestablecimiento()">🔑 Restablecer contraseña</button>
+    </div>
+
+    <div class="login-footer" style="margin-top:20px;">
+      Los cambios se guardan localmente en este navegador.
+    </div>
+  </div>
 
 <!-- OVERLAY para sidebar en móvil -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="cerrarSidebarMovil()"></div>
@@ -814,6 +1003,9 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
     </div>
     <div class="nav-item" onclick="exportarExcel()" id="nav-export">
       <span class="ni">📥</span> Exportar Excel
+    </div>
+    <div class="nav-item admin-only" onclick="showPanel('usuarios')" id="nav-usuarios">
+      <span class="ni">👥</span> Usuarios
     </div>
     <div class="sidebar-footer">
       <div class="sf-text">FondoUne v2.0<br>Portal Empleados</div>
@@ -1018,8 +1210,122 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
       </div>
     </div>
 
+    <!-- ════ GESTIÓN DE USUARIOS (Admin) ════ -->
+    <div class="panel" id="panel-usuarios">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">👥 Gestión de Usuarios</div>
+          <div class="pg-sub">Crea, edita y elimina usuarios del portal. Solo visible para administradores.</div>
+        </div>
+        <div class="pg-actions">
+          <button class="btn btn-gold" onclick="abrirCrearUsuario()">➕ Nuevo Usuario</button>
+        </div>
+      </div>
+
+      <!-- Info de usuarios actuales -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-head">
+          <div class="card-title">👤 Usuarios registrados</div>
+          <div style="font-size:12px;color:var(--muted);" id="usr-count-txt">— usuarios</div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table class="usr-table">
+            <thead>
+              <tr>
+                <th>Nombre / Usuario</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="usrTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Info de seguridad -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">🔒 Información de seguridad</div></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;">
+            <div style="background:var(--bg);border-radius:9px;padding:14px;">
+              <div style="font-weight:700;margin-bottom:4px;color:var(--text);">🛡️ Almacenamiento</div>
+              <div style="color:var(--muted);font-size:12.5px;line-height:1.6;">Los usuarios y contraseñas (hasheadas con SHA-256) se guardan en el navegador local. Para sincronizar entre equipos, comparte el archivo HTML actualizado.</div>
+            </div>
+            <div style="background:var(--bg);border-radius:9px;padding:14px;">
+              <div style="font-weight:700;margin-bottom:4px;color:var(--text);">⚠️ Importante</div>
+              <div style="color:var(--muted);font-size:12.5px;line-height:1.6;">No elimines el usuario <strong>admin</strong>. Siempre debe existir al menos un administrador para poder gestionar los demás usuarios.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main-layout -->
+
+<!-- ════════════════════════════════════════
+     PANEL GESTIÓN DE USUARIOS (Admin only)
+     ════════════════════════════════════════ -->
+<div class="adm-overlay" id="usrOverlay" onclick="if(event.target===this)cerrarUsrModal()"></div>
+
+<!-- Modal: Crear / Editar usuario -->
+<div class="adm-modal" id="usrModal" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(.96);z-index:801;opacity:0;pointer-events:none;transition:all .28s cubic-bezier(.34,1.2,.64,1);">
+  <div class="adm-head">
+    <div class="adm-head-title" id="usrModalTitle">👤 Crear Usuario</div>
+    <button class="adm-close" onclick="cerrarUsrModal()">✕</button>
+  </div>
+  <div class="adm-body">
+    <input type="hidden" id="usrEditKey">
+    <div class="adm-field">
+      <div class="adm-label">👤 Nombre completo</div>
+      <input class="adm-input" id="usrNombre" placeholder="Ej: María González" maxlength="60">
+    </div>
+    <div class="adm-field">
+      <div class="adm-label">🔑 Usuario (login)</div>
+      <input class="adm-input" id="usrLogin" placeholder="Ej: mgonzalez" maxlength="30" autocomplete="off">
+      <div class="adm-hint">Solo letras, números y guión bajo. No se puede cambiar después.</div>
+    </div>
+    <div class="adm-field">
+      <div class="adm-label">🎭 Rol</div>
+      <select class="adm-select" id="usrRol">
+        <option value="Asesor">Asesor</option>
+        <option value="Administrador">Administrador</option>
+      </select>
+    </div>
+    <div class="adm-field" id="usrPassField">
+      <div class="adm-label">🔒 Contraseña</div>
+      <div class="adm-pass-wrap">
+        <input class="adm-input" id="usrPass" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+        <button class="adm-pass-eye" onclick="togglePassField('usrPass')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="adm-field" id="usrPassField2">
+      <div class="adm-label">🔒 Confirmar contraseña</div>
+      <div class="adm-pass-wrap">
+        <input class="adm-input" id="usrPass2" type="password" placeholder="Repite la contraseña" autocomplete="new-password">
+        <button class="adm-pass-eye" onclick="togglePassField('usrPass2')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="adm-field" id="usrPassCambioField" style="display:none;">
+      <div class="adm-label">🔄 Nueva contraseña <span style="font-weight:400;text-transform:none;letter-spacing:0;">(dejar vacío para no cambiar)</span></div>
+      <div class="adm-pass-wrap">
+        <input class="adm-input" id="usrPassCambio" type="password" placeholder="Nueva contraseña (opcional)" autocomplete="new-password">
+        <button class="adm-pass-eye" onclick="togglePassField('usrPassCambio')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="adm-msg" id="usrModalMsg"></div>
+  </div>
+  <div class="adm-footer">
+    <button class="btn btn-outline" onclick="cerrarUsrModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="guardarUsuario()" id="usrGuardarBtn">💾 Guardar</button>
+  </div>
+</div>
 
 <!-- MODAL DETALLE -->
 <div class="modal-overlay" id="modalOverlay" onclick="cerrarModal(event)">
@@ -1249,6 +1555,11 @@ function loginExitoso(usuario, datosUsuario) {
     overlay.style.display = 'none';
     document.getElementById('sessionUser').textContent = '● ' + datosUsuario.nombre + ' (' + datosUsuario.rol + ')';
     document.getElementById('sessionBar').classList.add('show');
+    // Mostrar opciones de admin si aplica
+    actualizarNavAdmin();
+    if (datosUsuario.rol === 'Administrador') {
+      renderUsrTable();
+    }
     // Registrar en auditoría
     registrarAudit('Inicio de sesión', { id: 'auth', radicado: 'LOGIN', nombreTitular: datosUsuario.nombre });
   }, 400);
@@ -1294,6 +1605,9 @@ function cerrarSesion() {
 
 /* ── INIT SEGURIDAD (se ejecuta antes que todo) ── */
 (function initSeguridad() {
+  // Sincronizar usuarios guardados en localStorage con USUARIOS en memoria
+  sincronizarUsuariosEnMemoria();
+
   var sess = verificarSesion();
   if (sess) {
     // Sesión válida — ocultar overlay directamente
@@ -1301,6 +1615,9 @@ function cerrarSesion() {
     overlay.style.display = 'none';
     setTimeout(function() {
       document.getElementById('sessionUser').textContent = '● ' + sess.nombre + ' (' + sess.rol + ')';
+      document.getElementById('sessionBar').classList.add('show');
+      actualizarNavAdmin();
+      if (sess.rol === 'Administrador') renderUsrTable();
     }, 100);
   } else {
     // Sin sesión — mostrar login, ocultar contenido
@@ -1967,6 +2284,343 @@ function recargar(){
     var id=panelActivo.id.replace('panel-','');
     showPanel(id);
   }
+}
+
+/* ═══════════════════════════════════════════════════════
+   GESTIÓN DE USUARIOS — Sistema completo
+   ═══════════════════════════════════════════════════════ */
+
+var USR_KEY = 'fu_usuarios'; // localStorage key para usuarios custom
+
+/* Cargar usuarios (combina base + guardados en localStorage) */
+function cargarUsuarios() {
+  var base = {
+    'admin':   { hash: 'e5dc2f73f21351f6eea4d250725e701fd5ba6f9442f964f3eb6f7db510186d0c', nombre: 'Administrador', rol: 'Administrador' },
+    'asesor1': { hash: 'c07e647705fd1afdba00420755aeeb10e347e387ba17f3f463eaa3a5ddc32504', nombre: 'Asesor Créditos 1', rol: 'Asesor' },
+    'asesor2': { hash: '52fb1bd7895fe2b4e69b2f93b28c9f77122d6c8c5ad1da6ce88bd4fec08910f2', nombre: 'Asesor Créditos 2', rol: 'Asesor' }
+  };
+  try {
+    var custom = JSON.parse(localStorage.getItem(USR_KEY) || '{}');
+    // Merge: localStorage sobreescribe base (permite editar/eliminar)
+    return Object.assign({}, base, custom);
+  } catch(e) { return base; }
+}
+
+/* Guardar cambio de un usuario en localStorage */
+function persistirUsuario(login, datos) {
+  try {
+    var custom = JSON.parse(localStorage.getItem(USR_KEY) || '{}');
+    custom[login] = datos;
+    localStorage.setItem(USR_KEY, JSON.stringify(custom));
+    // También actualizar USUARIOS en memoria
+    USUARIOS[login] = datos;
+  } catch(e) {}
+}
+
+/* Eliminar usuario de localStorage */
+function eliminarUsuarioPersistido(login) {
+  try {
+    var custom = JSON.parse(localStorage.getItem(USR_KEY) || '{}');
+    delete custom[login];
+    localStorage.setItem(USR_KEY, JSON.stringify(custom));
+    delete USUARIOS[login];
+  } catch(e) {}
+}
+
+/* Refrescar USUARIOS en memoria desde localStorage al cargar */
+function sincronizarUsuariosEnMemoria() {
+  var todos = cargarUsuarios();
+  Object.keys(todos).forEach(function(k) { USUARIOS[k] = todos[k]; });
+}
+
+/* Verificar si la sesión activa es admin */
+function esAdmin() {
+  try {
+    var sess = JSON.parse(localStorage.getItem(SEC.SESS_KEY) || 'null');
+    return sess && sess.rol === 'Administrador';
+  } catch(e) { return false; }
+}
+
+/* Mostrar/ocultar nav de usuarios según rol */
+function actualizarNavAdmin() {
+  var items = document.querySelectorAll('.admin-only');
+  items.forEach(function(el) {
+    el.style.display = esAdmin() ? 'flex' : 'none';
+  });
+}
+
+/* ─── Renderizar tabla de usuarios ─── */
+function renderUsrTable() {
+  var todos = cargarUsuarios();
+  var keys = Object.keys(todos);
+  var tbody = document.getElementById('usrTableBody');
+  var countTxt = document.getElementById('usr-count-txt');
+  if (countTxt) countTxt.textContent = keys.length + ' usuario' + (keys.length !== 1 ? 's' : '');
+  if (!tbody) return;
+
+  var sess = JSON.parse(localStorage.getItem(SEC.SESS_KEY) || '{}');
+  var usuarioActual = sess.usuario || '';
+
+  tbody.innerHTML = keys.map(function(login) {
+    var u = todos[login];
+    var esYo = login === usuarioActual;
+    var esUnicoAdmin = u.rol === 'Administrador' &&
+      keys.filter(function(k){ return todos[k].rol === 'Administrador'; }).length === 1;
+
+    return '<tr>'
+      + '<td><div class="usr-name">' + u.nombre + '</div>'
+      + '<div class="usr-login">' + login + '</div>'
+      + (esYo ? '<span style="font-size:10px;color:var(--ok);margin-left:4px;">● tú</span>' : '')
+      + '</td>'
+      + '<td><span class="rol-badge ' + (u.rol==='Administrador'?'rol-admin':'rol-asesor') + '">'
+      + (u.rol==='Administrador'?'👑':'🎯') + ' ' + u.rol + '</span></td>'
+      + '<td><div class="usr-actions">'
+      + '<button class="usr-btn" onclick="abrirEditarUsuario(\'' + login + '\')" title="Editar">✏️ Editar</button>'
+      + '<button class="usr-btn danger" onclick="confirmarEliminarUsuario(\'' + login + '\')"'
+      + (esYo || esUnicoAdmin ? ' disabled title="No puedes eliminar este usuario"' : ' title="Eliminar"')
+      + '>🗑️ Eliminar</button>'
+      + '</div></td>'
+      + '</tr>';
+  }).join('');
+}
+
+/* ─── Abrir modal CREAR ─── */
+function abrirCrearUsuario() {
+  document.getElementById('usrModalTitle').textContent = '👤 Crear Nuevo Usuario';
+  document.getElementById('usrEditKey').value = '';
+  document.getElementById('usrNombre').value = '';
+  document.getElementById('usrLogin').value = '';
+  document.getElementById('usrLogin').disabled = false;
+  document.getElementById('usrRol').value = 'Asesor';
+  document.getElementById('usrPass').value = '';
+  document.getElementById('usrPass2').value = '';
+  document.getElementById('usrPassField').style.display = 'block';
+  document.getElementById('usrPassField2').style.display = 'block';
+  document.getElementById('usrPassCambioField').style.display = 'none';
+  var msg = document.getElementById('usrModalMsg');
+  msg.className = 'adm-msg'; msg.textContent = '';
+  abrirModalUsr();
+}
+
+/* ─── Abrir modal EDITAR ─── */
+function abrirEditarUsuario(login) {
+  var todos = cargarUsuarios();
+  var u = todos[login];
+  if (!u) return;
+  document.getElementById('usrModalTitle').textContent = '✏️ Editar Usuario — ' + login;
+  document.getElementById('usrEditKey').value = login;
+  document.getElementById('usrNombre').value = u.nombre;
+  document.getElementById('usrLogin').value = login;
+  document.getElementById('usrLogin').disabled = true; // login no editable
+  document.getElementById('usrRol').value = u.rol;
+  document.getElementById('usrPassCambio').value = '';
+  document.getElementById('usrPassField').style.display = 'none';
+  document.getElementById('usrPassField2').style.display = 'none';
+  document.getElementById('usrPassCambioField').style.display = 'block';
+  var msg = document.getElementById('usrModalMsg');
+  msg.className = 'adm-msg'; msg.textContent = '';
+  abrirModalUsr();
+}
+
+/* ─── Abrir/cerrar modal ─── */
+function abrirModalUsr() {
+  var ov = document.getElementById('usrOverlay');
+  var modal = document.getElementById('usrModal');
+  ov.classList.add('show');
+  modal.style.opacity = '1';
+  modal.style.pointerEvents = 'all';
+  modal.style.transform = 'translate(-50%,-50%) scale(1)';
+  setTimeout(function(){ document.getElementById('usrNombre').focus(); }, 100);
+}
+function cerrarUsrModal() {
+  var ov = document.getElementById('usrOverlay');
+  var modal = document.getElementById('usrModal');
+  ov.classList.remove('show');
+  modal.style.opacity = '0';
+  modal.style.pointerEvents = 'none';
+  modal.style.transform = 'translate(-50%,-48%) scale(.96)';
+}
+
+/* ─── Guardar usuario (crear o editar) ─── */
+function guardarUsuario() {
+  var editKey  = document.getElementById('usrEditKey').value;
+  var nombre   = document.getElementById('usrNombre').value.trim();
+  var login    = editKey || document.getElementById('usrLogin').value.trim().toLowerCase();
+  var rol      = document.getElementById('usrRol').value;
+  var msg      = document.getElementById('usrModalMsg');
+
+  function showMsg(tipo, txt) {
+    msg.className = 'adm-msg ' + tipo;
+    msg.textContent = txt;
+  }
+
+  if (!nombre) { showMsg('err', 'El nombre es obligatorio.'); return; }
+  if (!login)  { showMsg('err', 'El usuario es obligatorio.'); return; }
+  if (!/^[a-z0-9_]+$/.test(login)) { showMsg('err', 'El usuario solo puede tener letras minúsculas, números y guión bajo.'); return; }
+
+  var esEdicion = !!editKey;
+
+  if (!esEdicion) {
+    // Crear: verificar que no exista
+    var todos = cargarUsuarios();
+    if (todos[login]) { showMsg('err', 'Ya existe un usuario con ese nombre de usuario.'); return; }
+    var pass  = document.getElementById('usrPass').value;
+    var pass2 = document.getElementById('usrPass2').value;
+    if (pass.length < 8) { showMsg('err', 'La contraseña debe tener al menos 8 caracteres.'); return; }
+    if (pass !== pass2)  { showMsg('err', 'Las contraseñas no coinciden.'); return; }
+
+    var btn = document.getElementById('usrGuardarBtn');
+    btn.disabled = true; btn.textContent = 'Guardando…';
+
+    sha256(pass).then(function(hash) {
+      persistirUsuario(login, { hash: hash, nombre: nombre, rol: rol });
+      showMsg('ok', '✅ Usuario "' + login + '" creado correctamente.');
+      renderUsrTable();
+      btn.disabled = false; btn.textContent = '💾 Guardar';
+      setTimeout(cerrarUsrModal, 1200);
+    });
+
+  } else {
+    // Editar
+    var todos2 = cargarUsuarios();
+    var passCambio = document.getElementById('usrPassCambio').value;
+
+    function finalizarEdicion(nuevoHash) {
+      var datosActualizados = {
+        hash: nuevoHash || todos2[editKey].hash,
+        nombre: nombre,
+        rol: rol
+      };
+      persistirUsuario(editKey, datosActualizados);
+      showMsg('ok', '✅ Usuario actualizado correctamente.');
+      renderUsrTable();
+      setTimeout(cerrarUsrModal, 1200);
+    }
+
+    if (passCambio) {
+      if (passCambio.length < 8) { showMsg('err', 'La nueva contraseña debe tener al menos 8 caracteres.'); return; }
+      var btn2 = document.getElementById('usrGuardarBtn');
+      btn2.disabled = true; btn2.textContent = 'Guardando…';
+      sha256(passCambio).then(function(hash) {
+        finalizarEdicion(hash);
+        btn2.disabled = false; btn2.textContent = '💾 Guardar';
+      });
+    } else {
+      finalizarEdicion(null);
+    }
+  }
+}
+
+/* ─── Eliminar usuario ─── */
+function confirmarEliminarUsuario(login) {
+  var todos = cargarUsuarios();
+  var u = todos[login];
+  if (!u) return;
+  var confirmado = confirm('⚠️ ¿Eliminar el usuario "' + u.nombre + '" (' + login + ')?\n\nEsta acción no se puede deshacer.');
+  if (!confirmado) return;
+  eliminarUsuarioPersistido(login);
+  renderUsrTable();
+  mostrarToast('🗑️ Usuario "' + login + '" eliminado.');
+}
+
+/* ═══════════════════════════════════════════════════════
+   RECUPERAR CONTRASEÑA — Desde pantalla de login
+   ═══════════════════════════════════════════════════════ */
+
+function mostrarRecuperar() {
+  document.getElementById('loginCard').style.display = 'none';
+  var panel = document.getElementById('recoverPanel');
+  panel.style.display = 'flex';
+  panel.style.flexDirection = 'column';
+  // Reset estado
+  document.getElementById('recoverStep1').style.display = 'block';
+  document.getElementById('recoverStep2').style.display = 'none';
+  document.getElementById('recAdminUser').value = '';
+  document.getElementById('recAdminPass').value = '';
+  document.getElementById('recoverOk').style.display = 'none';
+  var err1 = document.getElementById('recoverError1');
+  err1.classList.remove('show');
+  setTimeout(function(){ document.getElementById('recAdminUser').focus(); }, 100);
+}
+
+function ocultarRecuperar() {
+  document.getElementById('recoverPanel').style.display = 'none';
+  document.getElementById('loginCard').style.display = 'flex';
+  document.getElementById('loginCard').style.flexDirection = 'column';
+}
+
+function verificarAdminRecuperar() {
+  var usuario  = (document.getElementById('recAdminUser').value || '').trim().toLowerCase();
+  var password = document.getElementById('recAdminPass').value || '';
+  var err1msg  = document.getElementById('recoverError1Msg');
+  var err1     = document.getElementById('recoverError1');
+
+  if (!usuario || !password) {
+    err1msg.textContent = 'Ingresa usuario y contraseña de administrador.';
+    err1.classList.add('show'); return;
+  }
+
+  sha256(password).then(function(hash) {
+    var todos = cargarUsuarios();
+    var u = todos[usuario];
+    if (!u || u.hash !== hash || u.rol !== 'Administrador') {
+      err1msg.textContent = 'Credenciales incorrectas o no es administrador.';
+      err1.classList.add('show');
+      document.getElementById('recAdminPass').value = '';
+      return;
+    }
+    // Admin verificado — mostrar paso 2
+    err1.classList.remove('show');
+    document.getElementById('recoverStep1').style.display = 'none';
+    document.getElementById('recoverStep2').style.display = 'block';
+    // Poblar select de usuarios
+    var sel = document.getElementById('recTargetUser');
+    sel.innerHTML = '<option value="">Seleccionar usuario…</option>';
+    Object.keys(todos).forEach(function(k) {
+      if (k !== usuario) { // no puede cambiar su propia aquí
+        var opt = document.createElement('option');
+        opt.value = k;
+        opt.textContent = todos[k].nombre + ' (' + k + ')';
+        sel.appendChild(opt);
+      }
+    });
+    document.getElementById('recoverOk').style.display = 'none';
+    var err2 = document.getElementById('recoverError2');
+    err2.classList.remove('show');
+  });
+}
+
+function ejecutarRestablecimiento() {
+  var targetLogin = document.getElementById('recTargetUser').value;
+  var newPass     = document.getElementById('recNewPass').value;
+  var confPass    = document.getElementById('recConfPass').value;
+  var err2msg     = document.getElementById('recoverError2Msg');
+  var err2        = document.getElementById('recoverError2');
+  var okBox       = document.getElementById('recoverOk');
+
+  if (!targetLogin) { err2msg.textContent='Selecciona un usuario.'; err2.classList.add('show'); return; }
+  if (newPass.length < 8) { err2msg.textContent='La contraseña debe tener al menos 8 caracteres.'; err2.classList.add('show'); return; }
+  if (newPass !== confPass) { err2msg.textContent='Las contraseñas no coinciden.'; err2.classList.add('show'); return; }
+
+  sha256(newPass).then(function(hash) {
+    var todos = cargarUsuarios();
+    var u = todos[targetLogin];
+    if (!u) return;
+    persistirUsuario(targetLogin, { hash: hash, nombre: u.nombre, rol: u.rol });
+    err2.classList.remove('show');
+    okBox.style.display = 'block';
+    document.getElementById('recNewPass').value = '';
+    document.getElementById('recConfPass').value = '';
+    // Volver al login tras 2.5s
+    setTimeout(ocultarRecuperar, 2500);
+  });
+}
+
+/* Helper: toggle visibility de cualquier campo password */
+function togglePassField(inputId) {
+  var inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
 }
 
 /* ═══ MENÚ MÓVIL ═══ */
