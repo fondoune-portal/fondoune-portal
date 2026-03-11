@@ -271,12 +271,10 @@ tbody tr:hover{background:#F7FAFD;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ══ LOGIN OVERLAY ══ */
+/* ══ LOGIN OVERLAY — Split screen ══ */
 .login-overlay {
   position: fixed; inset: 0; z-index: 9999;
-  background: var(--dark);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
+  display: flex;
   transition: opacity .4s ease;
 }
 .login-overlay.oculto {
@@ -285,17 +283,103 @@ tbody tr:hover{background:#F7FAFD;}
   visibility: hidden;
 }
 
-/* Fondo animado */
-.login-bg {
-  position: absolute; inset: 0; overflow: hidden;
+/* Panel izquierdo — formulario */
+.login-left {
+  width: 100%; max-width: 520px; flex-shrink: 0;
+  background: #1E0F06;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 48px 56px;
+  position: relative; z-index: 2;
+  overflow: hidden;
 }
+.login-left::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 20% 50%, rgba(232,81,26,.18) 0%, transparent 65%),
+              radial-gradient(ellipse at 80% 20%, rgba(192,57,43,.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.login-left-inner { position: relative; z-index: 1; width: 100%; max-width: 360px; }
+
+/* Panel derecho — imagen */
+.login-right {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.login-right-img {
+  position: absolute; inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80');
+  background-size: cover;
+  background-position: center top;
+  transition: transform 8s ease;
+}
+.login-right-img:hover { transform: scale(1.03); }
+.login-right-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg,
+    rgba(45,26,14,.75) 0%,
+    rgba(232,81,26,.45) 40%,
+    rgba(192,57,43,.55) 100%);
+}
+.login-right-content {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 48px;
+}
+.login-right-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.12); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 20px; padding: 6px 16px;
+  font-size: 11px; font-weight: 600; color: #fff;
+  letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 20px; width: fit-content;
+}
+.login-right-headline {
+  font-family: 'Outfit', sans-serif; font-weight: 800;
+  font-size: clamp(28px, 3.5vw, 42px); color: #fff;
+  line-height: 1.1; margin-bottom: 16px;
+  text-shadow: 0 2px 20px rgba(0,0,0,.3);
+}
+.login-right-headline span { color: #FFBFA0; }
+.login-right-sub {
+  font-size: 14px; color: rgba(255,255,255,.7);
+  line-height: 1.6; max-width: 400px; margin-bottom: 28px;
+}
+.login-right-stats {
+  display: flex; gap: 32px;
+}
+.login-stat {
+  display: flex; flex-direction: column;
+}
+.login-stat-val {
+  font-family: 'Outfit', sans-serif; font-weight: 800;
+  font-size: 26px; color: #fff;
+}
+.login-stat-lbl {
+  font-size: 11px; color: rgba(255,255,255,.55);
+  margin-top: 2px;
+}
+
+/* Responsive: ocultar imagen en pantallas pequeñas */
+@media (max-width: 900px) {
+  .login-right { display: none; }
+  .login-left { max-width: 100%; }
+}
+@media (max-width: 480px) {
+  .login-left { padding: 32px 24px; }
+}
+
+/* Fondo animado — ya no se usa pero se mantiene por recoverPanel */
+.login-bg { position: absolute; inset: 0; overflow: hidden; }
 .login-bg-circle {
   position: absolute; border-radius: 50%;
   background: radial-gradient(circle, rgba(232,81,26,.18) 0%, transparent 70%);
   animation: floatBg 8s ease-in-out infinite;
 }
-.login-bg-circle:nth-child(1) { width: 600px; height: 600px; top: -200px; left: -150px; animation-delay: 0s; }
-.login-bg-circle:nth-child(2) { width: 400px; height: 400px; bottom: -100px; right: -100px; animation-delay: -4s; background: radial-gradient(circle, rgba(192,57,43,.18) 0%, transparent 70%); }
+.login-bg-circle:nth-child(1) { width: 500px; height: 500px; top: -150px; left: -100px; }
+.login-bg-circle:nth-child(2) { width: 350px; height: 350px; bottom: -80px; right: -80px; animation-delay: -4s; background: radial-gradient(circle, rgba(192,57,43,.18) 0%, transparent 70%); }
 .login-bg-grid {
   position: absolute; inset: 0;
   background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
@@ -303,16 +387,15 @@ tbody tr:hover{background:#F7FAFD;}
 }
 @keyframes floatBg { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(20px,-20px) scale(1.05);} }
 
-/* Card login */
+/* Card login — ahora es el contenido del panel izquierdo */
 .login-card {
   position: relative; z-index: 1;
-  background: rgba(45,26,14,.88);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(232,81,26,.2);
-  border-radius: 24px;
-  padding: 44px 44px 40px;
-  width: 100%; max-width: 420px;
-  box-shadow: 0 32px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(232,81,26,.08);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
+  box-shadow: none;
   animation: loginEntrance .5s cubic-bezier(.34,1.56,.64,1) both;
 }
 @keyframes loginEntrance { from{opacity:0;transform:translateY(30px) scale(.95);} to{opacity:1;transform:translateY(0) scale(1);} }
@@ -774,111 +857,141 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
 <body>
 
 <!-- ══════════════════════════════════════
-     LOGIN OVERLAY — Capa de Seguridad
+     LOGIN OVERLAY — Split Screen
      ══════════════════════════════════════ -->
 <div class="login-overlay" id="loginOverlay">
-  <div class="login-bg">
-    <div class="login-bg-grid"></div>
-    <div class="login-bg-circle"></div>
-    <div class="login-bg-circle"></div>
-  </div>
-  <div class="login-card" id="loginCard">
-    <div class="login-logo">
-      <div class="login-logo-mark">
-        <svg viewBox="0 0 20 20" fill="none"><path d="M4 3h12v3H7.5v3.5H14v3H7.5V17H4V3z" fill="#fff"/></svg>
-      </div>
-      <div>
-        <div class="login-logo-name">Fondo<span>Une</span></div>
-        <div class="login-logo-tag">Fondo de Empleados</div>
-      </div>
-    </div>
 
-    <div class="login-title">Acceso Empleados</div>
-    <div class="login-sub">Portal restringido · Ingresa tus credenciales para continuar</div>
+  <!-- Panel izquierdo: formulario -->
+  <div class="login-left">
+    <div class="login-left-inner">
+      <div class="login-card" id="loginCard">
+        <div class="login-logo">
+          <div class="login-logo-mark">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M4 3h12v3H7.5v3.5H14v3H7.5V17H4V3z" fill="#fff"/></svg>
+          </div>
+          <div>
+            <div class="login-logo-name">Fondo<span>Une</span></div>
+            <div class="login-logo-tag">Fondo de Empleados</div>
+          </div>
+        </div>
 
-    <!-- Error -->
-    <div class="login-error" id="loginError">
-      <span>⚠</span>
-      <span id="loginErrorMsg">Usuario o contraseña incorrectos.</span>
-    </div>
+        <div class="login-title">Bienvenido</div>
+        <div class="login-sub">Portal de empleados · Ingresa tus credenciales para continuar</div>
 
-    <!-- Bloqueo temporal -->
-    <div class="login-blocked" id="loginBlocked">
-      <div class="lb-title">🔒 Acceso temporalmente bloqueado</div>
-      <div class="lb-timer" id="blockTimer">05:00</div>
-      <div class="lb-sub">Demasiados intentos fallidos. Espera para continuar.</div>
-    </div>
+        <div class="login-error" id="loginError">
+          <span>⚠</span>
+          <span id="loginErrorMsg">Usuario o contraseña incorrectos.</span>
+        </div>
+        <div class="login-blocked" id="loginBlocked">
+          <div class="lb-title">🔒 Acceso temporalmente bloqueado</div>
+          <div class="lb-timer" id="blockTimer">05:00</div>
+          <div class="lb-sub">Demasiados intentos fallidos. Espera para continuar.</div>
+        </div>
 
-    <!-- Campos -->
-    <div class="login-field">
-      <div class="login-label">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Usuario
-      </div>
-      <div class="login-input-wrap">
-        <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <input class="login-input" id="loginUser" type="text" placeholder="Tu usuario FondoUne" autocomplete="username" onkeydown="loginKeydown(event)">
-      </div>
-    </div>
+        <div class="login-field">
+          <div class="login-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Usuario
+          </div>
+          <div class="login-input-wrap">
+            <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input class="login-input" id="loginUser" type="text" placeholder="Tu usuario FondoUne" autocomplete="username" onkeydown="loginKeydown(event)">
+          </div>
+        </div>
 
-    <div class="login-field">
-      <div class="login-label">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Contraseña
-      </div>
-      <div class="login-input-wrap">
-        <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <input class="login-input" id="loginPass" type="password" placeholder="••••••••••" autocomplete="current-password" onkeydown="loginKeydown(event)">
-        <button class="login-eye" onclick="togglePassVer()" id="eyeBtn" tabindex="-1">
-          <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <div class="login-field">
+          <div class="login-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Contraseña
+          </div>
+          <div class="login-input-wrap">
+            <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input class="login-input" id="loginPass" type="password" placeholder="••••••••••" autocomplete="current-password" onkeydown="loginKeydown(event)">
+            <button class="login-eye" onclick="togglePassVer()" id="eyeBtn" tabindex="-1">
+              <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="login-btn" id="loginBtn" onclick="intentarLogin()">
+          <div class="login-btn-spinner" id="loginSpinner"></div>
+          <span id="loginBtnTxt">Ingresar al Portal</span>
         </button>
+
+        <div class="login-attempts" id="intentosDots">
+          <div class="attempt-dot" id="dot1"></div>
+          <div class="attempt-dot" id="dot2"></div>
+          <div class="attempt-dot" id="dot3"></div>
+          <div class="attempt-dot" id="dot4"></div>
+          <div class="attempt-dot" id="dot5"></div>
+        </div>
+
+        <div class="login-forgot">
+          <button class="login-forgot-btn" onclick="mostrarRecuperar()">🔑 ¿Olvidaste tu contraseña?</button>
+        </div>
+
+        <div class="login-footer">
+          🔒 Área restringida · Solo personal autorizado FondoUne
+        </div>
       </div>
     </div>
+  </div>
 
-    <button class="login-btn" id="loginBtn" onclick="intentarLogin()">
-      <div class="login-btn-spinner" id="loginSpinner"></div>
-      <span id="loginBtnTxt">🔐 Ingresar al Portal</span>
-    </button>
-
-    <!-- Indicador de intentos -->
-    <div class="login-attempts" id="intentosDots">
-      <div class="attempt-dot" id="dot1"></div>
-      <div class="attempt-dot" id="dot2"></div>
-      <div class="attempt-dot" id="dot3"></div>
-      <div class="attempt-dot" id="dot4"></div>
-      <div class="attempt-dot" id="dot5"></div>
-    </div>
-
-    <!-- Olvidé mi contraseña -->
-    <div class="login-forgot">
-      <button class="login-forgot-btn" onclick="mostrarRecuperar()">🔑 ¿Olvidaste tu contraseña?</button>
-    </div>
-
-    <div class="login-footer">
-      🔒 Área restringida · Solo personal autorizado FondoUne
+  <!-- Panel derecho: imagen -->
+  <div class="login-right">
+    <div class="login-right-img"></div>
+    <div class="login-right-overlay"></div>
+    <div class="login-right-content">
+      <div class="login-right-tag">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+        Portal Empleados · Activo
+      </div>
+      <div class="login-right-headline">
+        Unidos por<br><span>nuestros sueños</span>
+      </div>
+      <div class="login-right-sub">
+        Gestiona las solicitudes de crédito vivienda de los asociados de FondoUne de manera eficiente y segura.
+      </div>
+      <div class="login-right-stats">
+        <div class="login-stat">
+          <div class="login-stat-val">100%</div>
+          <div class="login-stat-lbl">Digital</div>
+        </div>
+        <div class="login-stat">
+          <div class="login-stat-val">24/7</div>
+          <div class="login-stat-lbl">Disponible</div>
+        </div>
+        <div class="login-stat">
+          <div class="login-stat-val">🔒</div>
+          <div class="login-stat-lbl">Seguro</div>
+        </div>
+      </div>
     </div>
   </div>
+
 </div>
 
 <!-- ══════════════════════════════════════
-     OVERLAY RECUPERAR CONTRASEÑA (independiente)
+     OVERLAY RECUPERAR CONTRASEÑA
      ══════════════════════════════════════ -->
 <div class="login-overlay oculto" id="recoverOverlay" style="z-index:10000;">
-  <div class="login-bg">
-    <div class="login-bg-grid"></div>
-    <div class="login-bg-circle"></div>
-    <div class="login-bg-circle"></div>
-  </div>
-  <div class="login-card" id="recoverPanel" style="max-height:90vh;overflow-y:auto;">
-    <div class="login-logo">
-      <div class="login-logo-mark">
-        <svg viewBox="0 0 20 20" fill="none"><path d="M4 3h12v3H7.5v3.5H14v3H7.5V17H4V3z" fill="#fff"/></svg>
-      </div>
-      <div>
-        <div class="login-logo-name">Fondo<span>Une</span></div>
-        <div class="login-logo-tag">Fondo de Empleados</div>
-      </div>
+  <div class="login-left">
+    <div class="login-bg">
+      <div class="login-bg-grid"></div>
+      <div class="login-bg-circle"></div>
+      <div class="login-bg-circle"></div>
     </div>
+    <div class="login-left-inner">
+      <div class="login-card" id="recoverPanel" style="max-height:90vh;overflow-y:auto;">
+        <div class="login-logo">
+          <div class="login-logo-mark">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M4 3h12v3H7.5v3.5H14v3H7.5V17H4V3z" fill="#fff"/></svg>
+          </div>
+          <div>
+            <div class="login-logo-name">Fondo<span>Une</span></div>
+            <div class="login-logo-tag">Fondo de Empleados</div>
+          </div>
+        </div>
 
     <button class="recover-back" onclick="ocultarRecuperar()">← Volver al inicio</button>
 
@@ -950,8 +1063,29 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
     <div class="login-footer" style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07);">
       Los cambios se guardan localmente en este navegador.
     </div>
+      </div><!-- /login-card recoverPanel -->
+    </div><!-- /login-left-inner -->
+  </div><!-- /login-left -->
+
+  <!-- Panel derecho: misma imagen -->
+  <div class="login-right">
+    <div class="login-right-img"></div>
+    <div class="login-right-overlay"></div>
+    <div class="login-right-content">
+      <div class="login-right-tag">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+        Restablecer Acceso
+      </div>
+      <div class="login-right-headline">
+        Recupera tu<br><span>acceso seguro</span>
+      </div>
+      <div class="login-right-sub">
+        Solo el administrador puede restablecer contraseñas, garantizando la seguridad de todos los usuarios del portal.
+      </div>
+    </div>
   </div>
-</div>
+
+</div><!-- /recoverOverlay -->
 
 <!-- OVERLAY para sidebar en móvil -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="cerrarSidebarMovil()"></div>

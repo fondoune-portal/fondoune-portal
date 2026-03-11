@@ -93,11 +93,66 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 .wrap { max-width: 1060px; margin: 0 auto; padding: 44px 24px 80px; }
 
 /* HERO */
-.hero { text-align: center; margin-bottom: 40px; }
-.hero-eyebrow { display: inline-flex; align-items: center; gap: 7px; background: var(--fu-gold-lt); border: 1px solid rgba(212,136,30,.2); color: var(--fu-gold); font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 16px; border-radius: 20px; margin-bottom: 16px; }
-.hero h1 { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 36px; color: var(--fu-dark); letter-spacing: -0.8px; line-height: 1.2; margin-bottom: 12px; }
-.hero h1 .hi { color: var(--fu-gold); }
-.hero-desc { color: var(--muted); font-size: 15px; font-weight: 300; max-width: 480px; margin: 0 auto; line-height: 1.7; }
+.hero {
+  position: relative; overflow: hidden;
+  border-radius: 20px; margin-bottom: 32px;
+  min-height: 260px; display: flex; align-items: center;
+}
+.hero-img {
+  position: absolute; inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?w=1400&q=80');
+  background-size: cover; background-position: center 30%;
+}
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg,
+    rgba(45,26,14,.92) 0%,
+    rgba(232,81,26,.72) 50%,
+    rgba(192,57,43,.55) 100%);
+}
+.hero-body {
+  position: relative; z-index: 1;
+  padding: 44px 48px; width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 32px;
+}
+.hero-text { flex: 1; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  color: #fff; font-family: 'Outfit', sans-serif; font-size: 11px;
+  font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 5px 16px; border-radius: 20px; margin-bottom: 14px;
+  backdrop-filter: blur(6px);
+}
+.hero h1 {
+  font-family: 'Outfit', sans-serif; font-weight: 800;
+  font-size: clamp(24px, 3vw, 36px); color: #fff;
+  letter-spacing: -0.5px; line-height: 1.15; margin-bottom: 12px;
+  text-shadow: 0 2px 12px rgba(0,0,0,.2);
+}
+.hero h1 .hi { color: #FFBFA0; }
+.hero-desc {
+  color: rgba(255,255,255,.75); font-size: 14px;
+  max-width: 440px; line-height: 1.7;
+}
+.hero-stats {
+  display: flex; flex-direction: column; gap: 16px; flex-shrink: 0;
+}
+.hero-stat-item {
+  background: rgba(255,255,255,.12); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 12px; padding: 14px 20px; text-align: center; min-width: 110px;
+}
+.hero-stat-num {
+  font-family: 'Outfit', sans-serif; font-weight: 800;
+  font-size: 22px; color: #fff; line-height: 1;
+}
+.hero-stat-lbl { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 4px; }
+
+@media (max-width: 680px) {
+  .hero-stats { display: none; }
+  .hero-body { padding: 32px 24px; }
+}
 
 /* TIPO CARDS */
 .type-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
@@ -262,9 +317,29 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 
 <div class="wrap">
   <div class="hero">
-    <div class="hero-eyebrow">🏠 Portal de Solicitudes</div>
-    <h1>Radica tu solicitud<br><span class="hi">de crédito vivienda</span></h1>
-    <p class="hero-desc">Completa el formulario y genera tu lista de chequeo. Tu solicitud quedará registrada automáticamente para el equipo de FondoUne.</p>
+    <div class="hero-img"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-body">
+      <div class="hero-text">
+        <div class="hero-eyebrow">🏠 Portal de Solicitudes · FondoUne</div>
+        <h1>Radica tu solicitud<br><span class="hi">de crédito vivienda</span></h1>
+        <p class="hero-desc">Completa el formulario y genera tu lista de chequeo. Tu solicitud quedará registrada automáticamente para el equipo de FondoUne.</p>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat-item">
+          <div class="hero-stat-num">3</div>
+          <div class="hero-stat-lbl">Tipos de crédito</div>
+        </div>
+        <div class="hero-stat-item">
+          <div class="hero-stat-num">100%</div>
+          <div class="hero-stat-lbl">Digital</div>
+        </div>
+        <div class="hero-stat-item">
+          <div class="hero-stat-num">🔒</div>
+          <div class="hero-stat-lbl">Seguro</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="type-row">
