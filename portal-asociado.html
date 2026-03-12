@@ -766,7 +766,49 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 .faq-search-ico { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #C4A090; }
 
 /* ═══ CATEGORÍAS ═══ */
-.faq-cats { display: flex; gap: 6px; padding: 12px 16px 0; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+/* ── Contenedor scroll de categorías ── */
+.faq-cats-wrap {
+  position: relative;
+  flex-shrink: 0;
+  padding: 12px 0 0;
+}
+/* Degradados laterales que indican más contenido */
+.faq-cats-wrap::before,
+.faq-cats-wrap::after {
+  content: '';
+  position: absolute;
+  top: 12px; bottom: 0;
+  width: 28px;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity .25s;
+}
+.faq-cats-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, #fff 30%, transparent);
+}
+.faq-cats-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, #fff 30%, transparent);
+}
+.faq-cats-wrap.at-start::before { opacity: 0; }
+.faq-cats-wrap.at-end::after   { opacity: 0; }
+
+.faq-cats {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 10px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  /* Scroll suave con inercia nativa en iOS/macOS */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  /* Snap suave para que las pills no queden cortadas */
+  scroll-snap-type: x proximity;
+  cursor: grab;
+}
+.faq-cats:active { cursor: grabbing; }
 .faq-cats::-webkit-scrollbar { display: none; }
 .faq-cat {
   padding: 5px 12px; border-radius: 20px;
@@ -775,6 +817,8 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   cursor: pointer; white-space: nowrap; transition: all .18s;
   background: #fff; color: #7A5540;
   letter-spacing: .2px;
+  scroll-snap-align: start;
+  flex-shrink: 0;
 }
 .faq-cat.active {
   background: linear-gradient(135deg, #E8511A, #C94010);
@@ -831,8 +875,27 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   border-top: 0 solid #F0D8CC;
 }
 .faq-item.open .faq-a {
-  max-height: 500px; padding: 12px 14px 14px;
+  /* Altura máxima visible — el contenido que no cabe scrollea */
+  max-height: 220px;
+  padding: 12px 14px 14px;
   border-top: 1px solid #F0D8CC;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+/* Scrollbar delgada, tono naranja suave */
+.faq-item.open .faq-a::-webkit-scrollbar { width: 3px; }
+.faq-item.open .faq-a::-webkit-scrollbar-track { background: transparent; }
+.faq-item.open .faq-a::-webkit-scrollbar-thumb { background: #E8C4B0; border-radius: 2px; }
+/* Degradado inferior que indica scroll disponible */
+.faq-item.open .faq-a {
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
+}
+/* Quitar el degradado cuando ya llegó al fondo */
+.faq-item.open .faq-a.scrolled-end {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 .faq-a ul { padding-left: 16px; margin: 6px 0; }
 .faq-a li { margin-bottom: 4px; }
@@ -1716,12 +1779,14 @@ var PQRS = (function() {
   </div>
 
   <!-- Categorías -->
-  <div class="faq-cats" id="faqCats">
-    <div class="faq-cat active" onclick="filtrarCategoria('documentos', this)">📄 Documentos</div>
-    <div class="faq-cat" onclick="filtrarCategoria('compra', this)">🏡 Compra</div>
-    <div class="faq-cat" onclick="filtrarCategoria('construccion', this)">🏗️ Construcción</div>
-    <div class="faq-cat" onclick="filtrarCategoria('gravamen', this)">🏦 Gravamen</div>
-    <div class="faq-cat" onclick="filtrarCategoria('proceso', this)">⚙️ Proceso</div>
+  <div class="faq-cats-wrap" id="faqCatsWrap">
+    <div class="faq-cats" id="faqCats">
+      <div class="faq-cat active" onclick="filtrarCategoria('documentos', this)">📄 Documentos</div>
+      <div class="faq-cat" onclick="filtrarCategoria('compra', this)">🏡 Compra</div>
+      <div class="faq-cat" onclick="filtrarCategoria('construccion', this)">🏗️ Construcción</div>
+      <div class="faq-cat" onclick="filtrarCategoria('gravamen', this)">🏦 Gravamen</div>
+      <div class="faq-cat" onclick="filtrarCategoria('proceso', this)">⚙️ Proceso</div>
+    </div>
   </div>
 
   <!-- Lista de preguntas -->
@@ -1849,11 +1914,23 @@ function renderFAQ(items) {
 
 function toggleFaqItem(el) {
   var isOpen = el.classList.contains('open');
-  // Cerrar todos los abiertos
   document.querySelectorAll('.faq-item.open').forEach(function(item) {
     item.classList.remove('open');
   });
-  if (!isOpen) el.classList.add('open');
+  if (!isOpen) {
+    el.classList.add('open');
+    /* Activar indicador de scroll en la respuesta recién abierta */
+    var ans = el.querySelector('.faq-a');
+    if (ans) {
+      /* Resetear estado */
+      ans.classList.remove('scrolled-end');
+      /* Escuchar scroll para quitar degradado al llegar al fondo */
+      ans.onscroll = function() {
+        var atBottom = ans.scrollTop + ans.clientHeight >= ans.scrollHeight - 4;
+        ans.classList.toggle('scrolled-end', atBottom);
+      };
+    }
+  }
 }
 
 function filtrarFAQ() {
@@ -1872,7 +1949,59 @@ function filtrarCategoria(cat, el) {
   document.getElementById('faqSearch').value = '';
   var items = cat === 'todas' ? FAQ_DATA : FAQ_DATA.filter(function(f){ return f.cat === cat; });
   renderFAQ(items);
+  /* Centrar la pill activa en la cinta */
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
+
+/* ── Cinta de categorías: degradados reactivos + drag-to-scroll ── */
+(function initCats() {
+  var wrap, rail;
+
+  function setup() {
+    wrap = document.getElementById('faqCatsWrap');
+    rail = document.getElementById('faqCats');
+    if (!wrap || !rail) return;
+
+    /* Actualizar degradados según posición del scroll */
+    function updateFades() {
+      var atStart = rail.scrollLeft <= 2;
+      var atEnd   = rail.scrollLeft >= rail.scrollWidth - rail.clientWidth - 2;
+      wrap.classList.toggle('at-start', atStart);
+      wrap.classList.toggle('at-end',   atEnd);
+    }
+    rail.addEventListener('scroll', updateFades, { passive: true });
+    updateFades(); /* estado inicial */
+
+    /* Drag-to-scroll con mouse (escritorio) */
+    var isDragging = false, startX, startScroll;
+    rail.addEventListener('mousedown', function(e) {
+      isDragging = true;
+      startX     = e.pageX - rail.offsetLeft;
+      startScroll = rail.scrollLeft;
+      rail.style.userSelect = 'none';
+    });
+    document.addEventListener('mouseup', function() {
+      isDragging = false;
+      rail.style.userSelect = '';
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+      var x    = e.pageX - rail.offsetLeft;
+      var walk = (x - startX) * 1.2;
+      rail.scrollLeft = startScroll - walk;
+    });
+  }
+
+  /* Inicializar cuando el panel se abre */
+  var orig = window.toggleFAQ;
+  window.toggleFAQ = function() {
+    orig();
+    setTimeout(setup, 60); /* esperar al render */
+  };
+  /* También inicializar si ya estaba abierto */
+  setup();
+})();
 </script>
 </body>
 </html>
