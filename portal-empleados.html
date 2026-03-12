@@ -2386,6 +2386,7 @@ function showPanel(id){
   if(id==='historial') renderAuditoria();
   if(id==='dashboard') renderDashboard();
   if(id==='pqrs') renderPQRS();
+  if(id==='usuarios') renderUsrTable();
 }
 
 /* ═══ NOTIFICACIONES ═══ */
@@ -3295,6 +3296,9 @@ window.addEventListener('resize', function() {
     if (b) iniciarCountdown(b.hasta);
   })();
 
+})(); // cierre de (function init(){
+
+</script>
 
 <!-- ══ iOS Bottom Tab Bar ══ -->
 <nav class="ios-tab-bar" id="iosTabBar" aria-label="Navegación principal">
