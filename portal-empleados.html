@@ -4,7 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FondoUne — Portal Empleados · Gestión de Solicitudes</title>
-<script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+<link rel="preload" as="image"
+  href="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80"
+  imagesrcset="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=75  600w,
+               https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&q=80  900w,
+               https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80 1200w,
+               https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1800&q=85 1800w"
+  imagesizes="(max-width: 900px) 100vw, 50vw"
+  fetchpriority="high">
+<script defer src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -153,8 +161,6 @@ body::after {
   background: rgba(45,26,14,0.85);
   -webkit-backdrop-filter: saturate(200%) blur(28px);
   backdrop-filter: saturate(200%) blur(28px);
-  height: 62px;
-  padding-top: var(--safe-top);
   height: calc(62px + var(--safe-top));
   display:flex;align-items:center;padding:0 24px;gap:16px;
   position:sticky;top:0;z-index:300;
@@ -460,8 +466,7 @@ tbody tr:hover{background:rgba(255,240,234,.5);}
 .pg-btn.active{background:var(--dark);border-color:var(--dark);color:#fff;}
 .pg-info{font-size:12px;color:var(--muted);margin-right:auto;}
 
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* animaciones definidas en bloque unificado más adelante */
 
 /* ══ LOGIN OVERLAY — Split screen ══ */
 .login-overlay {
@@ -501,9 +506,21 @@ tbody tr:hover{background:rgba(255,240,234,.5);}
 }
 .login-right-img {
   position: absolute; inset: 0;
+  /* Imagen base para la mayoría de pantallas */
   background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80');
+  /* Versión de alta resolución para pantallas Retina/HiDPI */
+  background-image: -webkit-image-set(
+    url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=75')  1x,
+    url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1400&q=80') 2x,
+    url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1800&q=85') 3x
+  );
+  background-image: image-set(
+    url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=75')  1x,
+    url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1400&q=80') 2x,
+    url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1800&q=85') 3x
+  );
   background-size: cover;
-  background-position: center top;
+  background-position: center 20%;
   transition: transform 8s ease;
 }
 .login-right-img:hover { transform: scale(1.03); }
@@ -554,13 +571,131 @@ tbody tr:hover{background:rgba(255,240,234,.5);}
   margin-top: 2px;
 }
 
-/* Responsive: ocultar imagen en pantallas pequeñas */
-@media (max-width: 900px) {
-  .login-right { display: none; }
-  .login-left { max-width: 100%; }
+/* ── Responsive login image ── */
+
+/* Pantallas grandes (≥1400px): máxima resolución */
+@media (min-width: 1400px) {
+  .login-right-img {
+    background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1800&q=85');
+    background-image: -webkit-image-set(
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1400&q=80') 1x,
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=2400&q=85') 2x
+    );
+    background-image: image-set(
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1400&q=80') 1x,
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=2400&q=85') 2x
+    );
+    background-position: center 15%;
+  }
 }
-@media (max-width: 480px) {
-  .login-left { padding: 32px 24px; }
+
+/* Pantallas medianas (901-1200px): imagen moderada */
+@media (min-width: 901px) and (max-width: 1200px) {
+  .login-right-img {
+    background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&q=75');
+    background-image: -webkit-image-set(
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&q=75')  1x,
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1400&q=80') 2x
+    );
+    background-image: image-set(
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&q=75')  1x,
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1400&q=80') 2x
+    );
+    background-position: 60% 20%;
+  }
+}
+
+/* ── Móvil y tablet (≤900px): imagen como fondo del formulario completo ── */
+@media (max-width: 900px) {
+  /* El overlay pasa a una sola columna con la imagen como fondo */
+  .login-overlay {
+    flex-direction: column;
+  }
+
+  /* El panel izquierdo ocupa toda la pantalla y muestra la imagen de fondo */
+  .login-left {
+    max-width: 100%;
+    width: 100%;
+    flex: 1;
+    position: relative;
+    background: transparent;
+    /* Imagen de fondo — se carga en resolución apropiada para móvil */
+    background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80');
+    background-image: -webkit-image-set(
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=75') 1x,
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&q=80') 2x
+    );
+    background-image: image-set(
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=75') 1x,
+      url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&q=80') 2x
+    );
+    background-size: cover;
+    /* Focal point: centrar en el rostro de la mujer */
+    background-position: 62% 18%;
+    overflow: hidden;
+  }
+
+  /* Capa oscura encima de la imagen para legibilidad del formulario */
+  .login-left::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      160deg,
+      rgba(45,26,14,.82) 0%,
+      rgba(45,26,14,.75) 40%,
+      rgba(232,81,26,.55) 80%,
+      rgba(192,57,43,.65) 100%
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* El ::before ya existe con gradiente radial — mantenerlo también */
+  .login-left::before { z-index: 1; }
+
+  /* El contenido del formulario queda por encima de ambas capas */
+  .login-left-inner { z-index: 2; }
+
+  /* Ocultar el panel derecho (imagen dedicada) — ya está en el fondo del left */
+  .login-right { display: none; }
+}
+
+/* Tablet mediana (601-900px): ajustar padding y focal point */
+@media (min-width: 601px) and (max-width: 900px) {
+  .login-left {
+    background-position: 58% 15%;
+    padding: 48px 56px;
+  }
+  .login-left-inner { max-width: 420px; }
+}
+
+/* Móvil pequeño (≤600px) */
+@media (max-width: 600px) {
+  .login-left {
+    padding: 36px 24px 48px;
+    background-position: 65% 12%;
+  }
+  /* Reforzar contraste de inputs sobre la imagen */
+  .login-input {
+    background: rgba(20,8,2,.45);
+    border-color: rgba(255,255,255,.18);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .login-input:focus {
+    background: rgba(20,8,2,.55);
+  }
+  .login-footer {
+    color: rgba(255,255,255,.35);
+  }
+}
+
+/* Móvil muy pequeño (≤400px) */
+@media (max-width: 400px) {
+  .login-left {
+    padding: 28px 20px 40px;
+    background-position: 68% 10%;
+  }
 }
 
 /* Fondo animado — ya no se usa pero se mantiene por recoverPanel */
@@ -983,7 +1118,6 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
 }
 .session-bar.show { display: flex; }
 .session-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); flex-shrink: 0; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
 .login-forgot {
   text-align: center; margin-top: 14px;
 }
@@ -1673,10 +1807,9 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
    Para agregar un usuario nuevo, agrega una entrada:
    'nombreusuario': { hash: sha256('contraseña'), nombre: 'Nombre Completo', rol: 'Asesor' }
    
-   Usuarios actuales:
-   admin    / FondoUne2025*
-   asesor1  / Creditos#2025
-   asesor2  / Vivienda@2025
+   Las contraseñas NO deben documentarse aquí. Guárdalas en un gestor de contraseñas.
+   Para generar un nuevo hash: abre F12 → Consola y ejecuta:
+   sha256('nueva_contraseña').then(h => console.log(h))
 */
 var USUARIOS = {
   'admin':   { hash: 'e5dc2f73f21351f6eea4d250725e701fd5ba6f9442f964f3eb6f7db510186d0c', nombre: 'Administrador', rol: 'Administrador' },
@@ -1923,11 +2056,8 @@ function cerrarSesion() {
 /* ═══════════════════════════════════════════════
    NOTA PARA EL ADMINISTRADOR — Cómo cambiar contraseñas
    ═══════════════════════════════════════════════
-   Las contraseñas actuales son:
-   
-   admin    → FondoUne2025*
-   asesor1  → Creditos#2025
-   asesor2  → Vivienda@2025
+   Las contraseñas NO deben documentarse en el código fuente.
+   Guárdalas en un gestor de contraseñas (Bitwarden, 1Password, etc.)
    
    Para cambiar una contraseña:
    1. Abre la consola del navegador (F12)
@@ -2028,12 +2158,15 @@ function iniciarEscuchaFirebase() {
 function cargarAudit(){ try{return JSON.parse(localStorage.getItem(AUDIT_KEY)||'[]');}catch(e){return [];} }
 function guardarAudit(d){ try{localStorage.setItem(AUDIT_KEY,JSON.stringify(d));}catch(e){} }
 
+function getUsuarioSesion(){
+  try{ var s=JSON.parse(localStorage.getItem(SEC.SESS_KEY)||'null'); return s?s.nombre+' ('+s.rol+')':'Empleado'; }catch(e){ return 'Empleado'; }
+}
 function registrarAudit(accion, solicitud, usuario){
   var entrada = {
     id: Date.now(), accion: accion,
     solicitudId: solicitud.id, radicado: solicitud.radicado,
     nombreTitular: solicitud.nombreTitular || solicitud.nombre,
-    fecha: new Date().toISOString(), usuario: usuario||'Empleado'
+    fecha: new Date().toISOString(), usuario: usuario||getUsuarioSesion()
   };
   var audit = cargarAudit();
   audit.unshift(entrada);
@@ -2098,7 +2231,7 @@ function cambiarEstado(id, sel){
   if(!db[idx].historial) db[idx].historial=[];
   db[idx].historial.unshift({
     accion:'Estado cambiado: '+anterior+' → '+sel.value,
-    fecha:new Date().toISOString(), usuario:'Empleado'
+    fecha:new Date().toISOString(), usuario:getUsuarioSesion()
   });
   guardarDB(db);
   // Sincronizar cambio en Firebase
@@ -2109,10 +2242,24 @@ function cambiarEstado(id, sel){
   agregarNotificacion('Estado actualizado',(db[idx].nombreTitular||db[idx].nombre||'—')+' — '+sel.value, db[idx].id);
 }
 
+/* ── Helper anti-XSS ── */
+function escHtml(str){
+  if(!str) return '—';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* ── Cache de elementos DOM para showPanel ── */
+var _paneles = null, _navItems = null;
+function _initNavCache(){
+  if(!_paneles){ _paneles=Array.from(document.querySelectorAll('.panel')); }
+  if(!_navItems){ _navItems=Array.from(document.querySelectorAll('.nav-item')); }
+}
+
 /* ═══ NAVEGAR ═══ */
 function showPanel(id){
-  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  _initNavCache();
+  _paneles.forEach(function(p){p.classList.remove('active');});
+  _navItems.forEach(function(n){n.classList.remove('active');});
   var panel=$id('panel-'+id);
   var nav=$id('nav-'+id);
   if(panel) panel.classList.add('active');
@@ -2159,6 +2306,7 @@ document.addEventListener('click',function(e){
 });
 
 /* ═══ CONTADORES ═══ */
+var _ultimoPqrsPend = -1;
 function actualizarContadores(){
   var db=cargarDB();
   var creditos=db.filter(function(s){return s.tipo!=='pqrs';});
@@ -2168,7 +2316,8 @@ function actualizarContadores(){
   $id('cnt-solicitudes').textContent=creditos.length;
   $id('cnt-pendientes').textContent=pend;
   $id('cnt-pqrs').textContent=pqrs.length;
-  if(pqrsPend>0) agregarNotificacion('Nuevas PQRS pendientes', pqrsPend+' solicitud(es) sin atender','pqrs');
+  if(pqrsPend>0 && pqrsPend>_ultimoPqrsPend) agregarNotificacion('Nuevas PQRS pendientes', pqrsPend+' solicitud(es) sin atender','pqrs');
+  _ultimoPqrsPend=pqrsPend;
 }
 
 /* ═══ DASHBOARD ═══ */
@@ -2284,7 +2433,7 @@ function renderTabla(){
   body.innerHTML=pagina.map(function(s){
     return '<tr>'
       +'<td><span class="tr-id">'+s.id+'</span><div class="tr-sub">'+s.radicado+'</div></td>'
-      +'<td><div class="tr-name">'+s.nombreTitular+'</div><div class="tr-sub">CC: '+s.cedula+'</div></td>'
+      +'<td><div class="tr-name">'+escHtml(s.nombreTitular)+'</div><div class="tr-sub">CC: '+escHtml(s.cedula)+'</div></td>'
       +'<td>'+badgeTipo(s.tipo)+'</td>'
       +'<td style="font-size:12px;color:var(--muted)">'+fmtFechaCorta(s.fechaRegistro)+'</td>'
       +'<td>'+selectEstado(s)+'</td>'
@@ -2316,8 +2465,7 @@ function renderPaginacion(total){
   pg.innerHTML=html;
 }
 function irPag(p){
-  var db=cargarDB();
-  var totalPags=Math.ceil(db.length/POR_PAGINA);
+  var totalPags=Math.ceil(datosFiltered.length/POR_PAGINA);
   if(p<1||p>totalPags) return;
   paginaActual=p; renderTabla();
 }
@@ -2337,7 +2485,7 @@ function renderTablaSimple(bodyId,datos){
   body.innerHTML=datos.map(function(s){
     return '<tr>'
       +'<td><span class="tr-id">'+s.id+'</span><div class="tr-sub">'+s.radicado+'</div></td>'
-      +'<td><div class="tr-name">'+s.nombreTitular+'</div><div class="tr-sub">CC: '+s.cedula+'</div></td>'
+      +'<td><div class="tr-name">'+escHtml(s.nombreTitular)+'</div><div class="tr-sub">CC: '+escHtml(s.cedula)+'</div></td>'
       +'<td>'+badgeTipo(s.tipo)+'</td>'
       +'<td style="font-size:12px;color:var(--muted)">'+fmtFechaCorta(s.fechaRegistro)+'</td>'
       +'<td>'+selectEstado(s)+'</td>'
@@ -2381,7 +2529,7 @@ function renderPQRS(){
     var resumen=(s.inquietud||'').substring(0,60)+(s.inquietud&&s.inquietud.length>60?'…':'');
     return '<tr>'
       +'<td><span class="tr-id">'+s.id+'</span></td>'
-      +'<td><div class="tr-name">'+(s.nombre||s.nombreTitular||'—')+'</div><div class="tr-sub">Doc: '+(s.documento||s.cedula||'—')+'</div></td>'
+      +'<td><div class="tr-name">'+escHtml(s.nombre||s.nombreTitular)+'</div><div class="tr-sub">Doc: '+escHtml(s.documento||s.cedula)+'</div></td>'
       +'<td><span class="badge '+cls+'">'+(s.tipoLabel||s.tipoSolicitud||'—')+'</span></td>'
       +'<td style="max-width:200px;font-size:12px;color:var(--muted)">'+resumen+'</td>'
       +'<td style="font-size:12.5px">'+(s.telefono||'—')+'<br><span style="color:var(--muted);font-size:11px">'+(s.correo||'')+'</span></td>'
@@ -2554,6 +2702,7 @@ function buildDocx(d){
     var fn=(nombres[tipo]||tipo)+'_'+(d.radicado||'nuevo')+'.docx';
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     registrarAudit('Documento Word generado',d);
     showToast('Documento generado: '+fn,'📄');
   }).catch(function(e){showToast('Error al generar: '+e.message,'❌');});
@@ -2574,6 +2723,7 @@ function exportarExcel(){
   var blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');a.href=url;a.download='FondoUne_Solicitudes_'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
   registrarAudit('Exportación a Excel/CSV realizada',{id:'sistema',radicado:'EXPORT',nombreTitular:'Sistema'});
   showToast('Exportado: '+db.length+' registros','📥');
 }
@@ -2822,7 +2972,7 @@ function confirmarEliminarUsuario(login) {
   if (!confirmado) return;
   eliminarUsuarioPersistido(login);
   renderUsrTable();
-  mostrarToast('🗑️ Usuario "' + login + '" eliminado.');
+  showToast('🗑️ Usuario "' + login + '" eliminado.', '🗑️');
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -2958,8 +3108,11 @@ showPanel = function(id) {
   if (window.innerWidth <= 768) cerrarSidebarMovil();
 };
 
+/* Utilidad debounce */
+function _debounce(fn, ms){ var t; return function(){ clearTimeout(t); t=setTimeout(fn, ms); }; }
+
 /* Redibujar donut al cambiar tamaño de pantalla */
-window.addEventListener('resize', function() {
+window.addEventListener('resize', _debounce(function() {
   var db = cargarDB();
   if (db.length >= 0) {
     var compra   = db.filter(function(s){return s.tipo==='compra';}).length;
@@ -2967,7 +3120,7 @@ window.addEventListener('resize', function() {
     var grav     = db.filter(function(s){return s.tipo==='gravamen';}).length;
     dibujarDonut([compra, const_, grav], ['#E8511A','#0D7A4E','#C0392B']);
   }
-});
+}, 150));
 
 /* Mostrar/ocultar botón hamburguesa según ancho */
 (function() {
@@ -2977,7 +3130,7 @@ window.addEventListener('resize', function() {
     btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
   }
   checkMobile();
-  window.addEventListener('resize', checkMobile);
+  window.addEventListener('resize', _debounce(checkMobile, 100));
 })();
 
 /* ═══ INIT ═══ */
