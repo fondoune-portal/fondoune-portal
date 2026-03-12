@@ -1896,6 +1896,13 @@ function cerrarSesion() {
   document.getElementById('loginError').classList.remove('show');
   intentosFallidos = 0;
   actualizarDots();
+  // Resetear botón de login por si quedó en estado "Verificando…"
+  var btn = document.getElementById('loginBtn');
+  var spinner = document.getElementById('loginSpinner');
+  var btnTxt = document.getElementById('loginBtnTxt');
+  if (btn) btn.disabled = false;
+  if (spinner) spinner.style.display = 'none';
+  if (btnTxt) btnTxt.textContent = 'Ingresar al Portal';
   // Asegurarse que recoverOverlay también esté oculto
   var recOv = document.getElementById('recoverOverlay');
   recOv.classList.add('oculto');
