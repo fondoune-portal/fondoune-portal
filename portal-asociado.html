@@ -669,9 +669,9 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 /* ═══ FLOATING PANEL — animación macOS spring ═══ */
 .faq-panel {
   position: fixed; right: 24px; bottom: 96px; z-index: 601;
-  /* transform-origin apunta a la esquina inferior-derecha = donde vive el FAB */
   transform-origin: right bottom;
   transform: scale(0.01);
+  filter: blur(8px);
   width: 400px; max-width: calc(100vw - 32px);
   max-height: 88vh;
   background: #fff;
@@ -681,25 +681,18 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     0 8px 24px rgba(45,26,14,.12),
     0 0 0 1px rgba(240,216,204,.6);
   display: flex; flex-direction: column;
-  /* spring suave idéntico al zoom de macOS: overshoot controlado */
   transition:
     transform .52s cubic-bezier(.28, 1.56, .42, 1),
-    opacity   .32s cubic-bezier(.22, 1, .36, 1);
+    opacity   .32s cubic-bezier(.22, 1, .36, 1),
+    filter    .32s cubic-bezier(.22, 1, .36, 1);
   opacity: 0;
   overflow: hidden;
-  /* Micro-blur de entrada */
-  filter: blur(8px);
 }
 .faq-panel.show {
   transform: scale(1);
   opacity: 1;
   filter: blur(0px);
-  transition:
-    transform .52s cubic-bezier(.28, 1.56, .42, 1),
-    opacity   .28s cubic-bezier(.22, 1, .36, 1),
-    filter    .32s cubic-bezier(.22, 1, .36, 1);
 }
-/* Animación de cierre: más rápida y sin overshoot */
 .faq-panel.closing {
   transform: scale(0.01);
   opacity: 0;
@@ -881,10 +874,10 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     right: 0; left: 0; top: auto; bottom: 0; max-height: 92vh; width: 100%; max-width: 100%;
     border-radius: 20px 20px 0 0;
     transform-origin: center bottom;
-    transform: scale(0.01) translateY(10px);
+    transform: scale(0.01);
   }
-  .faq-panel.show { transform: scale(1) translateY(0); }
-  .faq-panel.closing { transform: scale(0.01) translateY(10px); }
+  .faq-panel.show { transform: scale(1); }
+  .faq-panel.closing { transform: scale(0.01); }
   .fab-help { bottom: 20px; right: 20px; }
 }
 
@@ -1738,7 +1731,7 @@ var PQRS = (function() {
   <div class="faq-footer">
     <div class="faq-footer-txt">
       ¿No encontraste tu respuesta? Escríbenos a
-      <a href="/cdn-cgi/l/email-protection#6c0a030208031902092c0a03020803190209420f0301"><span class="__cf_email__" data-cfemail="35535a5b515a405b5075535a5b515a405b501b565a58">[email&#160;protected]</span></a><br>
+      <a href="/cdn-cgi/l/email-protection#fc9a93929893899299bc9a93929893899299d29f9391"><span class="__cf_email__" data-cfemail="d1b7bebfb5bea4bfb491b7bebfb5bea4bfb4ffb2bebc">[email&#160;protected]</span></a><br>
       o llámanos al <a href="tel:3003528156">300 3528156</a>
     </div>
     <a href="https://wa.me/573003528156?text=Hola%2C%20necesito%20ayuda%20con%20mi%20solicitud%20de%20cr%C3%A9dito%20vivienda" 
@@ -1874,4 +1867,12 @@ function filtrarFAQ() {
 
 function filtrarCategoria(cat, el) {
   _faqCatActiva = cat;
-  document.querySelectorAll('.faq-cat').forEach(function(c){ c.classList.r
+  document.querySelectorAll('.faq-cat').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('faqSearch').value = '';
+  var items = cat === 'todas' ? FAQ_DATA : FAQ_DATA.filter(function(f){ return f.cat === cat; });
+  renderFAQ(items);
+}
+</script>
+</body>
+</html>
