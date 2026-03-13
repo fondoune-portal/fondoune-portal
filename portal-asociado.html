@@ -668,21 +668,22 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 
 /* ═══ FLOATING PANEL — spring fluido ═══ */
 .faq-panel {
-  position: fixed; right: 24px; bottom: 96px; z-index: 601;
+  /* Anclado al viewport: top + bottom fijos para usar toda la altura disponible */
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  z-index: 601;
 
-  /*
-   * transform-origin apunta al centro del FAB (bottom-right del panel).
-   * Usamos scale + translateY para reproducir el spring de macOS:
-   * el panel "nace" ligeramente desplazado hacia abajo y crece hacia arriba.
-   */
-  transform-origin: calc(100% - 4px) calc(100% + 12px);
+  /* Centrado vertical con translate: nunca queda cortado arriba ni abajo */
+  width: 400px; max-width: calc(100vw - 32px);
+  /* Altura adaptativa: usa hasta 90vh pero respeta el contenido */
+  max-height: min(90vh, 720px);
+  height: auto;
 
-  /* Estado inicial: pequeño, desplazado 16px abajo, invisible */
-  transform: scale(0.72) translateY(16px);
+  transform-origin: calc(100% - 4px) bottom;
+  transform: translateY(-50%) scale(0.72) translateY(16px);
   opacity: 0;
 
-  width: 400px; max-width: calc(100vw - 32px);
-  max-height: 88vh;
   background: #fff;
   border-radius: 20px;
   box-shadow:
@@ -691,28 +692,19 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     0 0 0 1px rgba(240,216,204,.6);
   display: flex; flex-direction: column;
   overflow: hidden;
-
-  /* will-change solo en propiedades que el compositor puede manejar en GPU */
   will-change: transform, opacity;
-
-  /*
-   * Apertura: dos fases encadenadas con delays distintos
-   * — opacity entra rápido (percepción de respuesta inmediata)
-   * — scale/translateY llegan con el spring característico
-   */
   transition:
     transform .48s cubic-bezier(0.34, 1.48, 0.64, 1),
     opacity   .22s cubic-bezier(0.22, 1,    0.36, 1);
 }
 
 .faq-panel.show {
-  transform: scale(1) translateY(0);
+  transform: translateY(-50%) scale(1) translateY(0);
   opacity: 1;
 }
 
-/* Cierre: colapso rápido y limpio, sin rebote */
 .faq-panel.closing {
-  transform: scale(0.82) translateY(10px);
+  transform: translateY(-50%) scale(0.82) translateY(10px);
   opacity: 0;
   transition:
     transform .22s cubic-bezier(0.4, 0, 1, 1),
@@ -845,7 +837,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 .faq-cat:hover:not(.active) { border-color: #E8511A; color: #E8511A; background: #FFF8F5; }
 
 /* ═══ LISTA PREGUNTAS ═══ */
-.faq-list { flex: 1; overflow-y: auto; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.faq-list { flex: 1; overflow-y: auto; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 8px; min-height: 0; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
 .faq-list::-webkit-scrollbar { width: 3px; }
 .faq-list::-webkit-scrollbar-track { background: transparent; }
 .faq-list::-webkit-scrollbar-thumb { background: #F0D8CC; border-radius: 2px; }
@@ -887,33 +879,18 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 .faq-a {
   max-height: 0;
   overflow: hidden;
-  transition: max-height .4s cubic-bezier(.22,1,.36,1), padding .3s;
+  transition: max-height .42s cubic-bezier(.22,1,.36,1), padding .3s;
   padding: 0 14px; background: #FFFAF8;
   font-size: 12px; color: #7A5540; line-height: 1.75;
   border-top: 0 solid #F0D8CC;
 }
 .faq-item.open .faq-a {
-  max-height: 220px;
+  /* Sin límite fijo: la respuesta se expande hasta lo que necesite.
+     El scroll del panel (faq-list) maneja el overflow vertical global. */
+  max-height: 1000px;
   padding: 12px 14px 14px;
   border-top: 1px solid #F0D8CC;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-/* scroll-ready: aplicado por JS al terminar la transicion — activa el scroll */
-.faq-item.open .faq-a.scroll-ready {
-  overflow-y: auto;
-}
-.faq-item.open .faq-a::-webkit-scrollbar { width: 3px; }
-.faq-item.open .faq-a::-webkit-scrollbar-track { background: transparent; }
-.faq-item.open .faq-a::-webkit-scrollbar-thumb { background: #E8C4B0; border-radius: 2px; }
-/* Degradado inferior solo cuando el scroll esta activo */
-.faq-item.open .faq-a.scroll-ready {
-  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
-  mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
-}
-.faq-item.open .faq-a.scroll-ready.scrolled-end {
-  -webkit-mask-image: none;
-  mask-image: none;
+  overflow: visible;
 }
 .faq-a ul { padding-left: 16px; margin: 6px 0; }
 .faq-a li { margin-bottom: 4px; }
@@ -1943,32 +1920,16 @@ function renderFAQ(items) {
 
 function toggleFaqItem(el) {
   var isOpen = el.classList.contains('open');
-  /* Cerrar todos — quitar scroll-ready de los que se cierran */
+  /* Cerrar todos */
   document.querySelectorAll('.faq-item.open').forEach(function(item) {
-    var a = item.querySelector('.faq-a');
-    if (a) { a.classList.remove('scroll-ready', 'scrolled-end'); }
     item.classList.remove('open');
   });
   if (!isOpen) {
     el.classList.add('open');
-    var ans = el.querySelector('.faq-a');
-    if (ans) {
-      ans.classList.remove('scroll-ready', 'scrolled-end');
-      /* Esperar a que termine la transición CSS (400ms) y luego activar scroll */
-      setTimeout(function() {
-        if (!el.classList.contains('open')) return; /* por si se cerró antes */
-        ans.classList.add('scroll-ready');
-        /* Listener para el degradado inferior */
-        ans.onscroll = function() {
-          var atBottom = ans.scrollTop + ans.clientHeight >= ans.scrollHeight - 4;
-          ans.classList.toggle('scrolled-end', atBottom);
-        };
-        /* Estado inicial del degradado: si el contenido no supera la altura, ocultar */
-        if (ans.scrollHeight <= ans.clientHeight + 4) {
-          ans.classList.add('scrolled-end');
-        }
-      }, 420);
-    }
+    /* Scroll suave para que la pregunta abierta quede visible en faq-list */
+    setTimeout(function() {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 80);
   }
 }
 
