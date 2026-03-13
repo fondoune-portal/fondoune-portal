@@ -681,7 +681,31 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 .pqrs-header-ico { width: 42px; height: 42px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
 .pqrs-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; color: #fff; }
 .pqrs-sub { font-size: 11.5px; color: rgba(255,255,255,.5); margin-top: 3px; line-height: 1.4; }
-.pqrs-body { padding: 22px 24px 20px; }
+/* Botón toggle integrado en el header — hace toda el área clickeable */
+.pqrs-header {
+  cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pqrs-header:hover { filter: brightness(1.06); }
+.pqrs-toggle-ico {
+  margin-left: auto;
+  width: 28px; height: 28px; flex-shrink: 0;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .38s cubic-bezier(.22,1,.36,1), background .2s;
+}
+.pqrs-toggle-ico svg { width: 11px; height: 11px; color: rgba(255,255,255,.85); }
+.pqrs-section.open .pqrs-toggle-ico { transform: rotate(180deg); background: rgba(255,255,255,.22); }
+/* Body colapsable */
+.pqrs-body {
+  height: 0; overflow: hidden;
+  transition: height .42s cubic-bezier(.22,1,.36,1);
+  padding: 0;
+}
+.pqrs-body-inner { padding: 22px 24px 20px; }
 .pqrs-tipos { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 4px; }
 .pqrs-tipo {
   padding: 7px 14px;
@@ -1624,14 +1648,18 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 
   <!-- ══ SECCIÓN PQRS / OTRAS SOLICITUDES ══ -->
   <div class="pqrs-section" id="pqrsSection">
-    <div class="pqrs-header">
+    <div class="pqrs-header" onclick="PQRS.togglePanel()" role="button" aria-expanded="false" id="pqrsHeader">
       <div class="pqrs-header-ico">💬</div>
       <div>
         <div class="pqrs-title">¿Tienes otra solicitud o inquietud?</div>
         <div class="pqrs-sub">Cancela tu hipoteca, solicita certificados o resuelve cualquier duda con tu asesor</div>
       </div>
+      <div class="pqrs-toggle-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
     </div>
-    <div class="pqrs-body">
+    <div class="pqrs-body" id="pqrsBody">
+      <div class="pqrs-body-inner">
       <div class="pqrs-tipos">
         <div class="pqrs-tipo" onclick="PQRS.selTipo(this,'credito_vivienda')">🏠 Crédito de Vivienda</div>
         <div class="pqrs-tipo" onclick="PQRS.selTipo(this,'cancelacion_hipoteca')">📜 Cancelación de Hipoteca</div>
@@ -1677,7 +1705,8 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
         </button>
         <button class="btn-clr" onclick="PQRS.limpiar()">↺ Limpiar</button>
       </div>
-    </div>
+      </div><!-- /pqrs-body-inner -->
+    </div><!-- /pqrs-body -->
   </div>
 
   <div class="page-foot">
@@ -2338,7 +2367,32 @@ var PQRS = (function() {
     $id('pqrsSbar').className='sbar';
   }
 
-  return { selTipo:selTipo, enviar:enviar, limpiar:limpiar };
+  /* ── Toggle del panel colapsable ── */
+  function togglePanel() {
+    var sec    = document.getElementById('pqrsSection');
+    var body   = document.getElementById('pqrsBody');
+    var header = document.getElementById('pqrsHeader');
+    if (!sec || !body) return;
+    var isOpen = sec.classList.contains('open');
+    if (isOpen) {
+      body.style.height = body.scrollHeight + 'px';
+      body.offsetHeight;
+      body.style.height = '0';
+      sec.classList.remove('open');
+      if (header) header.setAttribute('aria-expanded', 'false');
+    } else {
+      sec.classList.add('open');
+      if (header) header.setAttribute('aria-expanded', 'true');
+      body.style.height = body.scrollHeight + 'px';
+      var onEnd = function() {
+        body.removeEventListener('transitionend', onEnd);
+        if (sec.classList.contains('open')) body.style.height = 'auto';
+      };
+      body.addEventListener('transitionend', onEnd);
+    }
+  }
+
+  return { selTipo:selTipo, enviar:enviar, limpiar:limpiar, togglePanel:togglePanel };
 }());
 </script>
 
