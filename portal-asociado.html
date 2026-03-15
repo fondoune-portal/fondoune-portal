@@ -824,7 +824,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 .fab-help {
   pointer-events: all;
   position: relative;
-  width: 120px; height: 200px;
+  width: 140px; height: 247px;
   background: none; border: none;
   cursor: pointer; padding: 0; outline: none;
   overflow: visible;
@@ -851,12 +851,15 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   position: absolute;
   bottom: 0; left: 50%;
   transform: translateX(-50%);
-  width: 120px; height: 200px;
+  width: 140px; height: 247px;
   object-fit: contain;
   object-position: bottom center;
   background: transparent;
   display: block;
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
 }
 
 /* Flotación suave mejorada con más dinamismo */
@@ -1252,13 +1255,13 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   transition: bottom 0.4s cubic-bezier(0.34,1.48,0.64,1), right 0.4s cubic-bezier(0.34,1.48,0.64,1);
 }
 .fab-felix-wrap.fab-docked .fab-help {
-  width: 72px;
-  height: 120px;
+  width: 96px;
+  height: 160px;
   transition: width 0.4s cubic-bezier(0.34,1.48,0.64,1), height 0.4s cubic-bezier(0.34,1.48,0.64,1);
 }
 .fab-felix-wrap.fab-docked .fab-felix-video {
-  width: 72px;
-  height: 120px;
+  width: 96px;
+  height: 160px;
 }
 .fab-felix-wrap.fab-docked .fab-bubble {
   display: none;
@@ -1272,7 +1275,306 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 }
 
 
-</style>
+
+  /* ── CHECKBOX RUT PERSONALIZADO ── */
+  .rut-check-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+  .rut-na-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .rut-na-label:hover .rut-na-box {
+    border-color: #E8511A;
+    background: #FFF0EA;
+  }
+  .rut-na-box {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #C4A090;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .rut-na-box .rut-na-icon {
+    opacity: 0;
+    transform: scale(0.4) rotate(-20deg);
+    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    font-style: normal;
+    font-size: 13px;
+    line-height: 1;
+    font-weight: 700;
+  }
+  .rut-na-chk:checked + .rut-na-label .rut-na-box {
+    background: linear-gradient(135deg, #0D7A4E, #0a6040);
+    border-color: #0D7A4E;
+    box-shadow: 0 3px 10px rgba(13,122,78,0.35);
+    transform: scale(1.08);
+  }
+  .rut-na-chk:checked + .rut-na-label .rut-na-box .rut-na-icon {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    color: #fff;
+  }
+  .rut-na-chk:checked + .rut-na-label {
+    color: #0D7A4E;
+    font-weight: 600;
+  }
+  .rut-na-chk {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+  /* Input RUT deshabilitado */
+  input.rut-disabled {
+    background: rgba(240,216,204,0.25) !important;
+    color: #C4A090 !important;
+    border-color: rgba(240,216,204,0.6) !important;
+    cursor: not-allowed !important;
+  }
+
+  
+  /* ── BANNER GUÍA DE PASOS ── */
+  .guide-banner {
+    margin-bottom: 28px;
+    animation: fadeInUp .5s cubic-bezier(.22,1,.36,1) both;
+    animation-delay: .08s;
+  }
+  .guide-banner-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .guide-banner-head-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #E8511A, #C94010);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(232,81,26,.3);
+  }
+  .guide-banner-title {
+    font-family: Outfit, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--fu-dark);
+    line-height: 1.2;
+  }
+  .guide-banner-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-weight: 400;
+  }
+  .guide-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .guide-card {
+    background: rgba(255,255,255,0.82);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border: 1.5px solid rgba(255,255,255,0.75);
+    border-radius: 16px;
+    padding: 18px 16px 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(45,26,14,0.08), inset 0 1px 0 rgba(255,255,255,0.85);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .guide-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(45,26,14,0.13), inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+  .guide-card-bar {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 3.5px;
+    border-radius: 16px 16px 0 0;
+  }
+  .guide-card--credito .guide-card-bar { background: linear-gradient(90deg, #E8511A, #C94010); }
+  .guide-card--asociado .guide-card-bar { background: linear-gradient(90deg, #1A6CA8, #1A3A5C); }
+  .guide-card--pqrs .guide-card-bar { background: linear-gradient(90deg, #0D7A4E, #0a6040); }
+  .guide-card-num {
+    font-family: Outfit, sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .guide-card--credito .guide-card-num { background: #FFF0EA; color: #E8511A; }
+  .guide-card--asociado .guide-card-num { background: #E8F2FB; color: #1A3A5C; }
+  .guide-card--pqrs .guide-card-num { background: #E8F8F0; color: #0D7A4E; }
+  .guide-card-ico {
+    font-size: 26px;
+    display: block;
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+  .guide-card-name {
+    font-family: Outfit, sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--fu-dark);
+    margin-bottom: 5px;
+    line-height: 1.3;
+  }
+  .guide-card-desc {
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 14px;
+  }
+  .guide-card-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+  .guide-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+  .guide-step-n {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Outfit, sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .guide-card--credito .guide-step-n { background: #FFF0EA; color: #E8511A; }
+  .guide-card--asociado .guide-step-n { background: #E8F2FB; color: #1A3A5C; }
+  .guide-card--pqrs .guide-step-n { background: #E8F8F0; color: #0D7A4E; }
+  .guide-card-btn {
+    width: 100%;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    font-family: Outfit, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all .2s cubic-bezier(.34,1.56,.64,1);
+    letter-spacing: .2px;
+    text-decoration: none;
+  }
+  .guide-card--credito .guide-card-btn {
+    background: linear-gradient(135deg, #E8511A, #C94010);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(232,81,26,.3);
+  }
+  .guide-card--credito .guide-card-btn:hover {
+    box-shadow: 0 6px 20px rgba(232,81,26,.45);
+    transform: translateY(-1px);
+  }
+  .guide-card--asociado .guide-card-btn {
+    background: linear-gradient(135deg, #1A3A5C, #1A6CA8);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(26,60,92,.28);
+  }
+  .guide-card--asociado .guide-card-btn:hover {
+    box-shadow: 0 6px 20px rgba(26,60,92,.4);
+    transform: translateY(-1px);
+  }
+  .guide-card--pqrs .guide-card-btn {
+    background: linear-gradient(135deg, #0D7A4E, #0a6040);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(13,122,78,.28);
+  }
+  .guide-card--pqrs .guide-card-btn:hover {
+    box-shadow: 0 6px 20px rgba(13,122,78,.4);
+    transform: translateY(-1px);
+  }
+  @media (max-width: 700px) {
+    .guide-cards {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .guide-card {
+      padding: 14px 14px 14px;
+    }
+  }
+
+  
+  /* BANNER GUIA DE PASOS */
+  .guide-banner { margin-bottom: 28px; animation: fadeInUp .5s cubic-bezier(.22,1,.36,1) both; animation-delay: .08s; }
+  .guide-banner-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .guide-banner-head-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #E8511A, #C94010); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; box-shadow: 0 3px 10px rgba(232,81,26,.3); }
+  .guide-banner-title { font-family: Outfit, sans-serif; font-weight: 700; font-size: 14px; color: var(--fu-dark); }
+  .guide-banner-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .guide-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .guide-card { background: rgba(255,255,255,0.82); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 16px; padding: 18px 16px 16px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(45,26,14,0.08), inset 0 1px 0 rgba(255,255,255,0.85); transition: transform .2s, box-shadow .2s; }
+  .guide-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(45,26,14,0.13); }
+  .guide-card-bar { position: absolute; top: 0; left: 0; width: 100%; height: 3.5px; border-radius: 16px 16px 0 0; }
+  .guide-card--credito .guide-card-bar { background: linear-gradient(90deg, #E8511A, #C94010); }
+  .guide-card--asociado .guide-card-bar { background: linear-gradient(90deg, #1A6CA8, #1A3A5C); }
+  .guide-card--pqrs .guide-card-bar { background: linear-gradient(90deg, #0D7A4E, #0a6040); }
+  .guide-card-badge { font-family: Outfit, sans-serif; font-weight: 700; font-size: 10.5px; letter-spacing: .8px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 10px; }
+  .guide-card--credito .guide-card-badge { background: #FFF0EA; color: #E8511A; }
+  .guide-card--asociado .guide-card-badge { background: #E8F2FB; color: #1A3A5C; }
+  .guide-card--pqrs .guide-card-badge { background: #E8F8F0; color: #0D7A4E; }
+  .guide-card-ico { font-size: 26px; display: block; margin-bottom: 8px; line-height: 1; }
+  .guide-card-name { font-family: Outfit, sans-serif; font-weight: 700; font-size: 13.5px; color: var(--fu-dark); margin-bottom: 5px; line-height: 1.3; }
+  .guide-card-desc { font-size: 11.5px; color: var(--muted); line-height: 1.55; margin-bottom: 12px; }
+  .guide-card-steps { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+  .guide-step { display: flex; align-items: flex-start; gap: 7px; font-size: 11px; color: var(--muted); line-height: 1.45; }
+  .guide-step-n { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: Outfit, sans-serif; font-weight: 800; font-size: 9px; flex-shrink: 0; margin-top: 1px; }
+  .guide-card--credito .guide-step-n { background: #FFF0EA; color: #E8511A; }
+  .guide-card--asociado .guide-step-n { background: #E8F2FB; color: #1A3A5C; }
+  .guide-card--pqrs .guide-step-n { background: #E8F8F0; color: #0D7A4E; }
+  .guide-card-btn { width: 100%; height: 36px; border: none; border-radius: 10px; font-family: Outfit, sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .2s cubic-bezier(.34,1.56,.64,1); letter-spacing: .2px; }
+  .guide-card--credito .guide-card-btn { background: linear-gradient(135deg, #E8511A, #C94010); color: #fff; box-shadow: 0 3px 12px rgba(232,81,26,.3); }
+  .guide-card--credito .guide-card-btn:hover { box-shadow: 0 6px 20px rgba(232,81,26,.45); transform: translateY(-1px); }
+  .guide-card--asociado .guide-card-btn { background: linear-gradient(135deg, #1A3A5C, #1A6CA8); color: #fff; box-shadow: 0 3px 12px rgba(26,60,92,.28); }
+  .guide-card--asociado .guide-card-btn:hover { box-shadow: 0 6px 20px rgba(26,60,92,.4); transform: translateY(-1px); }
+  .guide-card--pqrs .guide-card-btn { background: linear-gradient(135deg, #0D7A4E, #0a6040); color: #fff; box-shadow: 0 3px 12px rgba(13,122,78,.28); }
+  .guide-card--pqrs .guide-card-btn:hover { box-shadow: 0 6px 20px rgba(13,122,78,.4); transform: translateY(-1px); }
+  @media (max-width: 700px) { .guide-cards { grid-template-columns: 1fr; gap: 10px; } .guide-card { padding: 14px; } }
+
+  </style>
 </head>
 <body>
 <!-- ── Mesh background layers ── -->
@@ -1329,6 +1631,75 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
       </div>
     </div>
   </div>
+
+  <!-- BANNER GUIA DE PASOS -->
+  <div class="guide-banner">
+    <div class="guide-banner-head">
+      <div class="guide-banner-head-icon">&#x1F9ED;</div>
+      <div>
+        <div class="guide-banner-title">&#xBF;Por donde empezar?</div>
+        <div class="guide-banner-sub">Selecciona el tramite que necesitas realizar hoy</div>
+      </div>
+    </div>
+    <div class="guide-cards">
+
+      <!-- Tarjeta 1: Credito -->
+      <div class="guide-card guide-card--credito">
+        <div class="guide-card-bar"></div>
+        <span class="guide-card-badge">Opcion 1</span>
+        <span class="guide-card-ico">&#x1F4CB;</span>
+        <div class="guide-card-name">Documentos para Desembolso</div>
+        <div class="guide-card-desc">Genera tu lista de chequeo con los documentos requeridos segun el tipo de credito de vivienda.</div>
+        <div class="guide-card-steps">
+          <div class="guide-step"><span class="guide-step-n">1</span><span>Selecciona el tipo de credito en las tarjetas de abajo</span></div>
+          <div class="guide-step"><span class="guide-step-n">2</span><span>Completa todos los datos del formulario</span></div>
+          <div class="guide-step"><span class="guide-step-n">3</span><span>Haz clic en <strong>Registrar y Generar Documento</strong></span></div>
+        </div>
+        <button class="guide-card-btn" onclick="document.getElementById('radicado').scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(function(){ document.getElementById('radicado').focus(); }, 600);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Ir al formulario
+        </button>
+      </div>
+
+      <!-- Tarjeta 2: Datos del Asociado -->
+      <div class="guide-card guide-card--asociado">
+        <div class="guide-card-bar"></div>
+        <span class="guide-card-badge">Opcion 2</span>
+        <span class="guide-card-ico">&#x1F464;</span>
+        <div class="guide-card-name">Datos del Asociado</div>
+        <div class="guide-card-desc">Registra o actualiza tu informacion personal y laboral para pre-llenar tus solicitudes.</div>
+        <div class="guide-card-steps">
+          <div class="guide-step"><span class="guide-step-n">1</span><span>Desplazate al formulario <strong>azul</strong> mas abajo en la pagina</span></div>
+          <div class="guide-step"><span class="guide-step-n">2</span><span>Completa datos personales, laborales y bancarios</span></div>
+          <div class="guide-step"><span class="guide-step-n">3</span><span>Haz clic en <strong>Guardar mis datos</strong></span></div>
+        </div>
+        <button class="guide-card-btn" onclick="document.getElementById('asocSection').scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(function(){ if(!document.getElementById('asocSection').classList.contains('open')) ASOC.toggle(); }, 500);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Ir a mis datos
+        </button>
+      </div>
+
+      <!-- Tarjeta 3: PQRS -->
+      <div class="guide-card guide-card--pqrs">
+        <div class="guide-card-bar"></div>
+        <span class="guide-card-badge">Opcion 3</span>
+        <span class="guide-card-ico">&#x1F4AC;</span>
+        <div class="guide-card-name">PQRS / Otras Solicitudes</div>
+        <div class="guide-card-desc">Cancelacion de hipoteca, certificados tributarios, paz y salvos u otras inquietudes.</div>
+        <div class="guide-card-steps">
+          <div class="guide-step"><span class="guide-step-n">1</span><span>Desplazate al formulario <strong>naranja</strong> al final</span></div>
+          <div class="guide-step"><span class="guide-step-n">2</span><span>Selecciona el tipo de solicitud que necesitas</span></div>
+          <div class="guide-step"><span class="guide-step-n">3</span><span>Describe tu caso y haz clic en <strong>Enviar Solicitud</strong></span></div>
+        </div>
+        <button class="guide-card-btn" onclick="document.getElementById('pqrsSection').scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(function(){ if(!document.getElementById('pqrsSection').classList.contains('open')) PQRS.togglePanel(); }, 500);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Ir a PQRS
+        </button>
+      </div>
+
+    </div>
+  </div>
+  <!-- FIN BANNER GUIA -->
 
   <div class="type-row">
     <div class="tc on" id="tc-compra" onclick="APP.selTipo('compra')">
@@ -1417,9 +1788,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
             <label>RUT — Número de NIT / RUT del Asociado</label>
             <div style="display:flex;gap:10px;align-items:center;">
               <input id="rutTitular" placeholder="Ej: 900.123.456-7" style="flex:1">
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:400;color:var(--muted);cursor:pointer;white-space:nowrap;">
-                <input type="checkbox" id="rutNoAplica" onchange="toggleRut(this,'rutTitular')"> No aplica / No tengo RUT
-              </label>
+              <input type="checkbox" id="rutNoAplica" class="rut-na-chk" onchange="toggleRut(this,'rutTitular')"><label for="rutNoAplica" class="rut-na-label"><span class="rut-na-box"><i class="rut-na-icon">✓</i></span>No aplica / No tengo RUT</label>
             </div>
           </div>
         </div>
@@ -1659,10 +2028,11 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
             <label>Tipo de Contrato</label>
             <select id="asocTipoContrato">
               <option value="">Seleccionar…</option>
-              <option value="E">Empleado Oficial</option>
               <option value="T">Término Fijo</option>
               <option value="I">Indefinido</option>
               <option value="P">Prestación de Servicios</option>
+              <option value="A">Aprendizaje (SENA)</option>
+              <option value="O">Obra o Labor</option>
             </select>
           </div>
           <div class="fld">
@@ -1697,16 +2067,53 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
           <div class="fld">
             <label>Banco</label>
             <select id="asocBanco">
-              <option value="">Seleccionar…</option>
-              <option>Bancolombia</option>
-              <option>Banco de Bogotá</option>
-              <option>Davivienda</option>
-              <option>BBVA</option>
-              <option>Banco Popular</option>
-              <option>Banco Agrario</option>
-              <option>Nequi</option>
-              <option>Daviplata</option>
-              <option>Otro</option>
+              <option value="">Seleccionar banco…</option>
+              <optgroup label="Bancos Tradicionales">
+                <option>Bancolombia</option>
+                <option>Banco de Bogotá</option>
+                <option>Davivienda</option>
+                <option>DaviBank</option>
+                <option>BBVA Colombia</option>
+                <option>Banco Popular</option>
+                <option>AV Villas</option>
+                <option>Banco de Occidente</option>
+                <option>Banco Caja Social</option>
+                <option>GNB Sudameris</option>
+                <option>Banco Agrario de Colombia</option>
+                <option>Banco WWB</option>
+                <option>Banco Falabella</option>
+                <option>Banco Pichincha</option>
+                <option>Banco Finandina</option>
+                <option>Banco Serfinanza</option>
+                <option>Banco Multibank</option>
+                <option>Banco Coopcentral</option>
+                <option>Itaú Colombia</option>
+                <option>Bancamía</option>
+                <option>Credifamilia</option>
+                <option>Mibanco Colombia</option>
+              </optgroup>
+              <optgroup label="Neobancos y Bancos Digitales">
+                <option>Nequi</option>
+                <option>Daviplata</option>
+                <option>Lulo Bank</option>
+                <option>Nubank Colombia</option>
+                <option>RappiPay</option>
+                <option>Movii</option>
+                <option>Iris (Coopcentral)</option>
+                <option>Powwi</option>
+                <option>Tpaga</option>
+              </optgroup>
+              <optgroup label="Cooperativas y Fondos">
+                <option>Confiar Cooperativa</option>
+                <option>Coofinep</option>
+                <option>Coltefinanciera</option>
+                <option>Juriscoop</option>
+                <option>Cotrafa Cooperativa Financiera</option>
+                <option>CFA Cooperativa Financiera</option>
+              </optgroup>
+              <optgroup label="Otro">
+                <option value="Otro">Otro banco / entidad</option>
+              </optgroup>
             </select>
           </div>
           <div class="fld">
@@ -1730,9 +2137,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
             <label>Número de NIT / RUT</label>
             <div style="display:flex;gap:10px;align-items:center;">
               <input id="asocRut" placeholder="Ej: 900.123.456-7" style="flex:1">
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:400;color:var(--muted);cursor:pointer;white-space:nowrap;">
-                <input type="checkbox" id="asocRutNA" onchange="ASOC.toggleRut(this)"> No tengo / No aplica
-              </label>
+              <input type="checkbox" id="asocRutNA" class="rut-na-chk" onchange="ASOC.toggleRut(this)"><label for="asocRutNA" class="rut-na-label"><span class="rut-na-box"><i class="rut-na-icon">✓</i></span>No tengo / No aplica</label>
             </div>
           </div>
         </div>
