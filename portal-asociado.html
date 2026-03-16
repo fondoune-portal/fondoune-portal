@@ -976,8 +976,8 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 /* ═══ FLOATING PANEL — spring fluido ═══ */
 .faq-panel {
   position: fixed;
-  right: 24px;
-  bottom: 96px;
+  right: 168px;
+  bottom: 14px;
   z-index: 601;
   width: 400px; max-width: calc(100vw - 32px);
   height: calc(100vh - 120px);
@@ -1364,10 +1364,8 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 
 /* Félix anclado en esquina inferior derecha del panel cuando está abierto */
 .fab-felix-wrap.fab-docked {
-  bottom: 82px;
-  right: 20px;
-  z-index: 602;
-  transition: bottom 0.4s cubic-bezier(0.34,1.48,0.64,1), right 0.4s cubic-bezier(0.34,1.48,0.64,1);
+  bottom: 14px; right: 16px; left: auto;
+  z-index: 602; align-items: flex-end;
 }
 .fab-felix-wrap.fab-docked .fab-help {
   width: 96px;
@@ -1384,9 +1382,9 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 /* En móvil, Felix docked queda en esquina inferior derecha también */
 @media (max-width: 480px) {
   .fab-felix-wrap.fab-docked {
-    bottom: 72px;
-    right: 12px;
-  }
+  bottom: 14px; right: 16px; left: auto;
+  z-index: 602; align-items: flex-end;
+}
 }
 
 
@@ -4339,7 +4337,7 @@ function filtrarCategoria(cat, el) {
 
   /* ── CONFIGURACIÓN ── */
   var FELIX_CFG = {
-    API_KEY:   'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
+    API_KEY:   'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
     MODEL:     'gemini-2.0-flash',
     ENDPOINT:  'https://generativelanguage.googleapis.com/v1beta/models/',
     MAX_TOKENS: 512,
@@ -4434,7 +4432,6 @@ function filtrarCategoria(cat, el) {
 
       var response = await fetch(url, {
         method: 'POST',
-        mode: 'cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
@@ -4465,10 +4462,7 @@ function filtrarCategoria(cat, el) {
 
     } catch(err) {
       showTyping(false);
-      var errMsg = '😔 Hubo un problema al conectarme. ';
-      if (err.message && err.message.includes('API_KEY')) {
-        errMsg += 'Verifica que la API Key esté configurada correctamente.';
-      } else if (err.message && err.message.includes('quota')) {
+      var errMsg = '😔 Error: ' + (err.message || err.toString()) + '. Escríbenos a creditosvivienda@fondoune.com'; else if (err.message && err.message.includes('quota')) {
         errMsg += 'Se alcanzó el límite de consultas. Intenta en unos minutos.';
       } else {
         errMsg += 'Por favor escríbenos a creditosvivienda@fondoune.com';

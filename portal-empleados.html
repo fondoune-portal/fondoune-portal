@@ -3864,7 +3864,7 @@ window.addEventListener('resize', _debounce(function() {
   'use strict';
 
   var FELIX_CFG = {
-    API_KEY:        'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
+    API_KEY:   'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
     MODEL:          'gemini-2.0-flash',
     ENDPOINT:       'https://generativelanguage.googleapis.com/v1beta/models/',
     MAX_TOKENS:     600,
@@ -3970,7 +3970,6 @@ window.addEventListener('resize', _debounce(function() {
       var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
       var res = await fetch(url, {
         method: 'POST',
-        mode: 'cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
@@ -4006,10 +4005,7 @@ window.addEventListener('resize', _debounce(function() {
 
     } catch(err) {
       showTyping(false);
-      var msg = '😔 Problema de conexión. ';
-      if (err.message && err.message.includes('API_KEY')) msg += 'Verifica la API Key.';
-      else if (err.message && err.message.includes('quota')) msg += 'Límite de consultas alcanzado. Intenta en unos minutos.';
-      else msg += 'Verifica tu conexión a internet.';
+      var msg = '😔 Error: ' + (err.message || err.toString()) + '. Escríbenos a creditosvivienda@fondoune.com';
       appendMessage('felix', msg);
       if (window.FU_Audit) FU_Audit.log('FELIX_ERROR_EMP', err.message || 'Error');
     }
