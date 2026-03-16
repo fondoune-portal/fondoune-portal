@@ -4345,7 +4345,7 @@ function filtrarCategoria(cat, el) {
 /* ═══════════════════════════════════════════════════════════════
    FÉLIX IA — Integración Gemini 2.0 Flash
    FondoUne Portal | v1.0 2026
-   ⚠️  Reemplaza AIzaSyCO--eZ7QAE6SMcab4yH4pErIu8fXK73kI con tu clave de
+   ⚠️  Reemplaza AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw con tu clave de
        Google AI Studio (aistudio.google.com)
 ═══════════════════════════════════════════════════════════════ */
 (function() {
@@ -4353,7 +4353,7 @@ function filtrarCategoria(cat, el) {
 
   /* ── CONFIGURACIÓN ── */
   var FELIX_CFG = {
-    API_KEY:   'AIzaSyCO--eZ7QAE6SMcab4yH4pErIu8fXK73kI',
+    API_KEY:   'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
     MODEL:     'gemini-2.0-flash',
     ENDPOINT:  'https://generativelanguage.googleapis.com/v1beta/models/',
     MAX_TOKENS: 512,
@@ -4448,16 +4448,17 @@ function filtrarCategoria(cat, el) {
 
       var response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Referer': 'https://fondoune-portal.github.io/'
-        },
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
 
       if (!response.ok) {
-        var err = await response.json().catch(function() { return {}; });
-        throw new Error(err.error && err.error.message ? err.error.message : 'Error ' + response.status);
+        var errBody = await response.json().catch(function() { return {}; });
+        var errDetail = (errBody.error && errBody.error.message)
+          ? errBody.error.message
+          : 'HTTP ' + response.status + ' ' + response.statusText;
+        throw new Error(errDetail);
       }
 
       var data = await response.json();
