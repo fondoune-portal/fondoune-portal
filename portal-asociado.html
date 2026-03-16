@@ -728,22 +728,6 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   .asoc-foot { flex-direction: column; }
   .asoc-btn-save, .asoc-btn-clr { width: 100%; }
   .asoc-badge { display: none; }
-
-  /* En móvil el panel ocupa todo el ancho desde abajo */
-  .faq-panel {
-    right: 0;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    max-width: 100%;
-    max-height: 92vh;
-    border-radius: 22px 22px 0 0;
-    transform-origin: center bottom;
-    transform: translateY(100%) scale(0.96);
-  }
-  .faq-panel.show {
-    transform: translateY(0) scale(1);
-  }
 }
 
 .pqrs-section {
@@ -992,11 +976,11 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 /* ═══ FLOATING PANEL — spring fluido ═══ */
 .faq-panel {
   position: fixed;
-  right: 168px;          /* 16px margen + 140px ancho Félix + 12px gap */
-  bottom: 14px;          /* alineado con la base de Félix */
+  right: 24px;
+  bottom: 96px;
   z-index: 601;
-  width: 400px; max-width: calc(100vw - 200px);
-  height: calc(100vh - 40px);
+  width: 400px; max-width: calc(100vw - 32px);
+  height: calc(100vh - 120px);
   max-height: 620px;
   min-height: 420px;
   background: #FDF6F3;
@@ -1374,16 +1358,18 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 @media (max-width: 400px) {
   .type-row { grid-template-columns: 1fr; }
   .tc { min-width: unset; }
-  .hdr .logo-tagli.fab-felix-wrap.fab-docked {
-  /* Félix no se mueve — el panel aparece a su izquierda */
-  bottom: 14px;
-  right: 16px;
-  left: auto;
+  .hdr .logo-tagline { display: none; }
+}
+
+
+/* Félix anclado en esquina inferior derecha del panel cuando está abierto */
+.fab-felix-wrap.fab-docked {
+  bottom: 82px;
+  right: 20px;
   z-index: 602;
-  align-items: flex-end;
-}  left   0.4s cubic-bezier(0.34,1.48,0.64,1),
-              right  0.4s cubic-bezier(0.34,1.48,0.64,1);
-}.fab-felix-wrap.fab-docked .fab-help {
+  transition: bottom 0.4s cubic-bezier(0.34,1.48,0.64,1), right 0.4s cubic-bezier(0.34,1.48,0.64,1);
+}
+.fab-felix-wrap.fab-docked .fab-help {
   width: 96px;
   height: 160px;
   transition: width 0.4s cubic-bezier(0.34,1.48,0.64,1), height 0.4s cubic-bezier(0.34,1.48,0.64,1);
@@ -4345,7 +4331,7 @@ function filtrarCategoria(cat, el) {
 /* ═══════════════════════════════════════════════════════════════
    FÉLIX IA — Integración Gemini 2.0 Flash
    FondoUne Portal | v1.0 2026
-   ⚠️  Reemplaza AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw con tu clave de
+   ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
        Google AI Studio (aistudio.google.com)
 ═══════════════════════════════════════════════════════════════ */
 (function() {
@@ -4454,11 +4440,8 @@ function filtrarCategoria(cat, el) {
       });
 
       if (!response.ok) {
-        var errBody = await response.json().catch(function() { return {}; });
-        var errDetail = (errBody.error && errBody.error.message)
-          ? errBody.error.message
-          : 'HTTP ' + response.status + ' ' + response.statusText;
-        throw new Error(errDetail);
+        var err = await response.json().catch(function() { return {}; });
+        throw new Error(err.error && err.error.message ? err.error.message : 'Error ' + response.status);
       }
 
       var data = await response.json();
@@ -4482,9 +4465,20 @@ function filtrarCategoria(cat, el) {
 
     } catch(err) {
       showTyping(false);
-      // Mostrar error real para diagnóstico
-      var errMsg = '😔 Error técnico: ' + (err.message || 'sin detalle') + '. Escríbenos a creditosvivienda@fondoune.com';
-      isLoading = false;   focusInput();
+      var errMsg = '😔 Hubo un problema al conectarme. ';
+      if (err.message && err.message.includes('API_KEY')) {
+        errMsg += 'Verifica que la API Key esté configurada correctamente.';
+      } else if (err.message && err.message.includes('quota')) {
+        errMsg += 'Se alcanzó el límite de consultas. Intenta en unos minutos.';
+      } else {
+        errMsg += 'Por favor escríbenos a creditosvivienda@fondoune.com';
+      }
+      appendMessage('felix', errMsg);
+      if (window.FU_Audit) FU_Audit.log('FELIX_ERROR', err.message || 'Error desconocido');
+    }
+
+    isLoading = false;
+    focusInput();
   }
 
   /* ── UI HELPERS ── */
