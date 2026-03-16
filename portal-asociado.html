@@ -728,6 +728,22 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   .asoc-foot { flex-direction: column; }
   .asoc-btn-save, .asoc-btn-clr { width: 100%; }
   .asoc-badge { display: none; }
+
+  /* En móvil el panel ocupa todo el ancho desde abajo */
+  .faq-panel {
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 22px 22px 0 0;
+    transform-origin: center bottom;
+    transform: translateY(100%) scale(0.96);
+  }
+  .faq-panel.show {
+    transform: translateY(0) scale(1);
+  }
 }
 
 .pqrs-section {
@@ -976,11 +992,11 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 /* ═══ FLOATING PANEL — spring fluido ═══ */
 .faq-panel {
   position: fixed;
-  right: 24px;
-  bottom: 96px;
+  right: 168px;          /* 16px margen + 140px ancho Félix + 12px gap */
+  bottom: 14px;          /* alineado con la base de Félix */
   z-index: 601;
-  width: 400px; max-width: calc(100vw - 32px);
-  height: calc(100vh - 120px);
+  width: 400px; max-width: calc(100vw - 200px);
+  height: calc(100vh - 40px);
   max-height: 620px;
   min-height: 420px;
   background: #FDF6F3;
@@ -1358,18 +1374,16 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 @media (max-width: 400px) {
   .type-row { grid-template-columns: 1fr; }
   .tc { min-width: unset; }
-  .hdr .logo-tagline { display: none; }
-}
-
-
-/* Félix anclado en esquina inferior derecha del panel cuando está abierto */
-.fab-felix-wrap.fab-docked {
-  bottom: 82px;
-  right: 20px;
+  .hdr .logo-tagli.fab-felix-wrap.fab-docked {
+  /* Félix no se mueve — el panel aparece a su izquierda */
+  bottom: 14px;
+  right: 16px;
+  left: auto;
   z-index: 602;
-  transition: bottom 0.4s cubic-bezier(0.34,1.48,0.64,1), right 0.4s cubic-bezier(0.34,1.48,0.64,1);
-}
-.fab-felix-wrap.fab-docked .fab-help {
+  align-items: flex-end;
+}  left   0.4s cubic-bezier(0.34,1.48,0.64,1),
+              right  0.4s cubic-bezier(0.34,1.48,0.64,1);
+}.fab-felix-wrap.fab-docked .fab-help {
   width: 96px;
   height: 160px;
   transition: width 0.4s cubic-bezier(0.34,1.48,0.64,1), height 0.4s cubic-bezier(0.34,1.48,0.64,1);
@@ -2329,7 +2343,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   .felix-input-hint a { color: #E8511A; text-decoration: none; }
 
   
-/* ── Felix panel: sólido + pegado a Félix ── */
+/* ── Felix panel override: sólido + pegado ── */
 .faq-panel {
   position: fixed !important;
   bottom: 16px !important;
@@ -2339,7 +2353,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   background: #ffffff !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border: 1.5px solid rgba(232,81,26,0.2) !important;
+  border: 1.5px solid rgba(240,216,204,0.9) !important;
   z-index: 600;
   border-radius: 20px;
   overflow: hidden;
@@ -3734,7 +3748,7 @@ var PQRS = (function() {
             <div class="felix-chat-name">Félix · FondoUne IA</div>
             <div class="felix-chat-status">
               <span class="felix-status-dot"></span>
-              Asistente activo · Gemini 2.5 Flash
+              Asistente activo · Gemini 2.0 Flash
             </div>
           </div>
         </div>
@@ -3782,7 +3796,7 @@ var PQRS = (function() {
         </button>
       </div>
       <div class="felix-input-hint">
-        Powered by Gemini 2.5 Flash· <a href="mailto:creditosvivienda@fondoune.com">¿Necesitas más ayuda?</a>
+        Powered by Gemini 2.0 Flash · <a href="mailto:creditosvivienda@fondoune.com">¿Necesitas más ayuda?</a>
       </div>
     </div>
   </div>
@@ -4365,9 +4379,9 @@ function filtrarCategoria(cat, el) {
   <script>
 
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Integración Gemini 2.5 Flash
+   FÉLIX IA — Integración Gemini 2.0 Flash
    FondoUne Portal | v1.0 2026
-   ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
+   ⚠️  Reemplaza AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw con tu clave de
        Google AI Studio (aistudio.google.com)
 ═══════════════════════════════════════════════════════════════ */
 (function() {
@@ -4375,9 +4389,9 @@ function filtrarCategoria(cat, el) {
 
   /* ── CONFIGURACIÓN ── */
   var FELIX_CFG = {
-    API_KEY: 'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
-    MODEL: 'gemini-2.5-flash',
-    ENDPOINT:  'https://generativelanguage.googleapis.com/v1/models/',
+    API_KEY:   'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
+    MODEL:     'gemini-2.0-flash',
+    ENDPOINT:  'https://generativelanguage.googleapis.com/v1beta/models/',
     MAX_TOKENS: 512,
     TEMP:       0.7,
     HISTORY_LIMIT: 20   // máx turnos en memoria
@@ -4470,13 +4484,17 @@ function filtrarCategoria(cat, el) {
 
       var response = await fetch(url, {
         method: 'POST',
+        mode: 'cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
 
       if (!response.ok) {
-        var err = await response.json().catch(function() { return {}; });
-        throw new Error(err.error && err.error.message ? err.error.message : 'Error ' + response.status);
+        var errBody = await response.json().catch(function() { return {}; });
+        var errDetail = (errBody.error && errBody.error.message)
+          ? errBody.error.message
+          : 'HTTP ' + response.status + ' ' + response.statusText;
+        throw new Error(errDetail);
       }
 
       var data = await response.json();
@@ -4500,20 +4518,9 @@ function filtrarCategoria(cat, el) {
 
     } catch(err) {
       showTyping(false);
-      var errMsg = '😔 Error: ' + (err.message || JSON.stringify(err));
-      if (err.message && err.message.includes('API_KEY')) {
-        errMsg += 'Verifica que la API Key esté configurada correctamente.';
-      } else if (err.message && err.message.includes('quota')) {
-        errMsg += 'Se alcanzó el límite de consultas. Intenta en unos minutos.';
-      } else {
-        errMsg += 'Por favor escríbenos a creditosvivienda@fondoune.com';
-      }
-      appendMessage('felix', errMsg);
-      if (window.FU_Audit) FU_Audit.log('FELIX_ERROR', err.message || 'Error desconocido');
-    }
-
-    isLoading = false;
-    focusInput();
+      // Mostrar error real para diagnóstico
+      var errMsg = '😔 Error técnico: ' + (err.message || 'sin detalle') + '. Escríbenos a creditosvivienda@fondoune.com';
+      isLoading = false;   focusInput();
   }
 
   /* ── UI HELPERS ── */
