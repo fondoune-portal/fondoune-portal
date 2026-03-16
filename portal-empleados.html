@@ -3857,14 +3857,14 @@ window.addEventListener('resize', _debounce(function() {
 /* ═══════════════════════════════════════════════════════════════
    FÉLIX IA — Integración Gemini 2.0 Flash
    FondoUne Portal Empleados | v1.0 2026
-   ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
+   ⚠️  Reemplaza AIzaSyCO--eZ7QAE6SMcab4yH4pErIu8fXK73kI con tu clave de
        Google AI Studio (aistudio.google.com)
 ═══════════════════════════════════════════════════════════════ */
 (function() {
   'use strict';
 
   var FELIX_CFG = {
-    API_KEY:        'AIzaSyCO--eZ7QAE6SMcab4yH4pErIu8fXK73kI',
+    API_KEY:   'AIzaSyCO--eZ7QAE6SMcab4yH4pErIu8fXK73kI',
     MODEL:          'gemini-2.0-flash',
     ENDPOINT:       'https://generativelanguage.googleapis.com/v1beta/models/',
     MAX_TOKENS:     600,
@@ -3952,8 +3952,8 @@ window.addEventListener('resize', _debounce(function() {
   /* ── ENVIAR MENSAJE ── */
   async function felixSendMessage(userText) {
     if (!userText.trim() || isLoading) return;
-    if (FELIX_CFG.API_KEY === 'REEMPLAZAR_CON_TU_API_KEY') {
-      appendMessage('felix', '⚠️ Para activarme necesitas configurar la API Key de Gemini en el código. Busca <strong>REEMPLAZAR_CON_TU_API_KEY</strong> en el archivo HTML y reemplázala.');
+    if (FELIX_CFG.API_KEY === 'AIzaSyCO--eZ7QAE6SMcab4yH4pErIu8fXK73kI') {
+      appendMessage('felix', '⚠️ Para activarme necesitas configurar la API Key de Gemini en el código. Busca <strong>AIzaSyCO--eZ7QAE6SMcab4yH4pErIu8fXK73kI</strong> en el archivo HTML y reemplázala.');
       return;
     }
     isLoading = true;
