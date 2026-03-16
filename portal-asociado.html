@@ -980,27 +980,24 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   bottom: 96px;
   z-index: 601;
   width: 400px; max-width: calc(100vw - 32px);
-  /*
-   * max-height: el panel NO puede salirse de la pantalla.
-   * Calculamos: viewport - bottom(96px) - margen superior(16px).
-   * El contenido dentro (faq-list) scrolleará si supera este límite.
-   */
-  max-height: calc(100vh - 120px);
-  background: #fff;
+  height: calc(100vh - 120px);
+  max-height: 620px;
+  min-height: 420px;
+  background: #FDF6F3;
   border-radius: 20px;
-  box-shadow:
-    0 32px 80px rgba(45,26,14,.22),
-    0 8px 24px rgba(45,26,14,.12),
-    0 0 0 1px rgba(240,216,204,.6);
-  display: flex; flex-direction: column;
+  box-shadow: 0 24px 64px rgba(45,26,14,.22), 0 4px 16px rgba(45,26,14,.1), inset 0 1px 0 rgba(255,255,255,.7);
+  border: 1.5px solid rgba(255,255,255,.6);
   overflow: hidden;
-  will-change: transform, opacity;
-  transform-origin: calc(100% - 4px) calc(100% + 12px);
-  transform: scale(0.72) translateY(16px);
+  display: none;
+  flex-direction: column;
+  transform: translateY(16px) scale(.97);
   opacity: 0;
-  transition:
-    transform .48s cubic-bezier(0.34, 1.48, 0.64, 1),
-    opacity   .22s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform .3s cubic-bezier(.34,1.26,.64,1), opacity .25s ease;
+}
+.faq-panel.show {
+  display: flex;
+  transform: translateY(0) scale(1);
+  opacity: 1;
 }
 .faq-panel.show {
   transform: scale(1) translateY(0);
@@ -2048,6 +2045,288 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     backdrop-filter: saturate(140%) blur(10px);
   }
 }
+
+  
+  /* ═══════════ FÉLIX IA — CHAT UI ═══════════ */
+  .felix-chat-wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .felix-chat-header {
+    background: linear-gradient(145deg, #2D1A0E 0%, #5C2E10 50%, #E8511A 100%);
+    padding: 16px 18px 14px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .felix-chat-header::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 110px; height: 110px;
+    background: radial-gradient(circle, rgba(255,255,255,.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .felix-chat-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+  .felix-chat-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .felix-avatar-sm {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    border: 1.5px solid rgba(255,255,255,.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .felix-chat-name {
+    font-family: Outfit, sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    color: #fff;
+    line-height: 1.1;
+  }
+  .felix-chat-status {
+    font-size: 11px;
+    color: rgba(255,255,255,.6);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .felix-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: felixPulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes felixPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .6; transform: scale(.85); }
+  }
+  .felix-close-btn {
+    width: 30px;
+    height: 30px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, transform .15s;
+    position: relative;
+    z-index: 1;
+  }
+  .felix-close-btn:hover { background: rgba(255,255,255,.25); transform: rotate(90deg); }
+
+  /* Chips de acceso rápido */
+  .felix-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .felix-chip {
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.22);
+    color: rgba(255,255,255,.88);
+    font-family: Outfit, sans-serif;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .felix-chip:hover {
+    background: rgba(255,255,255,.22);
+    border-color: rgba(255,255,255,.45);
+    transform: translateY(-1px);
+  }
+
+  /* Área de mensajes */
+  .felix-messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  .felix-messages::-webkit-scrollbar { width: 4px; }
+  .felix-messages::-webkit-scrollbar-track { background: transparent; }
+  .felix-messages::-webkit-scrollbar-thumb { background: #E8C4B0; border-radius: 4px; }
+
+  /* Burbujas */
+  .felix-msg {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    animation: msgIn .28s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .felix-msg.user { flex-direction: row-reverse; }
+  .felix-msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #E8511A, #C94010);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(232,81,26,.3);
+  }
+  .felix-msg.user .felix-msg-avatar {
+    background: linear-gradient(135deg, #2D1A0E, #5C2E10);
+  }
+  .felix-msg-bubble {
+    max-width: 78%;
+    padding: 10px 13px;
+    border-radius: 16px 16px 16px 4px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #2D1A0E;
+    background: #fff;
+    border: 1px solid rgba(240,216,204,.8);
+    box-shadow: 0 2px 8px rgba(45,26,14,.07);
+  }
+  .felix-msg.user .felix-msg-bubble {
+    background: linear-gradient(135deg, #E8511A, #C94010);
+    color: #fff;
+    border-radius: 16px 16px 4px 16px;
+    border-color: transparent;
+    box-shadow: 0 2px 10px rgba(232,81,26,.3);
+  }
+  .felix-msg-time {
+    font-size: 10px;
+    color: #C4A090;
+    margin-top: 4px;
+    text-align: right;
+  }
+  .felix-msg.user .felix-msg-time { text-align: left; }
+
+  /* Typing indicator */
+  .felix-typing {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .felix-typing.show { opacity: 1; }
+  .felix-typing-bubble {
+    background: #fff;
+    border: 1px solid rgba(240,216,204,.8);
+    border-radius: 16px 16px 16px 4px;
+    padding: 10px 14px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .felix-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #C4A090;
+    animation: felixDot 1.2s ease-in-out infinite;
+  }
+  .felix-dot:nth-child(2) { animation-delay: .2s; }
+  .felix-dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes felixDot {
+    0%, 80%, 100% { transform: scale(.7); opacity: .5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Input area */
+  .felix-input-area {
+    padding: 10px 12px 14px;
+    border-top: 1px solid rgba(240,216,204,.5);
+    background: rgba(255,255,255,.9);
+    flex-shrink: 0;
+  }
+  .felix-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .felix-input {
+    flex: 1;
+    min-height: 40px;
+    max-height: 100px;
+    padding: 10px 14px;
+    border: 1.5px solid rgba(240,216,204,.9);
+    border-radius: 12px;
+    font-family: Inter, sans-serif;
+    font-size: 13px;
+    color: #2D1A0E;
+    background: rgba(255,255,255,.9);
+    outline: none;
+    resize: none;
+    transition: border-color .2s, box-shadow .2s;
+    line-height: 1.45;
+    overflow-y: auto;
+  }
+  .felix-input:focus {
+    border-color: #E8511A;
+    box-shadow: 0 0 0 3px rgba(232,81,26,.12);
+    background: #fff;
+  }
+  .felix-input::placeholder { color: #C4A090; }
+  .felix-send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #E8511A, #C94010);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all .2s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 3px 12px rgba(232,81,26,.4);
+  }
+  .felix-send-btn:hover { transform: scale(1.08) translateY(-1px); box-shadow: 0 5px 18px rgba(232,81,26,.5); }
+  .felix-send-btn:active { transform: scale(.95); }
+  .felix-send-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .felix-send-btn svg { width: 17px; height: 17px; }
+  .felix-input-hint {
+    font-size: 10.5px;
+    color: #C4A090;
+    text-align: center;
+    margin-top: 7px;
+  }
+  .felix-input-hint a { color: #E8511A; text-decoration: none; }
 
   </style>
 </head>
@@ -3409,55 +3688,67 @@ var PQRS = (function() {
 
 <!-- Panel FAQ -->
 <div class="faq-panel" id="faqPanel">
-  <div class="faq-head">
-    <div class="faq-head-top">
-      <div class="faq-head-logo">
-        <div class="faq-head-logo-mark">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M4 3h12v3H7.5v3.5H14v3H7.5V17H4V3z" fill="#fff"/></svg>
+  <div class="felix-chat-wrap">
+    <!-- Header -->
+    <div class="felix-chat-header">
+      <div class="felix-chat-header-top">
+        <div class="felix-chat-brand">
+          <div class="felix-avatar-sm">🤖</div>
+          <div>
+            <div class="felix-chat-name">Félix · FondoUne IA</div>
+            <div class="felix-chat-status">
+              <span class="felix-status-dot"></span>
+              Asistente activo · Gemini 2.0 Flash
+            </div>
+          </div>
         </div>
-        <div class="faq-head-brand">FondoUne</div>
+        <button class="felix-close-btn" onclick="cerrarFAQ()" aria-label="Cerrar">✕</button>
       </div>
-      <button class="faq-close" onclick="cerrarFAQ()">✕</button>
+      <div class="felix-chips">
+        <button class="felix-chip" onclick="felixChipClick('¿Qué documentos necesito para solicitar un crédito?')">📄 Documentos</button>
+        <button class="felix-chip" onclick="felixChipClick('¿Cuáles son los tipos de crédito disponibles?')">🏠 Tipos de crédito</button>
+        <button class="felix-chip" onclick="felixChipClick('¿Cómo es el proceso de solicitud?')">📋 Proceso</button>
+        <button class="felix-chip" onclick="felixChipClick('¿Cuánto tiempo tarda la aprobación?')">⏱️ Tiempos</button>
+      </div>
     </div>
-    <div class="faq-title">Centro de Ayuda</div>
-    <div class="faq-sub">Preguntas frecuentes sobre el proceso de crédito vivienda</div>
-  </div>
 
-  <!-- Búsqueda -->
-  <div class="faq-search-wrap">
-    <div class="faq-search-container" style="position:relative;">
-      <svg class="faq-search-ico" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="faq-search" id="faqSearch" placeholder="Buscar pregunta…" oninput="filtrarFAQ()" autocomplete="off">
+    <!-- Mensajes -->
+    <div class="felix-messages" id="felixMessages">
+      <!-- Los mensajes se insertan dinámicamente -->
     </div>
-  </div>
 
-  <!-- Categorías -->
-  <div class="faq-cats-wrap" id="faqCatsWrap">
-    <div class="faq-cats" id="faqCats">
-      <div class="faq-cat active" onclick="filtrarCategoria('documentos', this)">📄 Documentos</div>
-      <div class="faq-cat" onclick="filtrarCategoria('compra', this)">🏡 Compra</div>
-      <div class="faq-cat" onclick="filtrarCategoria('construccion', this)">🏗️ Construcción</div>
-      <div class="faq-cat" onclick="filtrarCategoria('gravamen', this)">🏦 Gravamen</div>
-      <div class="faq-cat" onclick="filtrarCategoria('proceso', this)">⚙️ Proceso</div>
+    <!-- Typing indicator -->
+    <div class="felix-typing" id="felixTyping">
+      <div class="felix-msg-avatar">🤖</div>
+      <div class="felix-typing-bubble">
+        <div class="felix-dot"></div>
+        <div class="felix-dot"></div>
+        <div class="felix-dot"></div>
+      </div>
     </div>
-  </div>
 
-  <!-- Lista de preguntas -->
-  <div class="faq-list" id="faqList"></div>
-
-  <!-- Footer -->
-  <div class="faq-footer">
-    <div class="faq-footer-txt">
-      &#xBF;Tienes alguna duda adicional? Escr&#xED;benos al correo<br>
-      <a href="mailto:creditosvivienda@fondoune.com">creditosvivienda@fondoune.com</a>
+    <!-- Input -->
+    <div class="felix-input-area">
+      <div class="felix-input-row">
+        <textarea
+          id="felixInput"
+          class="felix-input"
+          placeholder="Escribe tu pregunta a Félix..."
+          rows="1"
+          onkeydown="felixKeydown(event)"
+          aria-label="Mensaje para Félix"
+        ></textarea>
+        <button class="felix-send-btn" onclick="felixSend()" id="felixSendBtn" aria-label="Enviar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="felix-input-hint">
+        Powered by Gemini 2.0 Flash · <a href="mailto:creditosvivienda@fondoune.com">¿Necesitas más ayuda?</a>
+      </div>
     </div>
-    <a href="https://wa.me/573003528156?text=Hola%2C%20necesito%20ayuda%20con%20mi%20solicitud%20de%20cr%C3%A9dito%20vivienda" 
-       target="_blank" rel="noopener" class="faq-wa-btn">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-      </svg>
-      Chatear por WhatsApp
-    </a>
   </div>
 </div>
 
@@ -4030,6 +4321,275 @@ function filtrarCategoria(cat, el) {
         FU_Audit.log('DEVTOOLS_DETECTADO', 'Herramientas de desarrollador abiertas');
       }
     }, 3000);
+  });
+
+})();
+
+  </script>
+
+  <script>
+
+/* ═══════════════════════════════════════════════════════════════
+   FÉLIX IA — Integración Gemini 2.0 Flash
+   FondoUne Portal | v1.0 2026
+   ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
+       Google AI Studio (aistudio.google.com)
+═══════════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  /* ── CONFIGURACIÓN ── */
+  var FELIX_CFG = {
+    API_KEY:   'REEMPLAZAR_CON_TU_API_KEY',
+    MODEL:     'gemini-2.0-flash',
+    ENDPOINT:  'https://generativelanguage.googleapis.com/v1beta/models/',
+    MAX_TOKENS: 512,
+    TEMP:       0.7,
+    HISTORY_LIMIT: 20   // máx turnos en memoria
+  };
+
+  /* ── CONTEXTO DEL SISTEMA — Félix conoce a FondoUne ── */
+  var SYSTEM_PROMPT = [
+    'Eres Félix, el asistente virtual oficial de FondoUne (Fondo de Empleados de UNE).',
+    'Eres amable, claro, profesional y hablas siempre en español colombiano.',
+    'Tu misión es ayudar a los asociados con sus solicitudes de crédito de vivienda.',
+    '',
+    'TIPOS DE CRÉDITO QUE MANEJA FONDOUNE:',
+    '1. Crédito Compra de Vivienda: Para adquirir inmueble nuevo o usado.',
+    '2. Crédito Construcción en Lote Propio: Para construir en terreno del asociado.',
+    '3. Crédito con Garantía Hipotecaria: Con inmueble como respaldo.',
+    '4. Crédito Libre Destino con Garantía: Para cualquier propósito con garantía.',
+    '5. Crédito Compra de Lote: Para adquirir terreno.',
+    '6. Crédito Liberación de Gravamen: Para liberar hipoteca existente.',
+    '',
+    'DOCUMENTOS GENERALES REQUERIDOS (pueden variar según tipo):',
+    '- Cédula de ciudadanía ampliada al 150%',
+    '- Certificado laboral con salario y antigüedad (no mayor a 30 días)',
+    '- Últimas 3 colillas de pago',
+    '- Extractos bancarios últimos 3 meses',
+    '- Declaración de renta (si aplica)',
+    '- Certificado de tradición y libertad del inmueble',
+    '- Promesa de compraventa o escritura',
+    '- Avalúo comercial del inmueble',
+    '',
+    'PROCESO:',
+    '1. El asociado radica la solicitud en el Portal de Solicitudes con sus documentos.',
+    '2. El equipo de FondoUne revisa y valida la información.',
+    '3. Se realiza el estudio de crédito.',
+    '4. Se comunica la decisión al asociado.',
+    '5. Si es aprobado, se coordina el desembolso.',
+    '',
+    'CONTACTO: creditosvivienda@fondoune.com | WhatsApp: +57 300 352 8156',
+    '',
+    'REGLAS IMPORTANTES:',
+    '- Nunca inventes tasas de interés, montos o plazos específicos sin confirmar con el equipo.',
+    '- Si no sabes algo, indica al usuario que contacte directamente a FondoUne.',
+    '- Sé conciso: respuestas de máximo 3-4 párrafos cortos.',
+    '- Usa emojis ocasionalmente para ser más amigable pero sin exagerar.',
+    '- Si el usuario saluda, salúdalo cordialmente y pregunta en qué puedes ayudar.',
+  ].join('\n');
+
+  /* ── HISTORIAL DE CONVERSACIÓN ── */
+  var chatHistory = [];
+
+  /* ── ESTADO ── */
+  var isLoading = false;
+
+  /* ── FUNCIÓN PRINCIPAL: ENVIAR MENSAJE A GEMINI ── */
+  async function felixSendMessage(userText) {
+    if (!userText.trim() || isLoading) return;
+    if (FELIX_CFG.API_KEY === 'REEMPLAZAR_CON_TU_API_KEY') {
+      appendMessage('felix', '⚠️ Para activarme necesitas configurar la API Key de Gemini en el código. Consulta las instrucciones en el portal.');
+      return;
+    }
+
+    isLoading = true;
+    appendMessage('user', userText);
+    clearInput();
+    showTyping(true);
+    scrollToBottom();
+
+    // Agregar al historial
+    chatHistory.push({ role: 'user', parts: [{ text: userText }] });
+    if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
+      chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
+    }
+
+    try {
+      var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
+      var body = {
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: chatHistory,
+        generationConfig: {
+          temperature: FELIX_CFG.TEMP,
+          maxOutputTokens: FELIX_CFG.MAX_TOKENS,
+          topP: 0.9
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
+        ]
+      };
+
+      var response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        var err = await response.json().catch(function() { return {}; });
+        throw new Error(err.error && err.error.message ? err.error.message : 'Error ' + response.status);
+      }
+
+      var data = await response.json();
+      var reply = data.candidates &&
+                  data.candidates[0] &&
+                  data.candidates[0].content &&
+                  data.candidates[0].content.parts &&
+                  data.candidates[0].content.parts[0] &&
+                  data.candidates[0].content.parts[0].text
+                  ? data.candidates[0].content.parts[0].text
+                  : 'Lo siento, no pude generar una respuesta. Intenta de nuevo.';
+
+      // Guardar respuesta en historial
+      chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+
+      showTyping(false);
+      appendMessage('felix', reply);
+
+      // Auditoría
+      if (window.FU_Audit) FU_Audit.log('FELIX_IA', 'Consulta: ' + userText.substring(0, 60));
+
+    } catch(err) {
+      showTyping(false);
+      var errMsg = '😔 Hubo un problema al conectarme. ';
+      if (err.message && err.message.includes('API_KEY')) {
+        errMsg += 'Verifica que la API Key esté configurada correctamente.';
+      } else if (err.message && err.message.includes('quota')) {
+        errMsg += 'Se alcanzó el límite de consultas. Intenta en unos minutos.';
+      } else {
+        errMsg += 'Por favor escríbenos a creditosvivienda@fondoune.com';
+      }
+      appendMessage('felix', errMsg);
+      if (window.FU_Audit) FU_Audit.log('FELIX_ERROR', err.message || 'Error desconocido');
+    }
+
+    isLoading = false;
+    focusInput();
+  }
+
+  /* ── UI HELPERS ── */
+  function appendMessage(sender, text) {
+    var list = document.getElementById('felixMessages');
+    if (!list) return;
+
+    var isFelix = sender === 'felix';
+    var now = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+
+    var div = document.createElement('div');
+    div.className = 'felix-msg' + (isFelix ? '' : ' user');
+
+    // Convertir markdown básico a HTML
+    var html = formatText(text);
+
+    div.innerHTML =
+      '<div class="felix-msg-avatar">' + (isFelix ? '🤖' : '👤') + '</div>' +
+      '<div>' +
+        '<div class="felix-msg-bubble">' + html + '</div>' +
+        '<div class="felix-msg-time">' + now + '</div>' +
+      '</div>';
+
+    list.appendChild(div);
+    scrollToBottom();
+  }
+
+  function formatText(text) {
+    return text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>')
+      .replace(/^/, '<p>').replace(/$/, '</p>');
+  }
+
+  function showTyping(show) {
+    var el = document.getElementById('felixTyping');
+    if (el) el.classList.toggle('show', show);
+  }
+
+  function scrollToBottom() {
+    setTimeout(function() {
+      var list = document.getElementById('felixMessages');
+      if (list) list.scrollTop = list.scrollHeight;
+    }, 50);
+  }
+
+  function clearInput() {
+    var inp = document.getElementById('felixInput');
+    if (inp) { inp.value = ''; inp.style.height = '40px'; }
+  }
+
+  function focusInput() {
+    var inp = document.getElementById('felixInput');
+    if (inp) inp.focus();
+  }
+
+  /* ── MENSAJE DE BIENVENIDA ── */
+  function showWelcome() {
+    var list = document.getElementById('felixMessages');
+    if (!list || list.children.length > 0) return;
+    appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente de FondoUne.\n\n¿En qué puedo ayudarte hoy? Puedo orientarte sobre tipos de crédito, documentos necesarios, el proceso de solicitud y mucho más.');
+  }
+
+  /* ── CHIP CLICK ── */
+  window.felixChipClick = function(text) {
+    var inp = document.getElementById('felixInput');
+    if (inp) inp.value = text;
+    felixSendMessage(text);
+  };
+
+  /* ── SEND DESDE BOTÓN ── */
+  window.felixSend = function() {
+    var inp = document.getElementById('felixInput');
+    if (inp) felixSendMessage(inp.value.trim());
+  };
+
+  /* ── KEYDOWN EN INPUT ── */
+  window.felixKeydown = function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      window.felixSend();
+    }
+    // Auto-resize textarea
+    var inp = e.target;
+    setTimeout(function() {
+      inp.style.height = '40px';
+      inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
+    }, 0);
+  };
+
+  /* ── INICIALIZAR AL ABRIR EL PANEL ── */
+  var _felixInit = false;
+  var _origToggle = window.toggleFAQ;
+  window.toggleFAQ = function() {
+    if (_origToggle) _origToggle();
+    if (!_felixInit) {
+      _felixInit = true;
+      setTimeout(showWelcome, 400);
+    }
+    setTimeout(focusInput, 500);
+  };
+
+  /* También inicializar si el panel ya está abierto */
+  document.addEventListener('DOMContentLoaded', function() {
+    var panel = document.getElementById('faqPanel');
+    if (panel && panel.classList.contains('show')) {
+      showWelcome();
+    }
   });
 
 })();
