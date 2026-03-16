@@ -3864,8 +3864,8 @@ window.addEventListener('resize', _debounce(function() {
   'use strict';
 
   var FELIX_CFG = {
-    API_KEY:  'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
-    MODEL:    'gemini-2.5-flash',
+    API_KEY: 'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
+    MODEL: 'gemini-2.5-flash',
     ENDPOINT:       'https://generativelanguage.googleapis.com/v1/models/',
     MAX_TOKENS:     600,
     TEMP:           0.65,
@@ -3972,7 +3972,7 @@ window.addEventListener('resize', _debounce(function() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
           contents: chatHistory,
           generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 },
           safetySettings: [
@@ -4005,7 +4005,7 @@ window.addEventListener('resize', _debounce(function() {
 
     } catch(err) {
       showTyping(false);
-      var msg = '😔 Problema de conexión. ';
+      var msg = '😔 Error: ' + (err.message || JSON.stringify(err));
       if (err.message && err.message.includes('API_KEY')) msg += 'Verifica la API Key.';
       else if (err.message && err.message.includes('quota')) msg += 'Límite de consultas alcanzado. Intenta en unos minutos.';
       else msg += 'Verifica tu conexión a internet.';

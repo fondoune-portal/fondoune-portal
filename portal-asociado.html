@@ -975,26 +975,29 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 
 /* ═══ FLOATING PANEL — spring fluido ═══ */
 .faq-panel {
-  position: fixed !important;
-  bottom: 16px !important;
-  right: 392px !important;
-  width: 380px !important;
-  max-height: 620px !important;
-  z-index: 600;
+  position: fixed;
+  right: 24px;
+  bottom: 96px;
+  z-index: 601;
+  width: 400px; max-width: calc(100vw - 32px);
+  height: calc(100vh - 120px);
+  max-height: 620px;
+  min-height: 420px;
+  background: #FDF6F3;
   border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(45,26,14,.22), 0 4px 16px rgba(45,26,14,.1), inset 0 1px 0 rgba(255,255,255,.7);
+  border: 1.5px solid rgba(255,255,255,.6);
   overflow: hidden;
-  display: flex;
+  display: none;
   flex-direction: column;
+  transform: translateY(16px) scale(.97);
   opacity: 0;
-  pointer-events: none;
-  transform: translateY(16px) scale(0.97);
-  transition: opacity .3s cubic-bezier(.16,1,.3,1), transform .3s cubic-bezier(.16,1,.3,1);
-  box-shadow: 0 24px 64px rgba(45,26,14,.22), 0 8px 24px rgba(45,26,14,.12);
+  transition: transform .3s cubic-bezier(.34,1.26,.64,1), opacity .25s ease;
 }
 .faq-panel.show {
-  opacity: 1;
-  pointer-events: all;
+  display: flex;
   transform: translateY(0) scale(1);
+  opacity: 1;
 }
 .faq-panel.show {
   transform: scale(1) translateY(0);
@@ -2325,7 +2328,43 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   }
   .felix-input-hint a { color: #E8511A; text-decoration: none; }
 
-  </style>
+  
+/* ── Felix panel: sólido + pegado a Félix ── */
+.faq-panel {
+  position: fixed !important;
+  bottom: 16px !important;
+  right: 392px !important;
+  width: 360px !important;
+  max-height: 620px !important;
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1.5px solid rgba(232,81,26,0.2) !important;
+  z-index: 600;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px) scale(0.97);
+  transition: opacity .3s cubic-bezier(.16,1,.3,1), transform .3s cubic-bezier(.16,1,.3,1);
+  box-shadow: 0 24px 64px rgba(45,26,14,.22), 0 8px 24px rgba(45,26,14,.12) !important;
+}
+.faq-panel.show {
+  opacity: 1 !important;
+  pointer-events: all !important;
+  transform: translateY(0) scale(1) !important;
+}
+.faq-panel .fc-body,
+.faq-panel .felix-msgs,
+.faq-panel .felix-footer {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+</style>
 </head>
 <body>
 <!-- ── Mesh background layers ── -->
@@ -4336,8 +4375,8 @@ function filtrarCategoria(cat, el) {
 
   /* ── CONFIGURACIÓN ── */
   var FELIX_CFG = {
-    API_KEY:  'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
-    MODEL:    'gemini-2.5-flash',
+    API_KEY: 'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
+    MODEL: 'gemini-2.5-flash',
     ENDPOINT:  'https://generativelanguage.googleapis.com/v1/models/',
     MAX_TOKENS: 512,
     TEMP:       0.7,
@@ -4414,7 +4453,7 @@ function filtrarCategoria(cat, el) {
     try {
       var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
       var body = {
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: chatHistory,
         generationConfig: {
           temperature: FELIX_CFG.TEMP,
@@ -4461,7 +4500,14 @@ function filtrarCategoria(cat, el) {
 
     } catch(err) {
       showTyping(false);
-      var errMsg = '😔 Error: ' + (err.message || err.toString());
+      var errMsg = '😔 Error: ' + (err.message || JSON.stringify(err));
+      if (err.message && err.message.includes('API_KEY')) {
+        errMsg += 'Verifica que la API Key esté configurada correctamente.';
+      } else if (err.message && err.message.includes('quota')) {
+        errMsg += 'Se alcanzó el límite de consultas. Intenta en unos minutos.';
+      } else {
+        errMsg += 'Por favor escríbenos a creditosvivienda@fondoune.com';
+      }
       appendMessage('felix', errMsg);
       if (window.FU_Audit) FU_Audit.log('FELIX_ERROR', err.message || 'Error desconocido');
     }
