@@ -2342,36 +2342,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   }
   .felix-input-hint a { color: #E8511A; text-decoration: none; }
 
-  
-/* ============================================================== */
-/* AJUSTE ESTRICTO PARA iPHONE (evitar que el chat se corte)      */
-/* ============================================================== */
-@media (max-width: 768px) {
-  .faq-panel {
-    right: 0 !important;
-    left: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    max-width: 100vw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    border-radius: 0 !important;
-    border: none !important;
-    transform: translateY(100%) !important;
-  }
-  .faq-panel.show {
-    transform: translateY(0) !important;
-  }
-  .faq-input-wrap {
-    padding-bottom: 24px !important;
-  }
-  .faq-input {
-    font-size: 16px !important;
-  }
-}
-/* ============================================================== */
-</style>
+  </style>
 </head>
 <body>
 <!-- ── Mesh background layers ── -->
@@ -3741,7 +3712,7 @@ var PQRS = (function() {
             <div class="felix-chat-name">Félix · FondoUne IA</div>
             <div class="felix-chat-status">
               <span class="felix-status-dot"></span>
-              Asistente activo · Gemini 2.5 Flash
+              Asistente activo · Gemini 2.0 Flash
             </div>
           </div>
         </div>
@@ -3789,7 +3760,7 @@ var PQRS = (function() {
         </button>
       </div>
       <div class="felix-input-hint">
-        Powered by Gemini 2.5 Flash · <a href="mailto:creditosvivienda@fondoune.com">¿Necesitas más ayuda?</a>
+        Powered by Gemini 2.0 Flash · <a href="mailto:creditosvivienda@fondoune.com">¿Necesitas más ayuda?</a>
       </div>
     </div>
   </div>
@@ -3909,7 +3880,6 @@ function toggleFAQ() {
     requestAnimationFrame(function() {
       requestAnimationFrame(function() {
         panel.classList.add('show');
-        if(window.innerWidth<=768){var fw=document.getElementById('fabWrap');if(fw)fw.style.display='none';}
         if (overlay) overlay.classList.add('show');
       });
     });
@@ -3929,7 +3899,6 @@ function cerrarFAQ() {
   var overlay = document.getElementById('faqOverlay');
   var wrap    = document.getElementById('fabWrap');
   panel.classList.remove('show');
-  var fw=document.getElementById('fabWrap');if(fw)fw.style.display='flex';
   panel.classList.add('closing');
   if (overlay) overlay.classList.remove('show');
   if (wrap)    wrap.classList.remove('fab-docked');
@@ -4374,9 +4343,9 @@ function filtrarCategoria(cat, el) {
   <script>
 
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Integración Gemini 2.5 Flash
+   FÉLIX IA — Integración Gemini 2.0 Flash
    FondoUne Portal | v1.0 2026
-   ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
+   ⚠️  Reemplaza AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw con tu clave de
        Google AI Studio (aistudio.google.com)
 ═══════════════════════════════════════════════════════════════ */
 (function() {
@@ -4384,8 +4353,8 @@ function filtrarCategoria(cat, el) {
 
   /* ── CONFIGURACIÓN ── */
   var FELIX_CFG = {
-    API_KEY:   'AIzaSyCO--eZ7QAE6SMcab4yH4pErIu8fXK73kI',
-    MODEL:     'gemini-2.5-flash',
+    API_KEY:   'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
+    MODEL:     'gemini-2.0-flash',
     ENDPOINT:  'https://generativelanguage.googleapis.com/v1beta/models/',
     MAX_TOKENS: 512,
     TEMP:       0.7,
@@ -4442,18 +4411,17 @@ function filtrarCategoria(cat, el) {
   /* ── FUNCIÓN PRINCIPAL: ENVIAR MENSAJE A GEMINI ── */
   async function felixSendMessage(userText) {
     if (!userText.trim() || isLoading) return;
-    if (FELIX_CFG.API_KEY === 'REEMPLAZAR_CON_TU_API_KEY') {
-      appendMessage('felix', '⚠️ Para activarme necesitas configurar la API Key de Gemini en el código. Consulta las instrucciones en el portal.');
-      return;
-    }
-
     isLoading = true;
     appendMessage('user', userText);
     clearInput();
     showTyping(true);
     scrollToBottom();
 
-    // Agregar al historial
+    if (chatHistory.length === 0) {
+      chatHistory.push({ role: 'user', parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
+      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del portal de Asociados de FondoUne.' }] });
+    }
+
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
     if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
       chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
@@ -4461,178 +4429,40 @@ function filtrarCategoria(cat, el) {
 
     try {
       var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
-      var body = {
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      var payload = {
         contents: chatHistory,
-        generationConfig: {
-          temperature: FELIX_CFG.TEMP,
-          maxOutputTokens: FELIX_CFG.MAX_TOKENS,
-          topP: 0.9
-        },
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
-        ]
+        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 }
       };
 
       var response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
-        var err = await response.json().catch(function() { return {}; });
-        throw new Error(err.error && err.error.message ? err.error.message : 'Error ' + response.status);
+        var errData = await response.json().catch(function() { return {}; });
+        console.error("Gemini API Error:", errData);
+        throw new Error(errData.error && errData.error.message ? errData.error.message : 'HTTP ' + response.status);
       }
 
       var data = await response.json();
-      var reply = data.candidates &&
-                  data.candidates[0] &&
-                  data.candidates[0].content &&
-                  data.candidates[0].content.parts &&
-                  data.candidates[0].content.parts[0] &&
-                  data.candidates[0].content.parts[0].text
-                  ? data.candidates[0].content.parts[0].text
-                  : 'Lo siento, no pude generar una respuesta. Intenta de nuevo.';
+      var reply = (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) 
+                  ? data.candidates[0].content.parts[0].text : 'No pude generar respuesta.';
 
-      // Guardar respuesta en historial
       chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-
       showTyping(false);
       appendMessage('felix', reply);
 
-      // Auditoría
-      if (window.FU_Audit) FU_Audit.log('FELIX_IA', 'Consulta: ' + userText.substring(0, 60));
-
     } catch(err) {
+      console.error(err);
       showTyping(false);
-      var errMsg = '😔 Hubo un problema al conectarme. ';
-      if (err.message && err.message.includes('API_KEY')) {
-        errMsg += 'Verifica que la API Key esté configurada correctamente.';
-      } else if (err.message && err.message.includes('quota')) {
-        errMsg += 'Se alcanzó el límite de consultas. Intenta en unos minutos.';
-      } else {
-        errMsg += 'Por favor escríbenos a creditosvivienda@fondoune.com';
-      }
-      appendMessage('felix', errMsg);
-      if (window.FU_Audit) FU_Audit.log('FELIX_ERROR', err.message || 'Error desconocido');
+      appendMessage('felix', '😔 Error de conexión: ' + (err.message || String(err)) + '. Escríbenos a creditosvivienda@fondoune.com');
     }
 
     isLoading = false;
     focusInput();
-  }
-
-  /* ── UI HELPERS ── */
-  function appendMessage(sender, text) {
-    var list = document.getElementById('felixMessages');
-    if (!list) return;
-
-    var isFelix = sender === 'felix';
-    var now = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-
-    var div = document.createElement('div');
-    div.className = 'felix-msg' + (isFelix ? '' : ' user');
-
-    // Convertir markdown básico a HTML
-    var html = formatText(text);
-
-    div.innerHTML =
-      '<div class="felix-msg-avatar">' + (isFelix ? '🤖' : '👤') + '</div>' +
-      '<div>' +
-        '<div class="felix-msg-bubble">' + html + '</div>' +
-        '<div class="felix-msg-time">' + now + '</div>' +
-      '</div>';
-
-    list.appendChild(div);
-    scrollToBottom();
-  }
-
-  function formatText(text) {
-    return text
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/\n/g, '<br>')
-      .replace(/^/, '<p>').replace(/$/, '</p>');
-  }
-
-  function showTyping(show) {
-    var el = document.getElementById('felixTyping');
-    if (el) el.classList.toggle('show', show);
-  }
-
-  function scrollToBottom() {
-    setTimeout(function() {
-      var list = document.getElementById('felixMessages');
-      if (list) list.scrollTop = list.scrollHeight;
-    }, 50);
-  }
-
-  function clearInput() {
-    var inp = document.getElementById('felixInput');
-    if (inp) { inp.value = ''; inp.style.height = '40px'; }
-  }
-
-  function focusInput() {
-    var inp = document.getElementById('felixInput');
-    if (inp) inp.focus();
-  }
-
-  /* ── MENSAJE DE BIENVENIDA ── */
-  function showWelcome() {
-    var list = document.getElementById('felixMessages');
-    if (!list || list.children.length > 0) return;
-    appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente de FondoUne.\n\n¿En qué puedo ayudarte hoy? Puedo orientarte sobre tipos de crédito, documentos necesarios, el proceso de solicitud y mucho más.');
-  }
-
-  /* ── CHIP CLICK ── */
-  window.felixChipClick = function(text) {
-    var inp = document.getElementById('felixInput');
-    if (inp) inp.value = text;
-    felixSendMessage(text);
-  };
-
-  /* ── SEND DESDE BOTÓN ── */
-  window.felixSend = function() {
-    var inp = document.getElementById('felixInput');
-    if (inp) felixSendMessage(inp.value.trim());
-  };
-
-  /* ── KEYDOWN EN INPUT ── */
-  window.felixKeydown = function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      window.felixSend();
-    }
-    // Auto-resize textarea
-    var inp = e.target;
-    setTimeout(function() {
-      inp.style.height = '40px';
-      inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
-    }, 0);
-  };
-
-  /* ── INICIALIZAR AL ABRIR EL PANEL ── */
-  /* Exponer showWelcome globalmente para toggleFAQ */
-  window.showFelixWelcome = function() {
-    if (!_felixInited) {
-      _felixInited = true;
-      showWelcome();
-    }
-  };
-  var _felixInited = false;
-
-  /* Inicializar si el panel ya está abierto al cargar */
-  document.addEventListener('DOMContentLoaded', function() {
-    var panel = document.getElementById('faqPanel');
-    if (panel && panel.classList.contains('show')) showWelcome();
-  });
-
-})();
+  })();
 
   </script>
 </body>
