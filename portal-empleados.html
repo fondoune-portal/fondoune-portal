@@ -3970,7 +3970,6 @@ window.addEventListener('resize', _debounce(function() {
     panelOpen ? cerrarFelix() : abrirFelix();
   };
 
-  
   window.abrirFelix = function() {
     panelOpen = true;
     var panel   = document.getElementById('felixEmpPanel');
@@ -3979,14 +3978,23 @@ window.addEventListener('resize', _debounce(function() {
     if (panel)   { panel.style.display = 'flex'; setTimeout(function(){ panel.classList.add('show'); }, 10); }
     if (overlay) overlay.classList.add('show');
     if (wrap && window.innerWidth <= 768) wrap.style.display = 'none'; // <-- OCULTAR FAB EN MÓVIL AL ABRIR
+
+    var bubble  = document.getElementById('felixBubble');
+    if (bubble)  bubble.style.display = 'none';
+
     if (chatHistory.length === 0) setTimeout(showWelcome, 350);
     setTimeout(focusInput, 400);
   };
 
-  
-;
-
-  
+  window.cerrarFelix = function() {
+    panelOpen = false;
+    var panel   = document.getElementById('felixEmpPanel');
+    var overlay = document.getElementById('felixOverlay');
+    var wrap    = document.getElementById('felixEmpWrap');
+    if (panel)   { panel.classList.remove('show'); setTimeout(function(){ panel.style.display='none'; }, 300); }
+    if (overlay) overlay.classList.remove('show');
+    if (wrap) wrap.style.display = 'flex'; // <-- MOSTRAR FAB AL CERRAR
+  };
 
   /* ── ENVIAR MENSAJE ── */
   async function felixSendMessage(userText) {
