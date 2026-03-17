@@ -3798,7 +3798,7 @@ window.addEventListener('resize', _debounce(function() {
             <div class="felix-chat-name">Félix · FondoUne IA</div>
             <div class="felix-chat-status">
               <span class="felix-status-dot"></span>
-              Asistente activo · Gemini 2.5 Flash
+              Asistente activo · Gemini 1.5 Flash
             </div>
           </div>
         </div>
@@ -3844,7 +3844,7 @@ window.addEventListener('resize', _debounce(function() {
         </button>
       </div>
       <div class="felix-input-hint">
-        Powered by Gemini 2.5 Flash· <a href="mailto:creditosvivienda@fondoune.com">¿Más ayuda?</a>
+        Powered by Gemini 1.5 Flash· <a href="mailto:creditosvivienda@fondoune.com">¿Más ayuda?</a>
       </div>
     </div>
   </div>
@@ -3855,7 +3855,7 @@ window.addEventListener('resize', _debounce(function() {
   <script>
 
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Integración Gemini 2.5 Flash
+   FÉLIX IA — Integración Gemini 1.5 Flash
    FondoUne Portal Empleados | v1.0 2026
    ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
        Google AI Studio (aistudio.google.com)
@@ -3865,7 +3865,7 @@ window.addEventListener('resize', _debounce(function() {
 
   var FELIX_CFG = {
     API_KEY:  'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
-    MODEL:    'gemini-2.5-flash',
+    MODEL:    'gemini-1.5-flash',
     ENDPOINT: 'https://generativelanguage.googleapis.com/v1/models/',
     MAX_TOKENS:     600,
     TEMP:           0.65,
@@ -3953,7 +3953,7 @@ window.addEventListener('resize', _debounce(function() {
   async function felixSendMessage(userText) {
     if (!userText.trim() || isLoading) return;
     if (FELIX_CFG.API_KEY === 'REEMPLAZAR_CON_TU_API_KEY') {
-      appendMessage('felix', '⚠️ Para activarme necesitas configurar la API Key de Gemini en el código. Busca <strong>REEMPLAZAR_CON_TU_API_KEY</strong> en el archivo HTML y reemplázala.');
+      appendMessage('felix', '⚠️ Configura la API Key en el código.');
       return;
     }
     isLoading = true;
@@ -3961,59 +3961,48 @@ window.addEventListener('resize', _debounce(function() {
     clearInput();
     showTyping(true);
     scrollToBottom();
-
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
     if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2)
       chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
-
     try {
       var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
-      var res = await fetch(url, {
+      var payload = {
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: chatHistory,
+        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
+        ]
+      };
+      var response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: chatHistory,
-          generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 },
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
-          ]
-        })
+        body: JSON.stringify(payload)
       });
-
-      if (!res.ok) {
-        var e = await res.json().catch(function(){ return {}; });
-        throw new Error(e.error && e.error.message ? e.error.message : 'Error ' + res.status);
+      if (!response.ok) {
+        var errData = await response.json().catch(function() { return {}; });
+        throw new Error(errData.error && errData.error.message ? errData.error.message : 'HTTP ' + response.status);
       }
-      var data = await res.json();
-      var reply = data.candidates &&
-                  data.candidates[0] &&
-                  data.candidates[0].content &&
-                  data.candidates[0].content.parts &&
-                  data.candidates[0].content.parts[0] &&
-                  data.candidates[0].content.parts[0].text
-                  ? data.candidates[0].content.parts[0].text
-                  : 'No pude generar una respuesta. Intenta de nuevo.';
-
+      var data = await response.json();
+      var reply = (data.candidates && data.candidates[0] && data.candidates[0].content &&
+                   data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
+                   data.candidates[0].content.parts[0].text)
+                   ? data.candidates[0].content.parts[0].text
+                   : 'Lo siento, no pude generar una respuesta.';
       chatHistory.push({ role: 'model', parts: [{ text: reply }] });
       showTyping(false);
       appendMessage('felix', reply);
-      if (window.FU_Audit) FU_Audit.log('FELIX_IA_EMP', userText.substring(0, 60));
-
+      if (window.FU_Audit) FU_Audit.log('FELIX_IA', userText.substring(0, 60));
     } catch(err) {
       showTyping(false);
-      var msg = '😔 Problema de conexión. ';
-      if (err.message && err.message.includes('API_KEY')) msg += 'Verifica la API Key.';
-      else if (err.message && err.message.includes('quota')) msg += 'Límite de consultas alcanzado. Intenta en unos minutos.';
-      else msg += 'Verifica tu conexión a internet.';
-      appendMessage('felix', msg);
-      if (window.FU_Audit) FU_Audit.log('FELIX_ERROR_EMP', err.message || 'Error');
+      appendMessage('felix', '😔 Error: ' + (err.message || String(err)));
+      if (window.FU_Audit) FU_Audit.log('FELIX_ERROR', err.message || 'Error desconocido');
     }
     isLoading = false;
-    focusInput();
+    if (typeof focusInput === 'function') focusInput();
   }
 
   /* ── UI HELPERS ── */
@@ -4104,7 +4093,7 @@ window.addEventListener('resize', _debounce(function() {
       if (b) { b.style.transition='opacity .4s'; b.style.opacity='0'; setTimeout(function(){ if(b)b.style.display='none'; }, 400); }
     }, 5000);
   
-  window.showFelixWelcome = function() { if(typeof showWelcome === 'function') showWelcome(); };
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
 </script>
 </body>
 </html>
