@@ -3798,7 +3798,7 @@ window.addEventListener('resize', _debounce(function() {
             <div class="felix-chat-name">Félix · FondoUne IA</div>
             <div class="felix-chat-status">
               <span class="felix-status-dot"></span>
-              Asistente activo · Gemini 1.5 Flash
+              Asistente activo · Gemini 2.5 Flash
             </div>
           </div>
         </div>
@@ -3844,7 +3844,7 @@ window.addEventListener('resize', _debounce(function() {
         </button>
       </div>
       <div class="felix-input-hint">
-        Powered by Gemini 1.5 Flash· <a href="mailto:creditosvivienda@fondoune.com">¿Más ayuda?</a>
+        Powered by Gemini 2.5 Flash· <a href="mailto:creditosvivienda@fondoune.com">¿Más ayuda?</a>
       </div>
     </div>
   </div>
@@ -3855,7 +3855,7 @@ window.addEventListener('resize', _debounce(function() {
   <script>
 
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Integración Gemini 1.5 Flash
+   FÉLIX IA — Integración Gemini 2.5 Flash
    FondoUne Portal Empleados | v1.0 2026
    ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
        Google AI Studio (aistudio.google.com)
@@ -3865,8 +3865,8 @@ window.addEventListener('resize', _debounce(function() {
 
   var FELIX_CFG = {
     API_KEY:   'AIzaSyAnIn' + 'R4cmyHRDkxpqNj8UGBgbsnuG2SgK0',
-    MODEL:     'gemini-1.5-flash',
-    ENDPOINT:  'https://generativelanguage.googleapis.com/v1/models/',
+    MODEL:     'gemini-2.5-flash',
+    ENDPOINT:  'https://generativelanguage.googleapis.com/v1beta/models/',
     MAX_TOKENS:     600,
     TEMP:           0.65,
     HISTORY_LIMIT:  20
@@ -3953,19 +3953,19 @@ window.addEventListener('resize', _debounce(function() {
   async function felixSendMessage(userText) {
     if (!userText.trim() || isLoading) return;
     if (FELIX_CFG.API_KEY === 'REEMPLAZAR_CON_TU_API_KEY' || FELIX_CFG.API_KEY.includes('AIzaSyDi9RaIjm')) {
-      appendMsg('felix', '⚠️ API Key no configurada correctamente.');
+      appendMessage('felix', '⚠️ API Key no configurada correctamente.');
       return;
     }
 
     isLoading = true;
-    appendMsg('user', userText);
+    appendMessage('user', userText);
     if (typeof clearInput === 'function') clearInput();
     showTyping(true);
     scrollToBottom();
 
-    // Inyección de contexto segura (sin system_instruction)
+    // INYECCIÓN DE CONTEXTO
     if (chatHistory.length === 0) {
-      chatHistory.push({ role: 'user', parts: [{ text: 'ESTRICTAS INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
+      chatHistory.push({ role: 'user', parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
       chatHistory.push({ role: 'model', parts: [{ text: 'Entendido. Soy Félix, el asistente de FondoUne, y respetaré estas instrucciones al pie de la letra.' }] });
     }
 
@@ -4004,12 +4004,12 @@ window.addEventListener('resize', _debounce(function() {
 
       chatHistory.push({ role: 'model', parts: [{ text: reply }] });
       showTyping(false);
-      appendMsg('felix', reply);
+      appendMessage('felix', reply);
       if (window.FU_Audit) FU_Audit.log('FELIX_IA', userText.substring(0, 60));
 
     } catch(err) {
       showTyping(false);
-      appendMsg('felix', '😔 Error técnico: ' + (err.message || String(err)));
+      appendMessage('felix', '😔 Error de conexión: ' + (err.message || String(err)));
       if (window.FU_Audit) FU_Audit.log('FELIX_ERROR', err.message || 'Error');
     }
 
