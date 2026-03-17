@@ -1757,6 +1757,9 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   .faq-input {
     font-size: 16px !important; /* Evita auto-zoom de iOS */
   }
+  .faq-panel.show ~ .fab-felix-wrap {
+    display: none !important;
+  }
 }
 /* ============================================================== */
 </style>
@@ -3275,48 +3278,248 @@ var _faqCatActiva = 'documentos';
 
 function toggleFAQ() {
   var panel = document.getElementById('faqPanel');
+  var overlay = document.getElementById('faqOverlay');
+  var fab = document.getElementById('fabHelp');
   if (panel.classList.contains('show')) {
     cerrarFAQ();
   } else {
     /* Pre-render del contenido antes de que el panel sea visible */
     renderFAQ(FAQ_DATA.filter(function(f){ return f.cat === 'documentos'; }));
-    /* Forzar un frame de layout antes de añadir .show */
+    /* Forzar un frame de layout antes de añadir .show — garantiza
+       que el navegador parte del estado inicial (scale 0.72) y no salta */
     panel.classList.remove('closing');
-    requestAnimationFrame(function(){
-      abrirFAQ();
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        panel.classList.add('show');
+        if(window.innerWidth<=768){document.getElementById('fabWrap').style.display='none';}
+        overlay.classList.add('show');
+      });
     });
+    fab.classList.add('clicked');
+    document.getElementById('fabWrap').classList.add('fab-docked');
+    setTimeout(function(){ fab.classList.remove('clicked'); }, 400);
+    setTimeout(function(){
+      var s = document.getElementById('faqSearch');
+      if (s) s.focus();
+    }, 480);
   }
-}
-
-function abrirFAQ() {
-  var panel = document.getElementById('faqPanel');
-  var overlay = document.getElementById('faqOverlay');
-  var wrap = document.getElementById('fabWrap');
-  panel.classList.add('show');
-  overlay.classList.add('show');
-  hideBubble();
-
-  /* Ocultar botón FAB en móviles para que no estorbe */
-  if (wrap && window.innerWidth <= 768) {
-    wrap.style.display = 'none';
-  }
-
-  if (chatHistory.length === 0) setTimeout(showWelcome, 450);
-  setTimeout(function(){ var i=document.getElementById('faqInput'); if(i)i.focus(); }, 500);
 }
 
 function cerrarFAQ() {
   var panel = document.getElementById('faqPanel');
-  var overlay = document.getElementById('faqOverlay');
-  var wrap = document.getElementById('fabWrap');
-
-  /* Mostrar de nuevo el botón FAB */
-  if (wrap) wrap.style.display = 'flex';
-
-  /* Añadir clase de cierre para la animación inversa */
-  panel.classList.add('closing');
   panel.classList.remove('show');
-  overlay.classList.remove('show');
+  document.getElementById('fabWrap').style.display='flex';
+  panel.classList.add('closing');
+  document.getElementById('faqOverlay').classList.remove('show');
+  document.getElementById('fabWrap').classList.remove('fab-docked');
+  /* Limpiar closing exactamente cuando termina la transición (220ms) */
+  setTimeout(function() { panel.classList.remove('closing'); }, 240);
 }
 
->
+function renderFAQ(items) {
+  var list = document.getElementById('faqList');
+  if (!items.length) {
+    list.innerHTML = '<div class="faq-empty"><div class="faq-empty-ico">🔍</div><p>No encontramos preguntas que coincidan.<br>Intenta con otras palabras.</p></div>';
+    return;
+  }
+  list.innerHTML = items.map(function(item, i) {
+    return '<div class="faq-item" style="animation-delay:' + (i * 0.04) + 's" onclick="toggleFaqItem(this)">'
+      + '<div class="faq-q">'
+      + '<span class="faq-q-ico">' + item.ico + '</span>'
+      + '<span class="faq-q-text">' + item.q + '</span>'
+      + '<span class="faq-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></span>'
+      + '</div>'
+      + '<div class="faq-a">' + item.a + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function toggleFaqItem(el) {
+  var isOpen = el.classList.contains('open');
+
+  /* ── Cerrar todas las abiertas ── */
+  document.querySelectorAll('.faq-item.open').forEach(function(item) {
+    item.classList.remove('open');
+    var ans = item.querySelector('.faq-a');
+    if (ans) ans.style.height = '0';
+  });
+
+  if (!isOpen) {
+    /* ── Abrir la seleccionada ── */
+    el.classList.add('open');
+    var ans = el.querySelector('.faq-a');
+    if (ans) {
+      /*
+       * Medir la altura REAL del contenido:
+       * 1. Temporalmente hacer visible para medir
+       * 2. Aplicar la altura medida como transición CSS
+       * 3. Después de la transición, dejar height en 'auto'
+       *    para que si el viewport cambia se reajuste
+       */
+      ans.style.height = 'auto';
+      var targetH = ans.scrollHeight;
+      ans.style.height = '0';
+
+      /* Forzar reflow antes de animar */
+      ans.offsetHeight; // eslint-disable-line no-unused-expressions
+
+      ans.style.height = targetH + 'px';
+
+      /* Al terminar la transición: cambiar a 'auto' para ser responsive */
+      var onEnd = function() {
+        ans.removeEventListener('transitionend', onEnd);
+        if (el.classList.contains('open')) {
+          ans.style.height = 'auto';
+        }
+      };
+      ans.addEventListener('transitionend', onEnd);
+    }
+
+    /* Scroll suave en la lista para que el item abierto sea visible */
+    setTimeout(function() {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 60);
+  }
+}
+
+function filtrarFAQ() {
+  var q = document.getElementById('faqSearch').value.toLowerCase().trim();
+  var base = _faqCatActiva === 'todas' ? FAQ_DATA : FAQ_DATA.filter(function(f){ return f.cat === _faqCatActiva; });
+  var resultado = !q ? base : base.filter(function(f) {
+    return f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q);
+  });
+  renderFAQ(resultado);
+}
+
+function filtrarCategoria(cat, el) {
+  _faqCatActiva = cat;
+  document.querySelectorAll('.faq-cat').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('faqSearch').value = '';
+  var items = cat === 'todas' ? FAQ_DATA : FAQ_DATA.filter(function(f){ return f.cat === cat; });
+  renderFAQ(items);
+  /* Centrar la pill activa en la cinta */
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+}
+
+/* ── Cinta de categorías: degradados reactivos + drag-to-scroll ── */
+(function initCats() {
+  var wrap, rail;
+
+  function setup() {
+    wrap = document.getElementById('faqCatsWrap');
+    rail = document.getElementById('faqCats');
+    if (!wrap || !rail) return;
+
+    /* Actualizar degradados según posición del scroll */
+    function updateFades() {
+      var atStart = rail.scrollLeft <= 2;
+      var atEnd   = rail.scrollLeft >= rail.scrollWidth - rail.clientWidth - 2;
+      wrap.classList.toggle('at-start', atStart);
+      wrap.classList.toggle('at-end',   atEnd);
+    }
+    rail.addEventListener('scroll', updateFades, { passive: true });
+    updateFades(); /* estado inicial */
+
+    /* Drag-to-scroll con mouse (escritorio) */
+    var isDragging = false, startX, startScroll;
+    rail.addEventListener('mousedown', function(e) {
+      isDragging = true;
+      startX     = e.pageX - rail.offsetLeft;
+      startScroll = rail.scrollLeft;
+      rail.style.userSelect = 'none';
+    });
+    document.addEventListener('mouseup', function() {
+      isDragging = false;
+      rail.style.userSelect = '';
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+      var x    = e.pageX - rail.offsetLeft;
+      var walk = (x - startX) * 1.2;
+      rail.scrollLeft = startScroll - walk;
+    });
+  }
+
+  /* Inicializar cuando el panel se abre */
+  var orig = window.toggleFAQ;
+  window.toggleFAQ = function() {
+    orig();
+    setTimeout(setup, 60); /* esperar al render */
+  };
+  /* También inicializar si ya estaba abierto */
+  setup();
+})();
+
+
+  /* ── CARRUSEL HERO ── */
+  var CAROUSEL = (function() {
+  var SLIDE_MESSAGES = [
+    {
+      title: 'Radica tu solicitud<br><span class="hi">de crédito vivienda</span>',
+      desc:  'Completa el formulario y genera tu lista de chequeo al instante.'
+    },
+    {
+      title: 'Tu hogar propio<br><span class="hi">está más cerca</span>',
+      desc:  'FondoUne te acompaña en cada paso del proceso hipotecario.'
+    },
+    {
+      title: 'Construye o mejora<br><span class="hi">tu vivienda</span>',
+      desc:  'Financia la construcción, ampliación o mejoras de tu inmueble.'
+    },
+    {
+      title: 'Unidos por<br><span class="hi">nuestros sueños</span>',
+      desc:  'Más de 20 años respaldando los sueños de vivienda de los asociados.'
+    }
+  ];
+
+  function updateHeroText(index) {
+    var titleEl = document.getElementById('heroTitle');
+    var descEl  = document.getElementById('heroDesc');
+    if (!titleEl || !descEl) return;
+    // Fade out
+    titleEl.classList.add('fading');
+    descEl.classList.add('fading');
+    setTimeout(function() {
+      titleEl.innerHTML = SLIDE_MESSAGES[index].title;
+      descEl.textContent = SLIDE_MESSAGES[index].desc;
+      // Fade in — forzar reflow para que la transición se dispare correctamente
+      titleEl.offsetHeight; // eslint-disable-line no-unused-expressions
+      descEl.offsetHeight;  // eslint-disable-line no-unused-expressions
+      titleEl.classList.remove('fading');
+      descEl.classList.remove('fading');
+    }, 350);
+  }
+
+
+    var slides, dots, current = 0, total, timer, INTERVAL = 5000;
+    function init() {
+      slides = document.querySelectorAll('.hero-slide');
+      dots   = document.querySelectorAll('.hero-dot');
+      total  = slides.length;
+      if (!total) return;
+      timer = setInterval(next, INTERVAL);
+      // Pausa con hover
+      var hero = document.querySelector('.hero');
+      if (hero) {
+        hero.addEventListener('mouseenter', function(){ clearInterval(timer); });
+        hero.addEventListener('mouseleave', function(){ timer = setInterval(next, INTERVAL); });
+      }
+    }
+    function goTo(n) {
+      slides[current].classList.remove('active');
+      dots[current].classList.remove('active');
+      current = (n + total) % total;
+      slides[current].classList.add('active');
+      dots[current].classList.add('active');
+      updateHeroText(current);
+    }
+    function next() { goTo(current + 1); }
+    document.addEventListener('DOMContentLoaded', init);
+    return { goTo: goTo, next: next };
+  })();
+
+</script>
+</body>
+</html>
