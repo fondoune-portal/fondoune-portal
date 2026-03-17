@@ -12,11 +12,17 @@
                https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1800&q=85 1800w"
   imagesizes="(max-width: 900px) 100vw, 50vw"
   fetchpriority="high">
-<script defer src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js">
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
+</script>
 <script>
 /* ════════════════════════════════════════════════════
    CONFIGURACIÓN FIREBASE — FONDOUNE (mismo config que portal-asociado)
@@ -44,6 +50,8 @@ window._fbIniciado = false;
     }
   } catch(e) { console.warn('Firebase error:', e.message); }
 })();
+
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
 </script>
 <style>
 :root {
@@ -2194,6 +2202,8 @@ function cerrarSesion() {
 }
 
 /* ── INIT SEGURIDAD — movido al final del script principal ── */
+
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
 </script>
 
 <script>
@@ -2209,6 +2219,8 @@ function cerrarSesion() {
    3. Copia el hash resultante
    4. Reemplaza el valor en el objeto USUARIOS correspondiente
    ═══════════════════════════════════════════════ */
+
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
 </script>
 
 <script>
@@ -3525,6 +3537,8 @@ window.addEventListener('resize', _debounce(function() {
   })();
 
 }());
+
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
 </script>
 
   <script>
@@ -3767,7 +3781,9 @@ window.addEventListener('resize', _debounce(function() {
 
 })();
 
-  </script>
+  
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
+</script>
 
 
 <!-- ═══ FÉLIX IA — Portal Empleados ═══ -->
@@ -3798,7 +3814,7 @@ window.addEventListener('resize', _debounce(function() {
             <div class="felix-chat-name">Félix · FondoUne IA</div>
             <div class="felix-chat-status">
               <span class="felix-status-dot"></span>
-              Asistente activo · Gemini 1.5 Flash
+              Asistente activo · Gemini 2.5 Flash
             </div>
           </div>
         </div>
@@ -3844,7 +3860,7 @@ window.addEventListener('resize', _debounce(function() {
         </button>
       </div>
       <div class="felix-input-hint">
-        Powered by Gemini 1.5 Flash· <a href="mailto:creditosvivienda@fondoune.com">¿Más ayuda?</a>
+        Powered by Gemini 2.5 Flash· <a href="mailto:creditosvivienda@fondoune.com">¿Más ayuda?</a>
       </div>
     </div>
   </div>
@@ -3855,7 +3871,7 @@ window.addEventListener('resize', _debounce(function() {
   <script>
 
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Integración Gemini 1.5 Flash
+   FÉLIX IA — Integración Gemini 2.5 Flash
    FondoUne Portal Empleados | v1.0 2026
    ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
        Google AI Studio (aistudio.google.com)
@@ -3865,7 +3881,7 @@ window.addEventListener('resize', _debounce(function() {
 
   var FELIX_CFG = {
     API_KEY:  'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
-    MODEL:    'gemini-1.5-flash',
+    MODEL:    'gemini-2.5-flash',
     ENDPOINT: 'https://generativelanguage.googleapis.com/v1/models/',
     MAX_TOKENS:     600,
     TEMP:           0.65,
@@ -3958,23 +3974,32 @@ window.addEventListener('resize', _debounce(function() {
     }
     isLoading = true;
     appendMsg('user', userText);
-    clearInput(); showTyping(true); scrollToBottom();
+    clearInput();
+    showTyping(true);
+    scrollToBottom();
 
-    // Asegurar que el primer mensaje siempre sea el SYSTEM PROMPT simulado por el usuario
+    // INYECCIÓN DE CONTEXTO: sin usar system_instruction en el JSON
     if (chatHistory.length === 0) {
-      chatHistory.push({ role: 'user', parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
-      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido. Soy Félix y seguiré estas instrucciones.' }] });
+      chatHistory.push({ role: 'user', parts: [{ text: 'INSTRUCCIONES: ' + SYSTEM_PROMPT }] });
+      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido. Soy Félix y seguiré estas instrucciones para ayudarte.' }] });
     }
 
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
-    if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2)
+    if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
       chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
+    }
 
     try {
       var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
+
+      // PAYLOAD LIMPIO: sin system_instruction para evitar Invalid JSON error
       var payload = {
         contents: chatHistory,
-        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 },
+        generationConfig: {
+          temperature: FELIX_CFG.TEMP,
+          maxOutputTokens: FELIX_CFG.MAX_TOKENS,
+          topP: 0.9
+        },
         safetySettings: [
           { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
           { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -3982,25 +4007,32 @@ window.addEventListener('resize', _debounce(function() {
           { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
         ]
       };
+
       var response = await fetch(url, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
       if (!response.ok) {
-        var errData = await response.json().catch(function() { return {}; });
-        throw new Error(errData.error && errData.error.message ? errData.error.message : 'HTTP ' + response.status);
+        var errBody = await response.json().catch(function() { return {}; });
+        var errDetail = (errBody.error && errBody.error.message) ? errBody.error.message : 'HTTP ' + response.status;
+        throw new Error(errDetail);
       }
+
       var data = await response.json();
-      var reply = (data.candidates && data.candidates[0] && data.candidates[0].content &&
-                   data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
-                   data.candidates[0].content.parts[0].text)
-                   ? data.candidates[0].content.parts[0].text : 'No pude generar respuesta.';
+      var reply = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text ? data.candidates[0].content.parts[0].text : 'No pude generar una respuesta.';
+
       chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-      showTyping(false); appendMsg('felix', reply);
+      showTyping(false);
+      appendMsg('felix', reply);
+
       if (window.FU_Audit) FU_Audit.log('FELIX_IA', userText.substring(0, 60));
+
     } catch(err) {
       showTyping(false);
-      appendMsg('felix', '😔 Error: ' + (err.message || String(err)));
+      appendMsg('felix', '😔 Error técnico: ' + (err.message || 'Sin detalle'));
       if (window.FU_Audit) FU_Audit.log('FELIX_ERROR', err.message || 'Error');
     }
     isLoading = false;
@@ -4087,7 +4119,9 @@ window.addEventListener('resize', _debounce(function() {
 
 })();
 
-  </script>
+  
+  window.showFelixWelcome = function() { if(typeof showWelcome==='function') showWelcome(); };
+</script>
 
   <script>
     setTimeout(function(){

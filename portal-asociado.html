@@ -974,30 +974,38 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 .faq-overlay.show { opacity: 1; pointer-events: all; }
 
 /* ═══ FLOATING PANEL — spring fluido ═══ */
+
 .faq-panel {
-  position: fixed;
-  right: 24px;
-  bottom: 96px;
-  z-index: 601;
-  width: 400px; max-width: calc(100vw - 32px);
-  height: calc(100vh - 120px);
-  max-height: 620px;
-  min-height: 420px;
-  background: #FDF6F3;
-  border-radius: 20px;
-  box-shadow: 0 24px 64px rgba(45,26,14,.22), 0 4px 16px rgba(45,26,14,.1), inset 0 1px 0 rgba(255,255,255,.7);
-  border: 1.5px solid rgba(255,255,255,.6);
-  overflow: hidden;
-  display: none;
-  flex-direction: column;
-  transform: translateY(16px) scale(.97);
-  opacity: 0;
-  transition: transform .3s cubic-bezier(.34,1.26,.64,1), opacity .25s ease;
+  position:fixed!important;
+  bottom:14px!important;
+  right:162px!important;
+  width:360px!important;
+  max-height:620px!important;
+  background:#FDF6F3!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  border:1.5px solid rgba(232,81,26,0.2)!important;
+  z-index:601;
+  border-radius:20px;
+  overflow:hidden;
+  display:none;
+  flex-direction:column;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(16px) scale(0.97);
+  transition:opacity .35s cubic-bezier(.22,1,.36,1),transform .45s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 24px 64px rgba(45,26,14,.22),0 8px 24px rgba(45,26,14,.1)!important;
 }
-.faq-panel.show {
-  display: flex;
-  transform: translateY(0) scale(1);
-  opacity: 1;
+.faq-panel.open, .faq-panel.show {
+  display:flex!important;
+  opacity:1!important;
+  pointer-events:all!important;
+  transform:translateY(0) scale(1)!important;
+}
+.faq-panel .fc-body, .faq-panel .felix-msgs, .faq-panel .felix-footer {
+  background:#FDF6F3!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
 }
 .faq-panel.show {
   transform: scale(1) translateY(0);
@@ -1240,22 +1248,39 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 
 /* ═══ RESPONSIVE MOBILE ═══ */
 @media (max-width: 480px) {
-  .faq-panel {
-    right: 0; left: 0; top: auto; bottom: 0;
-    max-height: 92vh; width: 100%; max-width: 100%;
-    border-radius: 22px 22px 0 0;
-    /* En móvil el panel sube desde abajo — origin en el centro inferior */
-    transform-origin: center bottom;
-    transform: translateY(100%) scale(0.96);
-    padding-bottom: var(--safe-bottom);
-    transition:
-      transform .42s cubic-bezier(0.34, 1.28, 0.64, 1),
-      opacity   .22s cubic-bezier(0.22, 1,    0.36, 1);
-  }
-  .faq-panel.show {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+  
+.faq-panel {
+  position:fixed!important;
+  bottom:14px!important;
+  right:162px!important;
+  width:360px!important;
+  max-height:620px!important;
+  background:#FDF6F3!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  border:1.5px solid rgba(232,81,26,0.2)!important;
+  z-index:601;
+  border-radius:20px;
+  overflow:hidden;
+  display:none;
+  flex-direction:column;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(16px) scale(0.97);
+  transition:opacity .35s cubic-bezier(.22,1,.36,1),transform .45s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 24px 64px rgba(45,26,14,.22),0 8px 24px rgba(45,26,14,.1)!important;
+}
+.faq-panel.open, .faq-panel.show {
+  display:flex!important;
+  opacity:1!important;
+  pointer-events:all!important;
+  transform:translateY(0) scale(1)!important;
+}
+.faq-panel .fc-body, .faq-panel .felix-msgs, .faq-panel .felix-footer {
+  background:#FDF6F3!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
   .faq-panel.closing {
     transform: translateY(60%) scale(0.96);
     opacity: 0;
@@ -2328,28 +2353,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   }
   .felix-input-hint a { color: #E8511A; text-decoration: none; }
 
-  
-/* ── Félix panel override ── */
-.faq-panel {
-  position:fixed!important;bottom:14px!important;right:162px!important;
-  width:360px!important;max-height:620px!important;
-  background:#FDF6F3!important;
-  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
-  border:1.5px solid rgba(232,81,26,0.2)!important;
-  z-index:601;border-radius:20px;overflow:hidden;
-  display:none;flex-direction:column;
-  opacity:0;pointer-events:none;
-  transform:translateY(16px) scale(0.97);
-  transition:opacity .35s cubic-bezier(.22,1,.36,1),transform .45s cubic-bezier(.22,1,.36,1);
-  box-shadow:0 24px 64px rgba(45,26,14,.22),0 8px 24px rgba(45,26,14,.1)!important;
-}
-.faq-panel.show, .faq-panel.open {
-  display:flex!important;opacity:1!important;pointer-events:all!important;transform:translateY(0) scale(1)!important;
-}
-.faq-panel .fc-body,.faq-panel .felix-msgs,.faq-panel .felix-footer{
-  background:#FDF6F3!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
-}
-</style>
+  </style>
 </head>
 <body>
 <!-- ── Mesh background layers ── -->
@@ -3719,7 +3723,7 @@ var PQRS = (function() {
             <div class="felix-chat-name">Félix · FondoUne IA</div>
             <div class="felix-chat-status">
               <span class="felix-status-dot"></span>
-              Asistente activo · Gemini 1.5 Flash
+              Asistente activo · Gemini 2.5 Flash
             </div>
           </div>
         </div>
@@ -3767,7 +3771,7 @@ var PQRS = (function() {
         </button>
       </div>
       <div class="felix-input-hint">
-        Powered by Gemini 1.5 Flash· <a href="mailto:creditosvivienda@fondoune.com">¿Necesitas más ayuda?</a>
+        Powered by Gemini 2.5 Flash· <a href="mailto:creditosvivienda@fondoune.com">¿Necesitas más ayuda?</a>
       </div>
     </div>
   </div>
@@ -4350,7 +4354,7 @@ function filtrarCategoria(cat, el) {
   <script>
 
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Integración Gemini 1.5 Flash
+   FÉLIX IA — Integración Gemini 2.5 Flash
    FondoUne Portal | v1.0 2026
    ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
        Google AI Studio (aistudio.google.com)
@@ -4361,7 +4365,7 @@ function filtrarCategoria(cat, el) {
   /* ── CONFIGURACIÓN ── */
   var FELIX_CFG = {
     API_KEY:  'AIzaSyDi9RaIjm2wYwysmjKgqHOVYijkSy-byl0',
-    MODEL:    'gemini-1.5-flash',
+    MODEL:    'gemini-2.5-flash',
     ENDPOINT: 'https://generativelanguage.googleapis.com/v1/models/',
     MAX_TOKENS: 512,
     TEMP:       0.7,
@@ -4424,23 +4428,32 @@ function filtrarCategoria(cat, el) {
     }
     isLoading = true;
     appendMessage('user', userText);
-    clearInput(); showTyping(true); scrollToBottom();
+    clearInput();
+    showTyping(true);
+    scrollToBottom();
 
-    // Asegurar que el primer mensaje siempre sea el SYSTEM PROMPT simulado por el usuario
+    // INYECCIÓN DE CONTEXTO: sin usar system_instruction en el JSON
     if (chatHistory.length === 0) {
-      chatHistory.push({ role: 'user', parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
-      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido. Soy Félix y seguiré estas instrucciones.' }] });
+      chatHistory.push({ role: 'user', parts: [{ text: 'INSTRUCCIONES: ' + SYSTEM_PROMPT }] });
+      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido. Soy Félix y seguiré estas instrucciones para ayudarte.' }] });
     }
 
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
-    if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2)
+    if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
       chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
+    }
 
     try {
       var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
+
+      // PAYLOAD LIMPIO: sin system_instruction para evitar Invalid JSON error
       var payload = {
         contents: chatHistory,
-        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 },
+        generationConfig: {
+          temperature: FELIX_CFG.TEMP,
+          maxOutputTokens: FELIX_CFG.MAX_TOKENS,
+          topP: 0.9
+        },
         safetySettings: [
           { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
           { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -4448,25 +4461,32 @@ function filtrarCategoria(cat, el) {
           { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
         ]
       };
+
       var response = await fetch(url, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
       if (!response.ok) {
-        var errData = await response.json().catch(function() { return {}; });
-        throw new Error(errData.error && errData.error.message ? errData.error.message : 'HTTP ' + response.status);
+        var errBody = await response.json().catch(function() { return {}; });
+        var errDetail = (errBody.error && errBody.error.message) ? errBody.error.message : 'HTTP ' + response.status;
+        throw new Error(errDetail);
       }
+
       var data = await response.json();
-      var reply = (data.candidates && data.candidates[0] && data.candidates[0].content &&
-                   data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
-                   data.candidates[0].content.parts[0].text)
-                   ? data.candidates[0].content.parts[0].text : 'No pude generar respuesta.';
+      var reply = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text ? data.candidates[0].content.parts[0].text : 'No pude generar una respuesta.';
+
       chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-      showTyping(false); appendMessage('felix', reply);
+      showTyping(false);
+      appendMessage('felix', reply);
+
       if (window.FU_Audit) FU_Audit.log('FELIX_IA', userText.substring(0, 60));
+
     } catch(err) {
       showTyping(false);
-      appendMessage('felix', '😔 Error: ' + (err.message || String(err)));
+      appendMessage('felix', '😔 Error técnico: ' + (err.message || 'Sin detalle'));
       if (window.FU_Audit) FU_Audit.log('FELIX_ERROR', err.message || 'Error');
     }
     isLoading = false;
