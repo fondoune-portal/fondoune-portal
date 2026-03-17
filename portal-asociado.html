@@ -4410,7 +4410,8 @@ function filtrarCategoria(cat, el) {
 
   /* ── FUNCIÓN PRINCIPAL: ENVIAR MENSAJE A GEMINI ── */
   async function felixSendMessage(userText) {
-    if (!userText.trim() || isLoading) return;
+    if (!userText || !userText.trim() || isLoading) return;
+
     isLoading = true;
     appendMessage('user', userText);
     clearInput();
@@ -4418,20 +4419,35 @@ function filtrarCategoria(cat, el) {
     scrollToBottom();
 
     if (chatHistory.length === 0) {
-      chatHistory.push({ role: 'user', parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
-      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del portal de Asociados de FondoUne.' }] });
+      chatHistory.push({
+        role: 'user',
+        parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }]
+      });
+      chatHistory.push({
+        role: 'model',
+        parts: [{ text: 'Entendido, soy Félix del portal de Asociados de FondoUne.' }]
+      });
     }
 
-    chatHistory.push({ role: 'user', parts: [{ text: userText }] });
+    chatHistory.push({
+      role: 'user',
+      parts: [{ text: userText }]
+    });
+
     if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
       chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
     }
 
     try {
       var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
+
       var payload = {
         contents: chatHistory,
-        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 }
+        generationConfig: {
+          temperature: FELIX_CFG.TEMP,
+          maxOutputTokens: FELIX_CFG.MAX_TOKENS,
+          topP: 0.9
+        }
       };
 
       var response = await fetch(url, {
@@ -4441,23 +4457,40 @@ function filtrarCategoria(cat, el) {
       });
 
       if (!response.ok) {
-        var errData = await response.json().catch(function() { return {}; });
-        console.error("Gemini API Error:", errData);
-        throw new Error(errData.error && errData.error.message ? errData.error.message : 'HTTP ' + response.status);
+        var errData = await response.json().catch(function () { return {}; });
+        throw new Error(
+          errData.error && errData.error.message
+            ? errData.error.message
+            : 'HTTP ' + response.status
+        );
       }
 
       var data = await response.json();
-      var reply = (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) 
-                  ? data.candidates[0].content.parts[0].text : 'No pude generar respuesta.';
+      var reply =
+        data.candidates &&
+        data.candidates[0] &&
+        data.candidates[0].content &&
+        data.candidates[0].content.parts &&
+        data.candidates[0].content.parts[0] &&
+        data.candidates[0].content.parts[0].text
+          ? data.candidates[0].content.parts[0].text
+          : 'No pude generar respuesta.';
 
-      chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+      chatHistory.push({
+        role: 'model',
+        parts: [{ text: reply }]
+      });
+
       showTyping(false);
       appendMessage('felix', reply);
 
-    } catch(err) {
+    } catch (err) {
       console.error(err);
       showTyping(false);
-      appendMessage('felix', '😔 Error de conexión: ' + (err.message || String(err)) + '. Escríbenos a creditosvivienda@fondoune.com');
+      appendMessage(
+        'felix',
+        '😔 Error de conexión: ' + (err.message || String(err)) + '. Escríbenos a creditosvivienda@fondoune.com'
+      );
     }
 
     isLoading = false;
