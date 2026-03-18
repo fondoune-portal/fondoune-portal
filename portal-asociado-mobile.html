@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1E0F06">
+<title>FondoUne · Portal Asociados</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+/* ═══ FIREBASE ═══ */
+var FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyAUkk6h6IaDOvxRWRFGiV2USTzd6ZbJ3Qg",
+  authDomain:        "fondoune-portal-33446.firebaseapp.com",
+  projectId:         "fondoune-portal-33446",
+  storageBucket:     "fondoune-portal-33446.firebasestorage.app",
+  messagingSenderId: "901082593837",
+  appId:             "1:901082593837:web:91292ed594e171715fd6a4"
+};
+window._fbDB = null; window._fbIniciado = false;
+(function(){
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    window._fbDB = firebase.firestore();
+    window._fbIniciado = true;
+  } catch(e){ console.warn('Firebase:', e.message); }
+})();
+
+/* ═══ REDIRECCIÓN: si es desktop, volver al portal completo ═══ */
+(function(){
+  var isDesktop = window.innerWidth > 768 && !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isDesktop) { window.location.replace('./portal-asociado.html'); }
+})();
+</script>
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS & RESET
+═══════════════════════════════════════════ */
+:root {
+  --fu-orange:  #E8511A;
+  --fu-dark:    #1E0F06;
+  --fu-dark2:   #2D1A0E;
+  --fu-red:     #C0392B;
+  --orange-d:   #C94010;
+  --orange-lt:  #FFF0EA;
+  --bg:         #F7EDE6;
+  --surface:    #FFFFFF;
+  --border:     #EDD8CC;
+  --text:       #1E0F06;
+  --muted:      #7A5540;
+  --muted-lt:   #C4A090;
+  --ok:         #0D7A4E;
+  --ok-lt:      #E8F8F0;
+  --warn:       #B45309;
+  --warn-lt:    #FEF3C7;
+  --err:        #C0392B;
+  --err-lt:     #FDECEA;
+  --tab-h:      64px;
+  --top-h:      56px;
+  --safe-top:   env(safe-area-inset-top, 0px);
+  --safe-bot:   env(safe-area-inset-bottom, 0px);
+  --radius:     16px;
+  --radius-sm:  10px;
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══ BACKGROUND ═══ */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background: radial-gradient(ellipse 120% 80% at 50% 0%, #FDF0E8, #EDD8CC 100%);
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 20%, rgba(232,81,26,.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 80%, rgba(192,57,43,.14) 0%, transparent 60%);
+  animation: bgFloat 20s ease-in-out infinite alternate;
+}
+@keyframes bgFloat {
+  0%   { transform: scale(1) translate(0,0); }
+  100% { transform: scale(1.04) translate(8px,-12px); }
+}
+@media (prefers-reduced-motion: reduce) { body::after { animation: none; } }
+
+/* ═══ TOPBAR ═══ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: calc(var(--top-h) + var(--safe-top));
+  padding-top: var(--safe-top);
+  background: rgba(30,15,6,.92);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  display: flex; align-items: center; padding-left: 16px; padding-right: 16px; gap: 12px;
+}
+.topbar-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+.logo-mark {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--fu-orange); display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(232,81,26,.4);
+}
+.logo-mark svg { width: 16px; height: 16px; }
+.logo-name { font-weight: 800; font-size: 15px; color: #fff; letter-spacing: -.2px; }
+.logo-name span { color: var(--fu-orange); }
+.topbar-badge {
+  margin-left: auto;
+  background: rgba(232,81,26,.18); border: 1px solid rgba(232,81,26,.3);
+  color: #FFBFA0; font-size: 10px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px; letter-spacing: .4px; text-transform: uppercase;
+}
+.topbar-ver-desktop {
+  font-size: 11px; color: rgba(255,255,255,.45); text-decoration: none;
+  padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,.1);
+  white-space: nowrap;
+}
+
+/* ═══ MAIN SCROLL AREA ═══ */
+.main {
+  padding-top: calc(var(--top-h) + var(--safe-top));
+  padding-bottom: calc(var(--tab-h) + var(--safe-bot) + 8px);
+  min-height: 100vh;
+}
+
+/* ═══ VIEWS ═══ */
+.view { display: none; padding: 16px 16px 8px; }
+.view.active { display: block; }
+
+/* ═══ VIEW HEADER ═══ */
+.vh { margin-bottom: 18px; }
+.vh-title { font-weight: 800; font-size: 22px; color: var(--text); letter-spacing: -.4px; }
+.vh-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+/* ═══ CARDS ═══ */
+.card {
+  background: rgba(255,255,255,.88);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255,255,255,.75);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(30,15,6,.08), inset 0 1px 0 rgba(255,255,255,.9);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.card-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(237,216,204,.5);
+  background: rgba(255,255,255,.4);
+  display: flex; align-items: center; gap: 10px;
+}
+.card-head-ico { font-size: 18px; }
+.card-head-title { font-weight: 700; font-size: 14px; color: var(--text); }
+.card-body { padding: 16px; }
+
+/* ═══ TIPO SELECTOR (Solicitud) ═══ */
+.tipo-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px;
+}
+.tipo-btn {
+  background: rgba(255,255,255,.7);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 8px; text-align: center; cursor: pointer;
+  transition: all .2s; -webkit-tap-highlight-color: transparent;
+}
+.tipo-btn.on {
+  background: var(--orange-lt);
+  border-color: var(--fu-orange);
+  box-shadow: 0 0 0 3px rgba(232,81,26,.12);
+}
+.tipo-btn-ico { font-size: 22px; display: block; margin-bottom: 4px; }
+.tipo-btn-name { font-size: 11px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.tipo-btn.on .tipo-btn-name { color: var(--fu-orange); }
+
+/* ═══ FORM FIELDS ═══ */
+.fsec { margin-bottom: 18px; }
+.slbl {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 10px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.fld { margin-bottom: 12px; }
+.fld label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+.fld .req { color: var(--fu-orange); }
+.fld input, .fld select, .fld textarea {
+  width: 100%; padding: 12px 14px;
+  font-size: 16px; /* CRÍTICO: evita zoom en iOS Safari */
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--text);
+  background: rgba(255,255,255,.9);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none; appearance: none;
+}
+.fld input:focus, .fld select:focus, .fld textarea:focus {
+  border-color: var(--fu-orange);
+  box-shadow: 0 0 0 3px rgba(232,81,26,.1);
+}
+.fld textarea { resize: vertical; min-height: 80px; }
+.fld select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%237A5540' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* Campo peso */
+.campo-peso { position: relative; }
+.peso-box { display: flex; }
+.peso-symbol {
+  width: 40px; height: 48px; display: flex; align-items: center; justify-content: center;
+  background: rgba(237,216,204,.5); border: 1.5px solid var(--border); border-right: none;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm); font-weight: 700; color: var(--muted); font-size: 15px;
+}
+.peso-input {
+  flex: 1; border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
+}
+.peso-preview { font-size: 11px; color: var(--muted); margin-top: 4px; padding: 0 2px; }
+.peso-preview.has-val { color: var(--ok); font-weight: 600; }
+
+/* RUT no aplica */
+.rut-na-wrap { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.rut-na-chk { display: none; }
+.rut-na-label { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.rut-na-box {
+  width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all .15s;
+}
+.rut-na-chk:checked + .rut-na-label .rut-na-box { background: var(--fu-orange); border-color: var(--fu-orange); }
+.rut-na-icon { display: none; color: #fff; font-size: 11px; font-weight: 900; }
+.rut-na-chk:checked + .rut-na-label .rut-na-icon { display: block; }
+
+/* ═══ STATUS BAR ═══ */
+.sbar {
+  border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px;
+  font-size: 13px; font-weight: 600; display: none; align-items: center; gap: 8px;
+}
+.sbar.show { display: flex; }
+.sbar.loading { background: var(--warn-lt); color: var(--warn); border: 1px solid rgba(180,83,9,.2); }
+.sbar.ok     { background: var(--ok-lt); color: var(--ok); border: 1px solid rgba(13,122,78,.2); }
+.sbar.err    { background: var(--err-lt); color: var(--err); border: 1px solid rgba(192,57,43,.2); }
+.sbar-spin { width: 16px; height: 16px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══ BUTTONS ═══ */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 14px 20px; border: none; border-radius: var(--radius-sm);
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all .2s; letter-spacing: .1px;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--fu-dark); color: #fff; box-shadow: 0 4px 16px rgba(30,15,6,.25); }
+.btn-primary:active { background: var(--fu-orange); }
+.btn-orange { background: var(--fu-orange); color: #fff; box-shadow: 0 4px 16px rgba(232,81,26,.35); }
+.btn-orange:active { background: var(--orange-d); }
+.btn-outline {
+  background: rgba(255,255,255,.7); color: var(--muted);
+  border: 1.5px solid var(--border);
+}
+.btn-sm { padding: 10px 16px; font-size: 13px; width: auto; }
+.btn:disabled { opacity: .5; pointer-events: none; }
+
+/* ═══ BADGE / CHIP ═══ */
+.badge {
+  display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: .3px;
+}
+.badge-pendiente  { background: #FEF3C7; color: #92400E; }
+.badge-revision   { background: #EFF6FF; color: #1D4ED8; }
+.badge-aprobado   { background: var(--ok-lt); color: var(--ok); }
+.badge-rechazado  { background: var(--err-lt); color: var(--err); }
+.badge-desembolsado { background: #F0FDF4; color: #166534; }
+
+/* ═══ ESTADO VIEW ═══ */
+.estado-search {
+  display: flex; gap: 8px; margin-bottom: 16px;
+}
+.estado-search input {
+  flex: 1; padding: 13px 14px; font-size: 16px;
+  background: rgba(255,255,255,.9); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); outline: none; font-family: inherit;
+  transition: border-color .15s;
+}
+.estado-search input:focus { border-color: var(--fu-orange); box-shadow: 0 0 0 3px rgba(232,81,26,.1); }
+.estado-card {
+  background: rgba(255,255,255,.88);
+  border: 1.5px solid rgba(255,255,255,.75);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(30,15,6,.07);
+  margin-bottom: 10px;
+}
+.ec-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.ec-name { font-weight: 700; font-size: 15px; color: var(--text); }
+.ec-id { font-size: 11px; color: var(--muted); background: rgba(237,216,204,.5); padding: 2px 8px; border-radius: 5px; }
+.ec-tipo { font-size: 12px; color: var(--muted); }
+.ec-fecha { font-size: 11px; color: var(--muted-lt); margin-top: 4px; }
+.hist-item { padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; gap: 10px; }
+.hist-item:last-child { border-bottom: none; }
+.hist-dot { width: 8px; height: 8px; background: var(--fu-orange); border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.hist-accion { font-size: 13px; font-weight: 600; }
+.hist-fecha  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ═══ DATOS DEL ASOCIADO ═══ */
+.datos-header {
+  background: linear-gradient(135deg, var(--fu-dark) 0%, var(--fu-dark2) 100%);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.datos-avatar {
+  width: 44px; height: 44px; background: var(--fu-orange); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+}
+.datos-saved-name { font-weight: 700; font-size: 15px; color: #fff; }
+.datos-saved-ced  { font-size: 12px; color: rgba(255,255,255,.55); margin-top: 2px; }
+.datos-save-btn {
+  margin-left: auto; background: var(--fu-orange); border: none; border-radius: 8px;
+  padding: 8px 14px; font-family: inherit; font-size: 12px; font-weight: 700;
+  color: #fff; cursor: pointer; white-space: nowrap; transition: background .15s;
+}
+.datos-save-btn:active { background: var(--orange-d); }
+
+/* ═══ PQRS ═══ */
+.pqrs-tipos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.pqrs-tipo-btn {
+  background: rgba(255,255,255,.7); border: 2px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px; text-align: center;
+  cursor: pointer; transition: all .18s; -webkit-tap-highlight-color: transparent;
+}
+.pqrs-tipo-btn.on { background: var(--orange-lt); border-color: var(--fu-orange); }
+.pqrs-tipo-ico  { font-size: 20px; display: block; margin-bottom: 3px; }
+.pqrs-tipo-name { font-size: 11px; font-weight: 700; color: var(--text); }
+.pqrs-tipo-btn.on .pqrs-tipo-name { color: var(--fu-orange); }
+
+/* ═══ FELIX CHAT ═══ */
+.felix-view {
+  display: none; flex-direction: column;
+  position: fixed;
+  top: calc(var(--top-h) + var(--safe-top));
+  bottom: calc(var(--tab-h) + var(--safe-bot));
+  left: 0; right: 0;
+  background: var(--bg);
+  z-index: 50;
+}
+.felix-view.active { display: flex; }
+.felix-header {
+  padding: 12px 16px;
+  background: rgba(30,15,6,.9);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0;
+}
+.felix-avatar {
+  width: 38px; height: 38px; background: var(--fu-orange); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.felix-hname { font-weight: 700; font-size: 14px; color: #fff; }
+.felix-hsub  { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 1px; }
+.felix-hstatus { width: 8px; height: 8px; background: #22C55E; border-radius: 50%; box-shadow: 0 0 6px #22C55E; }
+.felix-chips {
+  padding: 8px 12px; display: flex; gap: 7px; overflow-x: auto;
+  background: rgba(30,15,6,.8); border-bottom: 1px solid rgba(255,255,255,.05);
+  flex-shrink: 0; scrollbar-width: none;
+}
+.felix-chips::-webkit-scrollbar { display: none; }
+.felix-chip {
+  background: rgba(232,81,26,.15); border: 1px solid rgba(232,81,26,.3);
+  color: #FFBFA0; font-size: 11px; font-weight: 600; border-radius: 20px;
+  padding: 5px 12px; white-space: nowrap; cursor: pointer;
+  transition: background .15s; -webkit-tap-highlight-color: transparent;
+}
+.felix-chip:active { background: rgba(232,81,26,.35); }
+.felix-messages {
+  flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.fmsg { display: flex; gap: 8px; align-items: flex-end; }
+.fmsg.user { flex-direction: row-reverse; }
+.fmsg-avatar {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.fmsg.felix .fmsg-avatar { background: var(--fu-orange); }
+.fmsg.user  .fmsg-avatar { background: var(--fu-dark2); }
+.fmsg-bubble {
+  max-width: 76%; padding: 10px 14px; border-radius: 16px;
+  font-size: 13.5px; line-height: 1.55;
+}
+.fmsg-bubble p { margin-bottom: 6px; }
+.fmsg-bubble p:last-child { margin-bottom: 0; }
+.fmsg.felix .fmsg-bubble {
+  background: rgba(255,255,255,.95);
+  border: 1px solid rgba(237,216,204,.6);
+  border-bottom-left-radius: 4px;
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(30,15,6,.06);
+}
+.fmsg.user .fmsg-bubble {
+  background: var(--fu-orange);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.fmsg-time { font-size: 10px; color: var(--muted-lt); margin-top: 4px; text-align: right; }
+.felix-typing {
+  display: none; gap: 8px; align-items: flex-end; padding: 0 16px 8px;
+  flex-shrink: 0;
+}
+.felix-typing.show { display: flex; }
+.typing-bubble {
+  background: rgba(255,255,255,.9); border: 1px solid var(--border);
+  border-radius: 16px; border-bottom-left-radius: 4px;
+  padding: 10px 14px; display: flex; gap: 4px; align-items: center;
+}
+.typing-dot {
+  width: 7px; height: 7px; background: var(--muted-lt); border-radius: 50%;
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: .2s; }
+.typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes typingBounce { 0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)} }
+.felix-input-area {
+  padding: 10px 12px; display: flex; gap: 8px; align-items: flex-end;
+  background: rgba(255,255,255,.85);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(237,216,204,.6);
+  flex-shrink: 0;
+}
+.felix-textarea {
+  flex: 1; padding: 11px 14px;
+  background: rgba(255,255,255,.9); border: 1.5px solid var(--border);
+  border-radius: 20px; font-size: 15px; font-family: inherit;
+  color: var(--text); outline: none; resize: none; overflow: hidden;
+  max-height: 100px; line-height: 1.4;
+  transition: border-color .15s;
+}
+.felix-textarea:focus { border-color: var(--fu-orange); }
+.felix-send {
+  width: 44px; height: 44px; background: var(--fu-orange); border: none;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .15s; flex-shrink: 0;
+}
+.felix-send:active { background: var(--orange-d); transform: scale(.93); }
+.felix-send svg { width: 18px; height: 18px; }
+
+/* ═══ TOAST ═══ */
+.toast {
+  position: fixed; bottom: calc(var(--tab-h) + var(--safe-bot) + 12px); left: 16px; right: 16px;
+  background: rgba(30,15,6,.93); color: #fff;
+  padding: 12px 16px; border-radius: 12px;
+  font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 8px 32px rgba(30,15,6,.25);
+  z-index: 999; opacity: 0; transform: translateY(8px);
+  transition: all .25s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ═══ BOTTOM TAB BAR ═══ */
+.tabbar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  height: calc(var(--tab-h) + var(--safe-bot));
+  padding-bottom: var(--safe-bot);
+  background: rgba(30,15,6,.92);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: stretch;
+}
+.tab-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; cursor: pointer; border: none; background: none;
+  color: rgba(255,255,255,.38); transition: color .2s;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  padding-bottom: 2px;
+}
+.tab-btn.active { color: var(--fu-orange); }
+.tab-ico { font-size: 20px; line-height: 1; }
+.tab-lbl { font-size: 9.5px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
+.tab-btn.active .tab-lbl { color: var(--fu-orange); }
+
+/* ═══ EMPTY STATE ═══ */
+.empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+.empty-ico { font-size: 42px; margin-bottom: 12px; }
+.empty-title { font-weight: 700; font-size: 16px; color: var(--text); margin-bottom: 6px; }
+.empty-sub { font-size: 13px; line-height: 1.5; }
+
+/* ═══ DL CARD (descarga docx) ═══ */
+.dl-card {
+  background: var(--ok-lt); border: 1.5px solid rgba(13,122,78,.2);
+  border-radius: var(--radius); padding: 16px; margin-top: 14px;
+  display: none;
+}
+.dl-card.show { display: block; }
+.dl-card-title { font-weight: 700; font-size: 14px; color: var(--ok); margin-bottom: 6px; }
+.dl-card-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+
+/* ═══ COLLAPSIBLE SECTION ═══ */
+.collapse-section { margin-bottom: 12px; }
+.collapse-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,.6); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  font-family: inherit; font-size: 13px; font-weight: 700; color: var(--text);
+  cursor: pointer; transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.collapse-trigger.open { background: var(--orange-lt); border-color: var(--fu-orange); color: var(--fu-orange); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.collapse-arrow { transition: transform .25s; }
+.collapse-trigger.open .collapse-arrow { transform: rotate(180deg); }
+.collapse-body {
+  background: rgba(255,255,255,.5); border: 1.5px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  overflow: hidden; height: 0; transition: height .3s ease;
+}
+.collapse-inner { padding: 14px; }
+
+/* ═══ INFO CHIPS ═══ */
+.info-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.info-chip {
+  background: rgba(255,240,234,.8); border: 1px solid rgba(232,81,26,.2);
+  color: var(--fu-orange); font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 20px;
+}
+
+/* ═══ SCROLL BEHAVIOR ═══ */
+.main { -webkit-overflow-scrolling: touch; }
+</style>
+</head>
+<body>
+
+<!-- ═══ TOPBAR ═══ -->
+<header class="topbar">
+  <a href="#" class="topbar-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </div>
+    <span class="logo-name">Fondo<span>Une</span></span>
+  </a>
+  <span class="topbar-badge">Asociados</span>
+  <a href="./portal-asociado.html" class="topbar-ver-desktop">🖥️ Escritorio</a>
+</header>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main" id="mainScroll">
+
+  <!-- ══ VIEW: SOLICITUD ══ -->
+  <section class="view active" id="view-solicitud">
+    <div class="vh">
+      <div class="vh-title">📋 Nueva Solicitud</div>
+      <div class="vh-sub">Selecciona el tipo de crédito y completa el formulario</div>
+    </div>
+
+    <!-- Tipo selector -->
+    <div class="tipo-grid">
+      <div class="tipo-btn on" id="tbtn-compra" onclick="APP.selTipo('compra')">
+        <span class="tipo-btn-ico">🏡</span>
+        <span class="tipo-btn-name">Compra Vivienda</span>
+      </div>
+      <div class="tipo-btn" id="tbtn-construccion" onclick="APP.selTipo('construccion')">
+        <span class="tipo-btn-ico">🏗️</span>
+        <span class="tipo-btn-name">Construcción</span>
+      </div>
+      <div class="tipo-btn" id="tbtn-gravamen" onclick="APP.selTipo('gravamen')">
+        <span class="tipo-btn-ico">📜</span>
+        <span class="tipo-btn-name">Gravamen</span>
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="sbar" id="sbar">
+      <div class="sbar-spin" id="spin" style="display:none"></div>
+      <span id="sbarTxt"></span>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card">
+      <div class="card-head">
+        <span class="card-head-ico" id="fIco">🏡</span>
+        <div>
+          <div class="card-head-title" id="fTit">Compra de Vivienda</div>
+          <div style="font-size:11px;color:var(--muted)" id="fSub">Datos del solicitante y del vendedor</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <!-- Info del crédito -->
+        <div class="fsec">
+          <div class="slbl">📋 Información del Crédito</div>
+          <div class="fld">
+            <label>N° Radicado / Crédito <span class="req">*</span></label>
+            <input id="radicado" placeholder="Ej: CR-2025-00123" autocomplete="off" inputmode="text">
+          </div>
+          <div class="fld">
+            <label>Fecha Límite de Documentos</label>
+            <input type="date" id="fechaLimite">
+          </div>
+          <div class="fld">
+            <label>Asesor Responsable</label>
+            <input id="asesor" placeholder="Nombre del asesor" autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Datos titular -->
+        <div class="fsec">
+          <div class="slbl" id="titLbl">👤 Datos del Solicitante</div>
+          <div class="fld">
+            <label>Nombre Completo <span class="req">*</span></label>
+            <input id="nombreTitular" placeholder="Nombre completo del titular" autocomplete="name">
+          </div>
+          <div class="fld">
+            <label>Número de Cédula <span class="req">*</span></label>
+            <input id="cedula" placeholder="Ej: 1.234.567.890" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="fld">
+            <label>Fecha de Expedición Cédula</label>
+            <input type="date" id="fechaExpCedula">
+          </div>
+          <div class="fld">
+            <label>Lugar de Expedición Cédula</label>
+            <input id="lugarExpCedula" placeholder="Ej: Medellín, Antioquia">
+          </div>
+          <div class="fld">
+            <label>Teléfono</label>
+            <input id="telefono" placeholder="Ej: 310 000 0000" inputmode="tel" maxlength="20">
+          </div>
+          <div class="fld">
+            <label>Correo Electrónico</label>
+            <input type="email" id="correo" placeholder="correo@ejemplo.com" inputmode="email" autocomplete="email">
+          </div>
+          <div class="fld">
+            <label id="dirLbl">Dirección del Inmueble</label>
+            <input id="direccion" placeholder="Dirección completa" autocomplete="street-address">
+          </div>
+          <div class="fld">
+            <label>RUT del Titular</label>
+            <input id="rutTitular" placeholder="Ej: 900.123.456-7">
+            <div class="rut-na-wrap">
+              <input type="checkbox" id="rutTitularNa" class="rut-na-chk" onchange="toggleRut(this,'rutTitular')">
+              <label for="rutTitularNa" class="rut-na-label">
+                <span class="rut-na-box"><i class="rut-na-icon">✓</i></span>
+                No aplica / No tengo RUT
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campos extra según tipo -->
+        <div id="extraFields"></div>
+
+        <!-- Botón generar -->
+        <button class="btn btn-orange" id="btnGen" onclick="APP.generar()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          Generar Lista de Chequeo
+        </button>
+
+        <!-- Download card -->
+        <div class="dl-card" id="dlCard">
+          <div class="dl-card-title">✅ ¡Solicitud registrada!</div>
+          <div class="dl-card-sub">Tu lista de chequeo fue generada y la solicitud quedó guardada. Descarga el documento para enviárselo al asociado.</div>
+          <button class="btn btn-primary" id="btnDl" onclick="APP.descargar()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Descargar .docx
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info chips -->
+    <div class="info-row">
+      <span class="info-chip">📧 creditosvivienda@fondoune.com</span>
+      <span class="info-chip">📱 +57 300 352 8156</span>
+    </div>
+  </section>
+
+  <!-- ══ VIEW: ESTADO ══ -->
+  <section class="view" id="view-estado">
+    <div class="vh">
+      <div class="vh-title">🔍 Estado de Solicitud</div>
+      <div class="vh-sub">Consulta por cédula o número de radicado</div>
+    </div>
+    <div class="estado-search">
+      <input id="buscarInput" placeholder="Cédula o N° Radicado…" inputmode="search" autocomplete="off">
+      <button class="btn btn-orange btn-sm" onclick="APP.buscarEstado()" style="border-radius:10px;padding:0 16px;width:auto;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+    <div id="estadoResults">
+      <div class="empty">
+        <div class="empty-ico">🔎</div>
+        <div class="empty-title">Ingresa tu cédula o radicado</div>
+        <div class="empty-sub">Te mostramos el estado actualizado de tu solicitud</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ VIEW: DATOS ══ -->
+  <section class="view" id="view-datos">
+    <div class="vh">
+      <div class="vh-title">👤 Mis Datos</div>
+      <div class="vh-sub">Mantén tu información actualizada</div>
+    </div>
+
+    <div class="datos-header" id="datosHeader">
+      <div class="datos-avatar">👤</div>
+      <div>
+        <div class="datos-saved-name" id="datosNombreDisplay">Sin información guardada</div>
+        <div class="datos-saved-ced" id="datosCedDisplay">Completa el formulario</div>
+      </div>
+      <button class="datos-save-btn" onclick="DATOS.guardar()">💾 Guardar</button>
+    </div>
+
+    <!-- Identificación -->
+    <div class="collapse-section">
+      <button class="collapse-trigger open" id="ct-ident" onclick="toggleCollapse('ident')">
+        🪪 Identificación <span class="collapse-arrow">▾</span>
+      </button>
+      <div class="collapse-body" id="cb-ident" style="height:auto">
+        <div class="collapse-inner">
+          <div class="fld"><label>Tipo de Identificación</label>
+            <select id="asocTipoId">
+              <option value="">Seleccionar…</option>
+              <option value="CC">Cédula de Ciudadanía</option>
+              <option value="CE">Cédula de Extranjería</option>
+              <option value="PA">Pasaporte</option>
+            </select>
+          </div>
+          <div class="fld"><label>Número de Documento</label>
+            <input id="asocCedula" placeholder="Número de identificación" inputmode="numeric">
+          </div>
+          <div class="fld"><label>Primer Apellido</label><input id="asocApe1" placeholder="Primer apellido"></div>
+          <div class="fld"><label>Segundo Apellido</label><input id="asocApe2" placeholder="Segundo apellido"></div>
+          <div class="fld"><label>Primer Nombre</label><input id="asocNom1" placeholder="Primer nombre"></div>
+          <div class="fld"><label>Segundo Nombre</label><input id="asocNom2" placeholder="Segundo nombre"></div>
+          <div class="fld"><label>Fecha de Nacimiento</label><input type="date" id="asocFechaNac"></div>
+          <div class="fld"><label>Lugar de Expedición</label><input id="asocLugarExp" placeholder="Ciudad de expedición"></div>
+          <div class="fld"><label>Fecha de Expedición</label><input type="date" id="asocFechaExp"></div>
+          <div class="fld"><label>Sexo</label>
+            <select id="asocSexo">
+              <option value="">Seleccionar…</option>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+              <option value="O">Otro</option>
+            </select>
+          </div>
+          <div class="fld"><label>Estado Civil</label>
+            <select id="asocEstadoCivil">
+              <option value="">Seleccionar…</option>
+              <option>Soltero/a</option><option>Casado/a</option>
+              <option>Unión libre</option><option>Divorciado/a</option><option>Viudo/a</option>
+            </select>
+          </div>
+          <div class="fld"><label>Nivel de Estudios</label>
+            <select id="asocEstudios">
+              <option value="">Seleccionar…</option>
+              <option>Primaria</option><option>Bachillerato</option>
+              <option>Técnico</option><option>Tecnólogo</option>
+              <option>Universitario</option><option>Posgrado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contacto -->
+    <div class="collapse-section">
+      <button class="collapse-trigger" id="ct-contacto" onclick="toggleCollapse('contacto')">
+        📞 Contacto y Dirección <span class="collapse-arrow">▾</span>
+      </button>
+      <div class="collapse-body" id="cb-contacto">
+        <div class="collapse-inner">
+          <div class="fld"><label>Teléfono Principal</label><input id="asocTel1" placeholder="Ej: 604 000 0000" inputmode="tel"></div>
+          <div class="fld"><label>Celular</label><input id="asocCelular" placeholder="Ej: 310 000 0000" inputmode="tel"></div>
+          <div class="fld"><label>Teléfono Alternativo</label><input id="asocTel2" placeholder="Opcional" inputmode="tel"></div>
+          <div class="fld"><label>Correo Electrónico</label><input type="email" id="asocEmail" placeholder="correo@ejemplo.com" inputmode="email"></div>
+          <div class="fld"><label>Dirección</label><input id="asocDireccion" placeholder="Dirección de residencia"></div>
+          <div class="fld"><label>Ciudad</label><input id="asocCiudad" placeholder="Ciudad"></div>
+          <div class="fld"><label>Departamento</label><input id="asocDepto" placeholder="Departamento"></div>
+          <div class="fld"><label>Barrio</label><input id="asocBarrio" placeholder="Barrio"></div>
+          <div class="fld"><label>Estrato</label>
+            <select id="asocEstrato">
+              <option value="">Seleccionar…</option>
+              <option>1</option><option>2</option><option>3</option>
+              <option>4</option><option>5</option><option>6</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Laboral -->
+    <div class="collapse-section">
+      <button class="collapse-trigger" id="ct-laboral" onclick="toggleCollapse('laboral')">
+        🏢 Información Laboral <span class="collapse-arrow">▾</span>
+      </button>
+      <div class="collapse-body" id="cb-laboral">
+        <div class="collapse-inner">
+          <div class="fld"><label>Empresa</label><input id="asocEmpresa" placeholder="Nombre de la empresa"></div>
+          <div class="fld"><label>Periodo de Nómina</label>
+            <select id="asocPeriodo">
+              <option value="">Seleccionar…</option>
+              <option>Quincenal</option><option>Mensual</option><option>Semanal</option>
+            </select>
+          </div>
+          <div class="fld"><label>Dependencia / Área</label><input id="asocDependencia" placeholder="Área o departamento"></div>
+          <div class="fld"><label>Tipo de Contrato</label>
+            <select id="asocTipoContrato">
+              <option value="">Seleccionar…</option>
+              <option>Término indefinido</option><option>Término fijo</option>
+              <option>Prestación de servicios</option><option>Obra o labor</option>
+            </select>
+          </div>
+          <div class="fld"><label>Cargo</label><input id="asocCargo" placeholder="Cargo actual"></div>
+          <div class="fld"><label>Fecha de Ingreso</label><input type="date" id="asocFechaIngreso"></div>
+          <div class="fld"><label>Salario Básico</label>
+            <div class="campo-peso">
+              <div class="peso-box">
+                <div class="peso-symbol">$</div>
+                <input class="peso-input" id="asocSalario" placeholder="Ej: 3.500.000" inputmode="numeric">
+              </div>
+              <div class="peso-preview" id="pvSalario">Ingresa el valor en pesos</div>
+            </div>
+          </div>
+          <div class="fld"><label>Total Deducciones</label>
+            <div class="campo-peso">
+              <div class="peso-box">
+                <div class="peso-symbol">$</div>
+                <input class="peso-input" id="asocDeduccion" placeholder="Ej: 800.000" inputmode="numeric">
+              </div>
+              <div class="peso-preview" id="pvDeduccion">Ingresa el valor en pesos</div>
+            </div>
+          </div>
+          <div class="fld"><label>RUT</label><input id="asocRut" placeholder="Ej: 900.123.456-7"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bancaria -->
+    <div class="collapse-section">
+      <button class="collapse-trigger" id="ct-banco" onclick="toggleCollapse('banco')">
+        🏦 Información Bancaria <span class="collapse-arrow">▾</span>
+      </button>
+      <div class="collapse-body" id="cb-banco">
+        <div class="collapse-inner">
+          <div class="fld"><label>Banco</label><input id="asocBanco" placeholder="Ej: Bancolombia"></div>
+          <div class="fld"><label>Número de Cuenta</label><input id="asocNroCuenta" placeholder="Número de cuenta" inputmode="numeric"></div>
+          <div class="fld"><label>Tipo de Cuenta</label>
+            <select id="asocTipoCuenta">
+              <option value="">Seleccionar…</option>
+              <option>Ahorros</option><option>Corriente</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-orange" onclick="DATOS.guardar()" style="margin-top:4px">
+      💾 Guardar Información
+    </button>
+  </section>
+
+  <!-- ══ VIEW: PQRS ══ -->
+  <section class="view" id="view-pqrs">
+    <div class="vh">
+      <div class="vh-title">💬 PQRS</div>
+      <div class="vh-sub">Peticiones, quejas, reclamos y sugerencias</div>
+    </div>
+
+    <div class="pqrs-tipos">
+      <div class="pqrs-tipo-btn on" id="pt-peticion" onclick="setPqrsTipo('peticion')">
+        <span class="pqrs-tipo-ico">📩</span>
+        <span class="pqrs-tipo-name">Petición</span>
+      </div>
+      <div class="pqrs-tipo-btn" id="pt-queja" onclick="setPqrsTipo('queja')">
+        <span class="pqrs-tipo-ico">😔</span>
+        <span class="pqrs-tipo-name">Queja</span>
+      </div>
+      <div class="pqrs-tipo-btn" id="pt-reclamo" onclick="setPqrsTipo('reclamo')">
+        <span class="pqrs-tipo-ico">⚠️</span>
+        <span class="pqrs-tipo-name">Reclamo</span>
+      </div>
+      <div class="pqrs-tipo-btn" id="pt-sugerencia" onclick="setPqrsTipo('sugerencia')">
+        <span class="pqrs-tipo-ico">💡</span>
+        <span class="pqrs-tipo-name">Sugerencia</span>
+      </div>
+    </div>
+
+    <div class="sbar" id="pqrsSbar">
+      <div class="sbar-spin" id="pqrsSpin" style="display:none"></div>
+      <span id="pqrsSbarTxt"></span>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="fld"><label>Nombre Completo <span class="req">*</span></label>
+          <input id="pqrsNombre" placeholder="Tu nombre completo" autocomplete="name">
+        </div>
+        <div class="fld"><label>Número de Documento <span class="req">*</span></label>
+          <input id="pqrsDocumento" placeholder="Ej: 1.234.567.890" inputmode="numeric">
+        </div>
+        <div class="fld"><label>Teléfono <span class="req">*</span></label>
+          <input id="pqrsTelefono" placeholder="Ej: 310 000 0000" inputmode="tel" maxlength="20">
+        </div>
+        <div class="fld"><label>Correo Electrónico</label>
+          <input type="email" id="pqrsCorreo" placeholder="correo@ejemplo.com" inputmode="email">
+        </div>
+        <div class="fld"><label>Tu Inquietud <span class="req">*</span></label>
+          <textarea id="pqrsInquietud" placeholder="Describe tu petición, queja, reclamo o sugerencia…" rows="4"></textarea>
+        </div>
+        <button class="btn btn-orange" onclick="PQRS.enviar()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Enviar Solicitud
+        </button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══ FÉLIX VIEW (fixed full) ═══ -->
+<div class="felix-view" id="view-felix">
+  <div class="felix-header">
+    <div class="felix-avatar">🤖</div>
+    <div>
+      <div class="felix-hname">Félix · FondoUne IA</div>
+      <div class="felix-hsub">Asistente activo · Gemini 2.0 Flash</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+      <div class="felix-hstatus"></div>
+    </div>
+  </div>
+  <div class="felix-chips">
+    <div class="felix-chip" onclick="felixChip('¿Qué documentos necesito para el crédito?')">📄 Documentos</div>
+    <div class="felix-chip" onclick="felixChip('¿Cómo consulto el estado de mi solicitud?')">🔍 Estado</div>
+    <div class="felix-chip" onclick="felixChip('¿Cuáles son los tipos de crédito?')">🏠 Créditos</div>
+    <div class="felix-chip" onclick="felixChip('¿Cómo me contacto con FondoUne?')">📞 Contacto</div>
+  </div>
+  <div class="felix-messages" id="felixMessages"></div>
+  <div class="felix-typing" id="felixTyping">
+    <div class="fmsg-avatar" style="background:var(--fu-orange);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🤖</div>
+    <div class="typing-bubble">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  </div>
+  <div class="felix-input-area">
+    <textarea class="felix-textarea" id="felixInput" placeholder="Pregúntale algo a Félix…" rows="1" onkeydown="felixKeydown(event)"></textarea>
+    <button class="felix-send" onclick="felixSend()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ BOTTOM TAB BAR ═══ -->
+<nav class="tabbar">
+  <button class="tab-btn active" id="tab-solicitud" onclick="goView('solicitud')">
+    <span class="tab-ico">📋</span>
+    <span class="tab-lbl">Solicitud</span>
+  </button>
+  <button class="tab-btn" id="tab-estado" onclick="goView('estado')">
+    <span class="tab-ico">🔍</span>
+    <span class="tab-lbl">Estado</span>
+  </button>
+  <button class="tab-btn" id="tab-datos" onclick="goView('datos')">
+    <span class="tab-ico">👤</span>
+    <span class="tab-lbl">Mis Datos</span>
+  </button>
+  <button class="tab-btn" id="tab-pqrs" onclick="goView('pqrs')">
+    <span class="tab-ico">💬</span>
+    <span class="tab-lbl">PQRS</span>
+  </button>
+  <button class="tab-btn" id="tab-felix" onclick="goView('felix')">
+    <span class="tab-ico">🤖</span>
+    <span class="tab-lbl">Félix</span>
+  </button>
+</nav>
+
+<!-- Toast -->
+<div class="toast" id="toast"><span id="toastIco"></span><span id="toastTxt"></span></div>
+
+<script defer src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   MÓDULO DE SEGURIDAD Y AUDITORÍA FONDOUNE
+═══════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var SEC = { MAX_IDLE_MINUTES:15, AUDIT_KEY:'fu_asoc_audit', SESS_KEY:'fu_asoc_sess' };
+  window.FU_Sanitize = function(str){
+    if(typeof str!=='string') return '';
+    var el=document.createElement('div'); el.textContent=str; return el.innerHTML.trim();
+  };
+  document.addEventListener('blur',function(e){
+    var el=e.target;
+    if((el.tagName==='INPUT'&&el.type!=='password'&&el.type!=='file')||el.tagName==='TEXTAREA'){
+      var c=window.FU_Sanitize(el.value); if(el.value!==c){el.value=c;el.dispatchEvent(new Event('input',{bubbles:true}));}
+    }
+  },true);
+  window.FU_Audit={
+    log:function(a,d){try{var l=JSON.parse(localStorage.getItem(SEC.AUDIT_KEY)||'[]');l.unshift({ts:new Date().toISOString(),accion:a,detalle:d||''});if(l.length>100)l=l.slice(0,100);localStorage.setItem(SEC.AUDIT_KEY,JSON.stringify(l));}catch(e){}},
+    get:function(){try{return JSON.parse(localStorage.getItem(SEC.AUDIT_KEY)||'[]');}catch(e){return[];}}
+  };
+  window.FU_Session={
+    init:function(){var r=localStorage.getItem(SEC.SESS_KEY);if(!r){localStorage.setItem(SEC.SESS_KEY,JSON.stringify({inicio:Date.now(),ultimaActividad:Date.now()}));FU_Audit.log('SESION_INICIO','Nueva sesión móvil');}else this.touch();},
+    touch:function(){try{var s=JSON.parse(localStorage.getItem(SEC.SESS_KEY));s.ultimaActividad=Date.now();localStorage.setItem(SEC.SESS_KEY,JSON.stringify(s));}catch(e){}},
+    check:function(){try{var s=JSON.parse(localStorage.getItem(SEC.SESS_KEY));if(!s)return;if((Date.now()-s.ultimaActividad)/60000>SEC.MAX_IDLE_MINUTES){FU_Audit.log('SESION_EXPIRADA','Inactividad');localStorage.removeItem(SEC.SESS_KEY);alert('Sesión expirada por inactividad. La página se recargará.');window.location.reload();}}catch(e){}}
+  };
+  window.FU_Session.init();
+  document.addEventListener('touchstart',function(){window.FU_Session.touch();},{passive:true});
+  document.addEventListener('keydown',function(){window.FU_Session.touch();});
+  setInterval(window.FU_Session.check,60000);
+})();
+
+/* ═══ NAV ═══ */
+var currentView = 'solicitud';
+function goView(name) {
+  // Views normales
+  var views = ['solicitud','estado','datos','pqrs'];
+  views.forEach(function(v){
+    var el = document.getElementById('view-'+v);
+    var tb = document.getElementById('tab-'+v);
+    if(el) el.classList[v===name?'add':'remove']('active');
+    if(tb) tb.classList[v===name?'add':'remove']('active');
+  });
+  // Felix es especial (fixed overlay)
+  var felixView = document.getElementById('view-felix');
+  var felixTab  = document.getElementById('tab-felix');
+  if(name==='felix'){
+    felixView.classList.add('active');
+    felixTab.classList.add('active');
+    if(window.felixHistory.length===0) setTimeout(felixBienvenida, 300);
+    setTimeout(function(){ var inp=document.getElementById('felixInput'); if(inp)inp.focus(); },400);
+  } else {
+    felixView.classList.remove('active');
+    if(felixTab) felixTab.classList.remove('active');
+    // scroll top on view change
+    var main = document.getElementById('mainScroll');
+    if(main) main.scrollTop = 0;
+  }
+  currentView = name;
+  if(window.FU_Audit) FU_Audit.log('NAV',name);
+}
+
+/* ═══ COLLAPSIBLES (Datos) ═══ */
+function toggleCollapse(id) {
+  var trigger = document.getElementById('ct-'+id);
+  var body    = document.getElementById('cb-'+id);
+  if(!trigger||!body) return;
+  var isOpen = trigger.classList.contains('open');
+  if(isOpen){
+    body.style.height = body.scrollHeight + 'px';
+    body.offsetHeight;
+    body.style.height = '0';
+    trigger.classList.remove('open');
+  } else {
+    trigger.classList.add('open');
+    body.style.height = body.scrollHeight + 'px';
+    setTimeout(function(){ body.style.height='auto'; },320);
+  }
+}
+// Inicializar: abrir ident por defecto
+window.addEventListener('DOMContentLoaded', function(){
+  var cb = document.getElementById('cb-ident');
+  if(cb) cb.style.height = 'auto';
+  ['contacto','laboral','banco'].forEach(function(id){
+    var el = document.getElementById('cb-'+id);
+    if(el) el.style.height = '0';
+  });
+  DATOS.cargar();
+  activarCamposPeso();
+});
+
+/* ═══ TOAST ═══ */
+var _toastTimer;
+function showToast(ico, txt) {
+  var t=document.getElementById('toast');
+  document.getElementById('toastIco').textContent=ico;
+  document.getElementById('toastTxt').textContent=txt;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ t.classList.remove('show'); },3000);
+}
+
+/* ═══ PQRS tipo selector ═══ */
+var pqrsTipo = 'peticion';
+function setPqrsTipo(t) {
+  pqrsTipo = t;
+  ['peticion','queja','reclamo','sugerencia'].forEach(function(k){
+    document.getElementById('pt-'+k).classList[k===t?'add':'remove']('on');
+  });
+}
+
+/* ═══ HELPERS ═══ */
+function $id(id){ return document.getElementById(id); }
+function val(id){ var el=$id(id); return el?el.value.trim():''; }
+function numAMiles(n){ return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function milesANum(s){ var c=(s||'').replace(/\./g,'').replace(/[^0-9]/g,''); return c?parseInt(c,10):0; }
+function textoLegible(n){
+  if(!n)return '';
+  if(n>=1000000000)return (n/1000000000).toFixed(1).replace('.0','')+ ' mil millones';
+  if(n>=1000000)return (n/1000000).toFixed(1).replace('.0','')+'M';
+  if(n>=1000)return (n/1000).toFixed(0)+' mil';
+  return numAMiles(n);
+}
+function fmtDate(v){ if(!v)return ''; var p=v.split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:v; }
+
+function activarCamposPeso() {
+  [['asocSalario','pvSalario'],['asocDeduccion','pvDeduccion'],
+   ['valorPresupuesto','pvPresupuesto'],['valorCredito','pvCredito']].forEach(function(pair){
+    var el=$id(pair[0]), pv=$id(pair[1]);
+    if(!el)return;
+    function actualizar(){
+      var raw=el.value.replace(/\./g,'').replace(/[^0-9]/g,'');
+      var n=raw?parseInt(raw,10):0;
+      el.value=n>0?numAMiles(n):'';
+      if(pv){
+        if(n>0){pv.className='peso-preview has-val';pv.innerHTML='<span>●</span> '+textoLegible(n)+' de pesos';}
+        else{pv.className='peso-preview';pv.innerHTML='Ingresa el valor en pesos';}
+      }
+    }
+    el.addEventListener('input',function(){var c=el.selectionStart,a=el.value.length;actualizar();var d=el.value.length;try{el.setSelectionRange(c+(d-a),c+(d-a));}catch(e){}});
+    el.addEventListener('keydown',function(e){var allow=/[0-9]/.test(e.key)||['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'].indexOf(e.key)>-1||e.ctrlKey||e.metaKey;if(!allow)e.preventDefault();});
+  });
+}
+
+function toggleRut(chk, inputId){
+  var inp=$id(inputId);
+  if(!inp)return;
+  inp.disabled=chk.checked;
+  if(chk.checked){inp.value='';inp.placeholder='No aplica';}
+  else{inp.placeholder='Ej: 900.123.456-7';}
+}
+function toggleOtroBanco(sel){
+  var fld=$id('fld-otroBanco');
+  if(fld) fld.style.display=sel.value==='Otro'?'block':'none';
+}
+
+/* ═══ FIREBASE HELPER ═══ */
+function fbActivo(){ return window._fbIniciado && window._fbDB; }
+
+/* ═══ APP (Solicitud) ═══ */
+var APP = (function(){
+  'use strict';
+  var tipo = 'compra';
+  var DB_KEY = 'fondoune_solicitudes';
+  var _lastDocx = null;
+
+  var cfg = {
+    compra:{
+      ico:'🏡',tit:'Compra de Vivienda',sub:'Datos del solicitante y del vendedor',
+      titLbl:'👤 Datos del Solicitante / Comprador',dirLbl:'Dirección del Inmueble por Comprar',
+      extra:function(){
+        return '<div class="fsec"><div class="slbl">🤝 Datos del Vendedor</div>'
+          +'<div class="fld"><label>Nombre del Vendedor</label><input id="nombreVendedor" placeholder="Nombre completo del vendedor"></div>'
+          +'<div class="fld"><label>Cédula del Vendedor</label><input id="cedulaVendedor" placeholder="Ej: 1.234.567.890"></div>'
+          +'<div class="fld"><label>Fecha Expedición Cédula Vendedor</label><input type="date" id="fechaExpCedulaVendedor"></div>'
+          +'<div class="fld"><label>Lugar Expedición Cédula Vendedor</label><input id="lugarExpCedulaVendedor" placeholder="Ej: Bogotá, D.C."></div>'
+          +'<div class="fld"><label>RUT del Vendedor</label>'
+          +'<input id="rutVendedor" placeholder="Ej: 900.123.456-7">'
+          +'<div class="rut-na-wrap"><input type="checkbox" id="rutVendNa" class="rut-na-chk" onchange="toggleRut(this,\'rutVendedor\')">'
+          +'<label for="rutVendNa" class="rut-na-label"><span class="rut-na-box"><i class="rut-na-icon">✓</i></span>No aplica</label></div>'
+          +'</div></div>';
+      }
+    },
+    construccion:{
+      ico:'🏗️',tit:'Construcción y Mejoras',sub:'Titular, codeudor y datos de la obra',
+      titLbl:'👤 Datos del Titular',dirLbl:'Dirección del Inmueble por Construir',
+      extra:function(){
+        return '<div class="fsec"><div class="slbl">👥 Codeudor / Cónyuge (si aplica)</div>'
+          +'<div class="fld"><label>Nombre del Codeudor</label><input id="nombreCodeudor" placeholder="Nombre (si aplica)"></div>'
+          +'<div class="fld"><label>Cédula del Codeudor</label><input id="cedulaCodeudor" placeholder="Cédula (si aplica)"></div>'
+          +'</div>'
+          +'<div class="fsec"><div class="slbl">🔨 Datos de la Obra</div>'
+          +'<div class="fld"><label>Tipo de Obra</label>'
+          +'<select id="tipoObra"><option value="">Seleccionar tipo…</option><option>Construcción</option><option>Ampliación</option><option>Mejoras</option></select></div>'
+          +'<div class="fld"><label>Valor del Presupuesto de Obra</label>'
+          +'<div class="campo-peso"><div class="peso-box"><div class="peso-symbol">$</div>'
+          +'<input class="peso-input" id="valorPresupuesto" placeholder="Ej: 80.000.000" inputmode="numeric"></div>'
+          +'<div class="peso-preview" id="pvPresupuesto">Ingresa el valor en pesos</div></div></div>'
+          +'</div>';
+      }
+    },
+    gravamen:{
+      ico:'📜',tit:'Gravamen Hipotecario',sub:'Datos del titular y de la entidad financiera',
+      titLbl:'👤 Datos del Titular del Crédito',dirLbl:'Dirección del Inmueble con Gravamen',
+      extra:function(){
+        return '<div class="fsec"><div class="slbl">🏦 Entidad Financiera</div>'
+          +'<div class="fld"><label>Entidad Financiera (Banco)</label>'
+          +'<select id="entidadFinanciera" onchange="toggleOtroBanco(this)">'
+          +'<option value="">Seleccionar banco…</option>'
+          +'<optgroup label="🏦 Bancos"><option>Bancolombia</option><option>Banco de Bogotá</option>'
+          +'<option>Davivienda</option><option>BBVA Colombia</option><option>Banco Popular</option>'
+          +'<option>AV Villas</option><option>Banco de Occidente</option><option>Banco Caja Social</option>'
+          +'<option>Scotiabank Colpatria</option><option>GNB Sudameris</option>'
+          +'<option>Banco Agrario</option></optgroup>'
+          +'<optgroup label="📱 Digital"><option>Nequi</option><option>Daviplata</option>'
+          +'<option>Lulo Bank</option><option>Nubank Colombia</option><option>Rappipay</option></optgroup>'
+          +'<optgroup label="🏢 Cooperativas"><option>Confiar</option><option>Coofinep</option>'
+          +'<option>Coltefinanciera</option><option>Juriscoop</option></optgroup>'
+          +'<optgroup label="➕ Otro"><option value="Otro">Otro banco / entidad…</option></optgroup>'
+          +'</select></div>'
+          +'<div class="fld" id="fld-otroBanco" style="display:none"><label>Especifica la entidad</label>'
+          +'<input id="otroBanco" placeholder="Nombre del banco o entidad"></div>'
+          +'<div class="fld"><label>Valor del Crédito Hipotecario</label>'
+          +'<div class="campo-peso"><div class="peso-box"><div class="peso-symbol">$</div>'
+          +'<input class="peso-input" id="valorCredito" placeholder="Ej: 200.000.000" inputmode="numeric"></div>'
+          +'<div class="peso-preview" id="pvCredito">Ingresa el valor en pesos</div></div></div>'
+          +'</div>';
+      }
+    }
+  };
+
+  function generarId(){ return 'SOL-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substring(2,6).toUpperCase(); }
+  function sbar(t,txt){ var b=$id('sbar'),s=$id('spin'); b.className='sbar show '+t; $id('sbarTxt').textContent=txt; if(s)s.style.display=t==='loading'?'block':'none'; }
+  function valPeso(id){ var el=$id(id); if(!el)return ''; var n=milesANum(el.value); return n?'$ '+numAMiles(n):''; }
+
+  function guardarSolicitud(datos,cb){
+    try{ var l=JSON.parse(localStorage.getItem(DB_KEY)||'[]'); l.unshift(datos); localStorage.setItem(DB_KEY,JSON.stringify(l)); }catch(e){}
+    if(fbActivo()){
+      window._fbDB.collection('solicitudes').doc(datos.id).set(datos)
+        .then(function(){ if(cb)cb(null); })
+        .catch(function(e){ if(cb)cb(e); });
+    } else { if(cb)cb(null); }
+  }
+
+  return {
+    selTipo: function(t){
+      tipo=t;
+      ['compra','construccion','gravamen'].forEach(function(k){
+        document.getElementById('tbtn-'+k).classList[k===t?'add':'remove']('on');
+      });
+      var c=cfg[t];
+      $id('fIco').textContent=c.ico; $id('fTit').textContent=c.tit; $id('fSub').textContent=c.sub;
+      $id('titLbl').textContent=c.titLbl; $id('dirLbl').textContent=c.dirLbl;
+      $id('extraFields').innerHTML=c.extra();
+      $id('dlCard').classList.remove('show');
+      $id('sbar').className='sbar';
+      activarCamposPeso();
+    },
+    generar: function(){
+      var rad=val('radicado'),nom=val('nombreTitular'),ced=val('cedula');
+      if(!rad||!nom||!ced){ sbar('err','⚠ Completa: Radicado, Nombre y Cédula'); return; }
+      $id('btnGen').disabled=true;
+      $id('dlCard').classList.remove('show');
+      sbar('loading','Registrando solicitud…');
+      var datos={
+        id:generarId(),radicado:rad,tipo:tipo,tipoLabel:cfg[tipo].tit,
+        nombreTitular:nom,cedula:ced,
+        fechaExpCedula:fmtDate(val('fechaExpCedula')),lugarExpCedula:val('lugarExpCedula'),
+        rutTitular:val('rutTitular'),telefono:val('telefono'),correo:val('correo'),
+        direccion:val('direccion'),fechaLimite:fmtDate(val('fechaLimite')),asesor:val('asesor'),
+        nombreVendedor:val('nombreVendedor'),cedulaVendedor:val('cedulaVendedor'),
+        fechaExpCedulaVendedor:fmtDate(val('fechaExpCedulaVendedor')),
+        lugarExpCedulaVendedor:val('lugarExpCedulaVendedor'),rutVendedor:val('rutVendedor'),
+        nombreCodeudor:val('nombreCodeudor'),cedulaCodeudor:val('cedulaCodeudor'),
+        tipoObra:val('tipoObra'),valorPresupuesto:valPeso('valorPresupuesto'),
+        entidadFinanciera:(val('entidadFinanciera')==='Otro'?(val('otroBanco')||'Otro'):val('entidadFinanciera')),
+        valorCredito:valPeso('valorCredito'),
+        estado:'pendiente',fechaRegistro:new Date().toISOString(),
+        historial:[{accion:'Solicitud registrada por el asociado',fecha:new Date().toISOString(),usuario:'Asociado'}]
+      };
+      _lastDocx=datos;
+      guardarSolicitud(datos,function(err){
+        if(err) sbar('warn','⚠ Guardado local. Error en la nube.');
+        else sbar('ok','✅ Solicitud registrada correctamente');
+        $id('dlCard').classList.add('show');
+        $id('btnGen').disabled=false;
+        if(window.FU_Audit) FU_Audit.log('SOLICITUD_CREADA','Radicado: '+rad+' | Tipo: '+tipo);
+        showToast('✅','Solicitud guardada: '+rad);
+      });
+    },
+    descargar: function(){
+      if(!_lastDocx){ showToast('⚠️','Genera primero la solicitud'); return; }
+      APP._buildDocx(_lastDocx);
+    },
+    buscarEstado: function(){
+      var q=val('buscarInput').replace(/\./g,'').replace(/\s/g,'').toLowerCase();
+      if(!q){ showToast('⚠️','Ingresa cédula o radicado'); return; }
+      var cont=$id('estadoResults');
+      cont.innerHTML='<div class="empty"><div class="empty-ico">⏳</div><div class="empty-title">Buscando…</div></div>';
+      var localData=[];
+      try{ localData=JSON.parse(localStorage.getItem(DB_KEY)||'[]'); }catch(e){}
+      function renderResults(arr){
+        var found=arr.filter(function(s){
+          return (s.cedula||'').replace(/\./g,'').toLowerCase().includes(q)||
+                 (s.radicado||'').toLowerCase().includes(q)||
+                 (s.id||'').toLowerCase().includes(q);
+        });
+        if(!found.length){
+          cont.innerHTML='<div class="empty"><div class="empty-ico">😔</div><div class="empty-title">Sin resultados</div><div class="empty-sub">No encontramos solicitudes con esa cédula o radicado</div></div>';
+          return;
+        }
+        cont.innerHTML=found.map(function(s){
+          var badge='<span class="badge badge-'+(s.estado||'pendiente')+'">'+(s.estado||'pendiente')+'</span>';
+          var hist=(s.historial||[]).slice(-3).reverse().map(function(h){
+            return '<div class="hist-item"><div class="hist-dot"></div><div><div class="hist-accion">'+h.accion+'</div><div class="hist-fecha">'+(h.fecha?new Date(h.fecha).toLocaleDateString('es-CO'):'')+'</div></div></div>';
+          }).join('');
+          return '<div class="estado-card">'
+            +'<div class="ec-row"><div><div class="ec-name">'+s.nombreTitular+'</div><div class="ec-tipo">'+s.tipoLabel+'</div></div>'+badge+'</div>'
+            +'<div class="ec-id">'+s.radicado+'</div>'
+            +'<div class="ec-fecha">📅 '+new Date(s.fechaRegistro).toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'})+'</div>'
+            +(hist?'<div style="margin-top:10px"><div class="slbl" style="margin-bottom:8px">Historial reciente</div>'+hist+'</div>':'')
+            +'</div>';
+        }).join('');
+      }
+      if(fbActivo()){
+        var cedQuery=q.replace(/[^0-9]/g,'');
+        var promises=[];
+        if(cedQuery){
+          promises.push(window._fbDB.collection('solicitudes').where('cedula','>=',cedQuery).where('cedula','<=',cedQuery+'\uf8ff').get());
+        }
+        promises.push(window._fbDB.collection('solicitudes').where('radicado','>=',q.toUpperCase()).where('radicado','<=',q.toUpperCase()+'\uf8ff').get());
+        Promise.all(promises).then(function(snaps){
+          var all=[];
+          snaps.forEach(function(snap){ snap.forEach(function(doc){ all.push(doc.data()); }); });
+          if(all.length) renderResults(all);
+          else renderResults(localData);
+        }).catch(function(){ renderResults(localData); });
+      } else { renderResults(localData); }
+    },
+    _buildDocx: function(d){
+      // Generar docx simple para móvil
+      var lib=(typeof docx!=='undefined'&&docx.Document)?docx:window;
+      if(!lib.Document){ showToast('⚠️','Librería docx cargando, intenta en 2s'); return; }
+      var DD=lib.Document,PK=lib.Packer,PA=lib.Paragraph,RN=lib.TextRun,
+          AL=lib.AlignmentType,BS=lib.BorderStyle,WT=lib.WidthType;
+      var rows=[
+        ['N° Radicado',d.radicado||''],['Tipo de Crédito',d.tipoLabel||''],
+        ['Nombre Titular',d.nombreTitular||''],['Cédula',d.cedula||''],
+        ['Teléfono',d.telefono||''],['Correo',d.correo||''],
+        ['Dirección',d.direccion||''],['Asesor',d.asesor||''],
+        ['Estado',d.estado||''],['Fecha Registro',d.fechaRegistro?new Date(d.fechaRegistro).toLocaleDateString('es-CO'):'']
+      ];
+      var docRows=rows.map(function(r){
+        return new lib.TableRow({children:[
+          new lib.TableCell({children:[new PA({children:[new RN({text:r[0],bold:true,size:20})]})],width:{size:40,type:WT.PERCENTAGE}}),
+          new lib.TableCell({children:[new PA({children:[new RN({text:r[1],size:20})]})],width:{size:60,type:WT.PERCENTAGE}})
+        ]});
+      });
+      var doc=new DD({sections:[{properties:{},children:[
+        new PA({children:[new RN({text:'FondoUne — Lista de Chequeo',bold:true,size:32,color:'E8511A'})],alignment:AL.CENTER}),
+        new PA({children:[new RN({text:'Solicitud de Crédito de Vivienda',size:24,color:'7A5540'})],alignment:AL.CENTER}),
+        new PA({children:[]}),
+        new lib.Table({rows:docRows,width:{size:100,type:WT.PERCENTAGE}})
+      ]}]});
+      PK.toBlob(doc).then(function(blob){
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement('a');
+        a.href=url; a.download='FondoUne_'+d.radicado+'_'+d.nombreTitular.split(' ')[0]+'.docx';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){URL.revokeObjectURL(url);},1000);
+        showToast('📄','Documento descargado');
+        if(window.FU_Audit) FU_Audit.log('DOCX_DESCARGADO','Radicado: '+d.radicado);
+      }).catch(function(e){ showToast('⚠️','Error al generar: '+e.message); });
+    }
+  };
+})();
+
+// Exponer buscarEstado en el scope global para el botón
+window.APP = APP;
+
+/* ═══ DATOS DEL ASOCIADO ═══ */
+var DATOS = (function(){
+  var KEY='fondoune_asoc_v1';
+  var CAMPOS=['asocTipoId','asocCedula','asocRelacion',
+    'asocApe1','asocApe2','asocNom1','asocNom2',
+    'asocFechaNac','asocLugarExp','asocFechaExp','asocSexo','asocEstadoCivil','asocEstudios',
+    'asocTel1','asocCelular','asocTel2','asocEmail','asocDireccion',
+    'asocCiudad','asocDepto','asocBarrio','asocEstrato',
+    'asocEmpresa','asocPeriodo','asocDependencia','asocTipoContrato',
+    'asocCargo','asocFechaIngreso','asocSalario','asocDeduccion',
+    'asocBanco','asocNroCuenta','asocTipoCuenta','asocRut'];
+  return {
+    guardar: function(){
+      var data={};
+      CAMPOS.forEach(function(c){ var el=$id(c); if(el) data[c]=el.value; });
+      try{ localStorage.setItem(KEY,JSON.stringify(data)); }catch(e){}
+      // Guardar también en Firebase si está activo
+      var ced=(data.asocCedula||'').replace(/\./g,'').replace(/\s/g,'');
+      if(fbActivo()&&ced){
+        data._updated=new Date().toISOString();
+        data._source='mobile';
+        window._fbDB.collection('asociados').doc(ced).set(data,{merge:true})
+          .then(function(){ showToast('✅','Datos guardados en la nube'); })
+          .catch(function(){ showToast('💾','Guardado localmente'); });
+      } else {
+        showToast('💾','Datos guardados');
+      }
+      // Actualizar header display
+      var nom=(data.asocNom1||'')+' '+(data.asocApe1||'');
+      $id('datosNombreDisplay').textContent=nom.trim()||'Sin nombre';
+      $id('datosCedDisplay').textContent=data.asocCedula||'Sin cédula';
+      if(window.FU_Audit) FU_Audit.log('DATOS_GUARDADOS','Cédula: '+(data.asocCedula||'N/A'));
+    },
+    cargar: function(){
+      try{
+        var data=JSON.parse(localStorage.getItem(KEY)||'{}');
+        CAMPOS.forEach(function(c){ var el=$id(c); if(el&&data[c]) el.value=data[c]; });
+        var nom=(data.asocNom1||'')+' '+(data.asocApe1||'');
+        if(nom.trim()) $id('datosNombreDisplay').textContent=nom.trim();
+        if(data.asocCedula) $id('datosCedDisplay').textContent=data.asocCedula;
+      }catch(e){}
+    }
+  };
+})();
+window.DATOS = DATOS;
+
+/* ═══ PQRS ═══ */
+var PQRS = (function(){
+  var DB_KEY_PQRS='fondoune_pqrs';
+  var tiposLabel={peticion:'Petición',queja:'Queja',reclamo:'Reclamo',sugerencia:'Sugerencia'};
+  return {
+    enviar: function(){
+      var nom=val('pqrsNombre'),doc=val('pqrsDocumento'),tel=val('pqrsTelefono'),inq=val('pqrsInquietud');
+      if(!nom||!doc||!tel||!inq){
+        var sb=$id('pqrsSbar');
+        sb.className='sbar show err'; $id('pqrsSbarTxt').textContent='⚠ Completa los campos obligatorios';
+        return;
+      }
+      var sb=$id('pqrsSbar'),sp=$id('pqrsSpin');
+      sb.className='sbar show loading'; $id('pqrsSbarTxt').textContent='Enviando…'; sp.style.display='block';
+      var datos={
+        id:'PQRS-'+Date.now().toString(36).toUpperCase(),
+        tipoSolicitud:pqrsTipo,tipoLabel:tiposLabel[pqrsTipo]||pqrsTipo,
+        nombre:nom,documento:doc,telefono:tel,
+        correo:val('pqrsCorreo'),inquietud:inq,
+        estado:'pendiente',fechaRegistro:new Date().toISOString(),
+        historial:[{accion:'Solicitud PQRS registrada',fecha:new Date().toISOString(),usuario:'Asociado'}]
+      };
+      try{ var l=JSON.parse(localStorage.getItem(DB_KEY_PQRS)||'[]'); l.unshift(datos); localStorage.setItem(DB_KEY_PQRS,JSON.stringify(l)); }catch(e){}
+      function done(err){
+        sp.style.display='none';
+        if(err){ sb.className='sbar show warn'; $id('pqrsSbarTxt').textContent='⚠ Guardado localmente. Error en la nube.'; }
+        else { sb.className='sbar show ok'; $id('pqrsSbarTxt').textContent='✅ PQRS enviado correctamente'; }
+        ['pqrsNombre','pqrsDocumento','pqrsTelefono','pqrsCorreo','pqrsInquietud'].forEach(function(id){ var el=$id(id); if(el)el.value=''; });
+        if(window.FU_Audit) FU_Audit.log('PQRS_ENVIADO',tiposLabel[pqrsTipo]+' — '+nom);
+        showToast('✅','PQRS enviado');
+      }
+      if(fbActivo()){
+        window._fbDB.collection('pqrs').doc(datos.id).set(datos).then(function(){ done(null); }).catch(function(e){ done(e); });
+      } else { setTimeout(function(){ done(null); },400); }
+    }
+  };
+})();
+window.PQRS = PQRS;
+
+/* ═══ FÉLIX IA ═══ */
+var FELIX_CFG = {
+  API_KEY: 'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
+  MODEL: 'gemini-2.0-flash',
+  ENDPOINT: 'https://generativelanguage.googleapis.com/v1beta/models/',
+  MAX_TOKENS: 512, TEMP: 0.7, HISTORY_LIMIT: 20
+};
+var FELIX_SYSTEM = [
+  'Eres Félix, el asistente virtual oficial de FondoUne (Fondo de Empleados de UNE).',
+  'Eres amable, claro, profesional y hablas siempre en español colombiano.',
+  'Tu misión es ayudar a los asociados con sus solicitudes de crédito de vivienda.',
+  '',
+  'TIPOS DE CRÉDITO QUE MANEJA FONDOUNE:',
+  '1. Crédito Compra de Vivienda: Para adquirir inmueble nuevo o usado.',
+  '2. Crédito Construcción en Lote Propio: Para construir en terreno del asociado.',
+  '3. Crédito con Garantía Hipotecaria: Con inmueble como respaldo.',
+  '4. Crédito Libre Destino con Garantía: Para cualquier propósito con garantía.',
+  '5. Crédito Compra de Lote: Para adquirir terreno.',
+  '6. Crédito Liberación de Gravamen: Para liberar hipoteca existente.',
+  '',
+  'DOCUMENTOS GENERALES REQUERIDOS:',
+  '- Cédula de ciudadanía ampliada al 150%',
+  '- Certificado laboral con salario y antigüedad (no mayor a 30 días)',
+  '- Últimas 3 colillas de pago',
+  '- Extractos bancarios últimos 3 meses',
+  '- Declaración de renta (si aplica)',
+  '- Certificado de tradición y libertad del inmueble',
+  '- Promesa de compraventa o escritura',
+  '- Avalúo comercial del inmueble',
+  '',
+  'PROCESO: El asociado radica la solicitud → FondoUne revisa → estudio de crédito → decisión → desembolso.',
+  '',
+  'CONTACTO: creditosvivienda@fondoune.com | WhatsApp: +57 300 352 8156',
+  '',
+  'REGLAS: Nunca inventes tasas o montos. Sé conciso (máx 3 párrafos). Usa emojis con moderación.',
+  'Estás en el PORTAL MÓVIL — el usuario accede desde su celular.',
+].join('\n');
+
+window.felixHistory = [];
+var felixLoading = false;
+
+function felixBienvenida(){
+  var list=$id('felixMessages');
+  if(!list||list.children.length>0) return;
+  felixAppend('felix','¡Hola! 👋 Soy **Félix**, tu asistente de FondoUne.\n\nPuedo ayudarte con documentos, estado de solicitudes y mucho más. ¿En qué te puedo ayudar hoy?');
+}
+
+function felixAppend(sender, text){
+  var list=$id('felixMessages');
+  if(!list) return;
+  var isFelix=sender==='felix';
+  var now=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  var div=document.createElement('div');
+  div.className='fmsg '+(isFelix?'felix':'user');
+  var html=felixFmt(text);
+  div.innerHTML=
+    '<div class="fmsg-avatar">'+(isFelix?'🤖':'👤')+'</div>'
+    +'<div><div class="fmsg-bubble">'+html+'</div>'
+    +'<div class="fmsg-time">'+now+'</div></div>';
+  list.appendChild(div);
+  felixScroll();
+}
+function felixFmt(t){
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')
+    .replace(/^/,'<p>').replace(/$/,'</p>');
+}
+function felixScroll(){
+  setTimeout(function(){ var l=$id('felixMessages'); if(l)l.scrollTop=l.scrollHeight; },60);
+}
+function felixTypingShow(show){ var el=$id('felixTyping'); if(el)el.classList.toggle('show',show); }
+
+function _extraerTexto(datos){
+  if(!datos) return null;
+  if(datos.candidates&&datos.candidates[0]&&datos.candidates[0].content&&datos.candidates[0].content.parts&&datos.candidates[0].content.parts[0])
+    return datos.candidates[0].content.parts[0].text||null;
+  return datos.reply||datos.respuesta||datos.text||datos.message||null;
+}
+
+async function felixQuery(historia){
+  try{
+    var url=FELIX_CFG.ENDPOINT+FELIX_CFG.MODEL+':generateContent?key='+FELIX_CFG.API_KEY;
+    var r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      contents:historia,
+      generationConfig:{temperature:FELIX_CFG.TEMP,maxOutputTokens:FELIX_CFG.MAX_TOKENS,topP:0.9}
+    })});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var d=await r.json();
+    var t=_extraerTexto(d);
+    if(t) return t;
+    throw new Error('Respuesta vacía');
+  }catch(e){
+    console.error('[Felix]',e.message);
+    return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo.';
+  }
+}
+
+async function felixSendMessage(userText){
+  if(!userText.trim()||felixLoading) return;
+  felixLoading=true;
+  felixAppend('user',userText);
+  var inp=$id('felixInput');
+  if(inp){inp.value='';inp.style.height='auto';}
+  felixTypingShow(true);
+  felixScroll();
+  if(window.felixHistory.length===0){
+    window.felixHistory.push({role:'user',parts:[{text:'INSTRUCCIONES DEL SISTEMA: '+FELIX_SYSTEM}]});
+    window.felixHistory.push({role:'model',parts:[{text:'Entendido, soy Félix del Portal Móvil FondoUne.'}]});
+  }
+  window.felixHistory.push({role:'user',parts:[{text:userText}]});
+  if(window.felixHistory.length>FELIX_CFG.HISTORY_LIMIT*2)
+    window.felixHistory=window.felixHistory.slice(-FELIX_CFG.HISTORY_LIMIT*2);
+  if(window.FU_Audit) FU_Audit.log('FELIX_IA','Consulta: '+userText.substring(0,60));
+  var reply=await felixQuery(window.felixHistory);
+  window.felixHistory.push({role:'model',parts:[{text:reply}]});
+  felixTypingShow(false);
+  felixAppend('felix',reply);
+  felixLoading=false;
+  if(inp) inp.focus();
+}
+
+function felixSend(){
+  var inp=$id('felixInput');
+  if(inp) felixSendMessage(inp.value.trim());
+}
+function felixChip(text){ felixSendMessage(text); }
+function felixKeydown(e){
+  if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); felixSend(); return; }
+  var inp=e.target;
+  setTimeout(function(){ inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,100)+'px'; },0);
+}
+
+/* ═══ BUSCADOR ESTADO — atajo ═══ */
+document.addEventListener('DOMContentLoaded', function(){
+  var bi=$id('buscarInput');
+  if(bi) bi.addEventListener('keydown',function(e){ if(e.key==='Enter') APP.buscarEstado(); });
+});
+</script>
+</body>
+</html>
