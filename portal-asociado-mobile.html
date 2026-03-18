@@ -690,7 +690,7 @@ body::after {
 
     <!-- Info chips -->
     <div class="info-row">
-      <span class="info-chip">📧 creditosvivienda@fondoune.com</span>
+      <span class="info-chip">📧 <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1b78697e7f726f74686d726d727e757f7a5b7d74757f746e757e35787476">[email&#160;protected]</a></span>
       <span class="info-chip">📱 +57 300 352 8156</span>
     </div>
   </section>
@@ -1001,7 +1001,7 @@ body::after {
 <!-- Toast -->
 <div class="toast" id="toast"><span id="toastIco"></span><span id="toastTxt"></span></div>
 
-<script defer src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script defer src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
 
 <script>
 /* ═══════════════════════════════════════════════════
@@ -1470,9 +1470,10 @@ window.PQRS = PQRS;
 
 /* ═══ FÉLIX IA ═══ */
 var FELIX_CFG = {
-  API_KEY: 'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
-  MODEL: 'gemini-2.0-flash',
-  ENDPOINT: 'https://generativelanguage.googleapis.com/v1beta/models/',
+  API_KEY:   'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
+  MODEL:     'gemini-2.5-flash',
+  ENDPOINT:  'https://generativelanguage.googleapis.com/v1beta/models/',
+  APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbyjEtX8qXtnv29-ZeKlvJna75gFOqtjX8AO6DWm6YV_SZnkHKRscmY7qE32KEFIK8yp/exec',
   MAX_TOKENS: 512, TEMP: 0.7, HISTORY_LIMIT: 20
 };
 var FELIX_SYSTEM = [
@@ -1550,20 +1551,44 @@ function _extraerTexto(datos){
 }
 
 async function felixQuery(historia){
-  try{
-    var url=FELIX_CFG.ENDPOINT+FELIX_CFG.MODEL+':generateContent?key='+FELIX_CFG.API_KEY;
-    var r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      contents:historia,
-      generationConfig:{temperature:FELIX_CFG.TEMP,maxOutputTokens:FELIX_CFG.MAX_TOKENS,topP:0.9}
-    })});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    var d=await r.json();
-    var t=_extraerTexto(d);
-    if(t) return t;
+  var ultimoMsg = historia.length ? historia[historia.length-1].parts[0].text : '';
+
+  /* ── Intento 1: Apps Script (puente serverless) ── */
+  try {
+    var resp = await fetch(FELIX_CFG.APPS_SCRIPT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ texto: ultimoMsg, historial: historia })
+    });
+    if (resp.ok) {
+      var datos = await resp.json();
+      console.log('[Felix·AS]', JSON.stringify(datos).substring(0,200));
+      if (!datos.error) {
+        var t = _extraerTexto(datos);
+        if (t) return t;
+      } else { console.warn('[Felix·AS] Error:', datos.error); }
+    } else { console.warn('[Felix·AS] HTTP', resp.status, '— fallback'); }
+  } catch(e) { console.warn('[Felix·AS] falló:', e.message, '— fallback Gemini'); }
+
+  /* ── Intento 2: Gemini API directo (fallback) ── */
+  try {
+    var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
+    var r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: historia,
+        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 }
+      })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var d = await r.json();
+    var t2 = _extraerTexto(d);
+    if (t2) return t2;
     throw new Error('Respuesta vacía');
-  }catch(e){
-    console.error('[Felix]',e.message);
-    return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo.';
+  } catch(e2) {
+    console.error('[Felix·FB] falló:', e2.message);
+    return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo en unos segundos.';
   }
 }
 
@@ -1602,11 +1627,4 @@ function felixKeydown(e){
   setTimeout(function(){ inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,100)+'px'; },0);
 }
 
-/* ═══ BUSCADOR ESTADO — atajo ═══ */
-document.addEventListener('DOMContentLoaded', function(){
-  var bi=$id('buscarInput');
-  if(bi) bi.addEventListener('keydown',function(e){ if(e.key==='Enter') APP.buscarEstado(); });
-});
-</script>
-</body>
-</html>
+/* ═══ BUSCADOR EST
