@@ -1166,7 +1166,7 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
   .felix-emp-wrap {
     position: fixed;
     bottom: 24px;
-    right: 24px;
+    right: 50px; /* Moved left */
     z-index: 602;
     display: flex;
     flex-direction: column;
@@ -1220,6 +1220,7 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
   }
   .felix-fab-video {
     position: absolute;
+    pointer-events: none; /* Let click pass to button */
     bottom: 0; left: 50%;
     transform: translateX(-50%);
     width: 140px; height: 247px;
