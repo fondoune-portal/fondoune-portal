@@ -1651,6 +1651,10 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
     <div class="nav-item" onclick="showPanel('aprobados')" id="nav-aprobados">
       <span class="ni">✅</span> Aprobados
     </div>
+    <div class="nav-item" onclick="showPanel('asociados')" id="nav-asociados">
+      <span class="ni">👤</span> Base Asociados
+      <span class="nav-cnt" id="cnt-asociados">0</span>
+    </div>
     <div class="nav-section">Herramientas</div>
     <div class="nav-item" onclick="showPanel('historial')" id="nav-historial">
       <span class="ni">🕐</span> Auditoría
@@ -1978,6 +1982,102 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
   <div class="adm-footer">
     <button class="btn btn-outline" onclick="cerrarUsrModal()">Cancelar</button>
     <button class="btn btn-gold" onclick="guardarUsuario()" id="usrGuardarBtn">💾 Guardar</button>
+  </div>
+</div>
+
+
+    <!-- ════ BASE DE DATOS ASOCIADOS (OPA) ════ -->
+    <div class="panel" id="panel-asociados">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">👤 Base de Datos — Asociados</div>
+          <div class="pg-sub">Información actualizada de todos los asociados para el aplicativo OPA</div>
+        </div>
+        <div class="pg-actions">
+          <button class="btn btn-outline btn-sm" onclick="asocRecargar()">🔄 Actualizar</button>
+          <button class="btn btn-gold btn-sm" onclick="asocExportarCSV()">📥 Exportar CSV</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px;">
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--orange)"></div>
+          <div class="kpi-ico">👥</div>
+          <div class="kpi-val" id="asocKpiTotal">0</div>
+          <div class="kpi-lbl">Total Asociados</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--ok)"></div>
+          <div class="kpi-ico">✅</div>
+          <div class="kpi-val" id="asocKpiCompletos">0</div>
+          <div class="kpi-lbl">Perfil Completo</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--warn)"></div>
+          <div class="kpi-ico">⚠️</div>
+          <div class="kpi-val" id="asocKpiIncompletos">0</div>
+          <div class="kpi-lbl">Incompletos</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="padding-bottom:8px;">
+          <div class="filters-bar">
+            <div class="search-wrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="search-input" id="asocSearch" placeholder="Buscar por nombre, cédula, correo, cargo…" oninput="asocFiltrar()">
+            </div>
+            <select class="filter-select" id="asocFiltroContrato" onchange="asocFiltrar()">
+              <option value="">Todos los contratos</option>
+              <option value="Término indefinido">Término indefinido</option>
+              <option value="Término fijo">Término fijo</option>
+              <option value="Prestación de servicios">Prestación de servicios</option>
+              <option value="Obra o labor">Obra o labor</option>
+            </select>
+            <select class="filter-select" id="asocFiltroDepto" onchange="asocFiltrar()">
+              <option value="">Todos los deptos</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre Completo</th>
+                <th>Cédula</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
+                <th>Cargo</th>
+                <th>Contrato</th>
+                <th>Ingreso</th>
+                <th>Perfil</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="asocTblBody"></tbody>
+          </table>
+        </div>
+        <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div class="pg-info" id="asocInfo">0 asociados</div>
+          <div class="pagination" id="asocPaginacion"></div>
+        </div>
+      </div>
+    </div>
+
+<!-- MODAL EDITAR ASOCIADO -->
+<div class="modal-overlay" id="asocModalOverlay" onclick="if(event.target===this)cerrarAsocModal()" style="display:none">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-head">
+      <span class="modal-title" id="asocModalTitle">✏️ Editar Asociado</span>
+      <button class="modal-close" onclick="cerrarAsocModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" id="asocModalBody"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" style="width:auto;padding:0 20px;" onclick="cerrarAsocModal()">Cancelar</button>
+      <button class="btn btn-gold" style="width:auto;padding:0 20px;" onclick="asocGuardarEdicion()">💾 Guardar Cambios</button>
+    </div>
   </div>
 </div>
 
@@ -4262,6 +4362,320 @@ window.addEventListener('resize', _debounce(function() {
       inp.style.height = '40px';
       inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
     }, 0);
+  };
+
+})();
+
+  </script>
+
+  <script>
+
+/* ═══════════════════════════════════════════════════════════════
+   MÓDULO BASE DE DATOS ASOCIADOS — OPA
+   Lee Firebase 'asociados', permite buscar, filtrar, editar,
+   eliminar y exportar CSV para el aplicativo OPA.
+═══════════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  var ASOC_CACHE_KEY  = 'fondoune_asoc_local_cache';
+  var _asocDatos      = [];
+  var _asocFiltrados  = [];
+  var _asocPage       = 1;
+  var ASOC_PER_PAGE   = 15;
+  var _asocEditando   = null;
+
+  var ASOC_CAMPOS = [
+    {key:'asocTipoId',      lbl:'Tipo ID'},
+    {key:'asocCedula',      lbl:'Cédula'},
+    {key:'asocApe1',        lbl:'Primer Apellido'},
+    {key:'asocApe2',        lbl:'Segundo Apellido'},
+    {key:'asocNom1',        lbl:'Primer Nombre'},
+    {key:'asocNom2',        lbl:'Segundo Nombre'},
+    {key:'asocFechaNac',    lbl:'Fecha Nacimiento'},
+    {key:'asocSexo',        lbl:'Sexo'},
+    {key:'asocEstadoCivil', lbl:'Estado Civil'},
+    {key:'asocEstudios',    lbl:'Nivel Estudios'},
+    {key:'asocLugarExp',    lbl:'Lugar Expedición'},
+    {key:'asocFechaExp',    lbl:'Fecha Expedición'},
+    {key:'asocTel1',        lbl:'Teléfono Fijo'},
+    {key:'asocCelular',     lbl:'Celular'},
+    {key:'asocTel2',        lbl:'Tel. Alternativo'},
+    {key:'asocEmail',       lbl:'Correo'},
+    {key:'asocDireccion',   lbl:'Dirección'},
+    {key:'asocCiudad',      lbl:'Ciudad'},
+    {key:'asocDepto',       lbl:'Departamento'},
+    {key:'asocBarrio',      lbl:'Barrio'},
+    {key:'asocEstrato',     lbl:'Estrato'},
+    {key:'asocEmpresa',     lbl:'Empresa'},
+    {key:'asocDependencia', lbl:'Dependencia'},
+    {key:'asocCargo',       lbl:'Cargo'},
+    {key:'asocTipoContrato',lbl:'Tipo Contrato'},
+    {key:'asocPeriodo',     lbl:'Periodo Nómina'},
+    {key:'asocFechaIngreso',lbl:'Fecha Ingreso'},
+    {key:'asocSalario',     lbl:'Salario'},
+    {key:'asocDeduccion',   lbl:'Deducciones'},
+    {key:'asocBanco',       lbl:'Banco'},
+    {key:'asocNroCuenta',   lbl:'N° Cuenta'},
+    {key:'asocTipoCuenta',  lbl:'Tipo Cuenta'},
+    {key:'asocRut',         lbl:'RUT'},
+  ];
+
+  var CAMPOS_CLAVE = ['asocCedula','asocNom1','asocApe1','asocEmail','asocCelular','asocCargo'];
+
+  function calcCompletitud(a){
+    var ok = CAMPOS_CLAVE.filter(function(k){ return a[k] && a[k].toString().trim(); }).length;
+    return Math.round((ok / CAMPOS_CLAVE.length) * 100);
+  }
+
+  function getNombre(a){
+    return [(a.asocNom1||''),(a.asocNom2||''),(a.asocApe1||''),(a.asocApe2||'')]
+      .filter(Boolean).join(' ').trim() || a.asocCedula || '—';
+  }
+
+  function fmtFecha(v){
+    if(!v) return '—';
+    if(v.indexOf('-')>-1){var p=v.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:v;}
+    return v;
+  }
+
+  function _esc(s){ return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  function _getEmpleado(){
+    try{var s=JSON.parse(localStorage.getItem('fu_session')||'null');return s?s.nombre:'Empleado';}
+    catch(e){return 'Empleado';}
+  }
+
+  /* ── CARGAR DESDE FIREBASE ── */
+  window.asocRecargar = function(){
+    var tbody = document.getElementById('asocTblBody');
+    if(tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">⏳ Cargando desde Firebase…</td></tr>';
+
+    if(window._fbDB){
+      window._fbDB.collection('asociados').get()
+        .then(function(snap){
+          var arr = [];
+          snap.forEach(function(doc){ arr.push(doc.data()); });
+          _asocDatos = arr;
+          try{ localStorage.setItem(ASOC_CACHE_KEY, JSON.stringify(arr)); }catch(e){}
+          _poblarFiltroDepto();
+          asocFiltrar();
+          if(window.FU_Audit) FU_Audit.log('ASOC_CARGADOS', arr.length + ' asociados desde Firebase');
+        })
+        .catch(function(e){
+          console.warn('Firebase asociados:', e.message);
+          _cargarCache();
+        });
+    } else {
+      _cargarCache();
+    }
+  };
+
+  function _cargarCache(){
+    try{ _asocDatos = JSON.parse(localStorage.getItem(ASOC_CACHE_KEY)||'[]'); }catch(e){ _asocDatos = []; }
+    _poblarFiltroDepto();
+    asocFiltrar();
+  }
+
+  function _poblarFiltroDepto(){
+    var sel = document.getElementById('asocFiltroDepto');
+    if(!sel) return;
+    var deptos = {};
+    _asocDatos.forEach(function(a){ if(a.asocDepto) deptos[a.asocDepto] = true; });
+    var val = sel.value;
+    sel.innerHTML = '<option value="">Todos los deptos</option>';
+    Object.keys(deptos).sort().forEach(function(d){
+      var o = document.createElement('option');
+      o.value = d; o.textContent = d; sel.appendChild(o);
+    });
+    sel.value = val;
+  }
+
+  /* ── FILTRAR ── */
+  window.asocFiltrar = function(){
+    var q        = ((document.getElementById('asocSearch')||{}).value||'').toLowerCase().trim();
+    var contrato = (document.getElementById('asocFiltroContrato')||{}).value||'';
+    var depto    = (document.getElementById('asocFiltroDepto')||{}).value||'';
+
+    _asocFiltrados = _asocDatos.filter(function(a){
+      var nom = getNombre(a).toLowerCase();
+      var matchQ = !q ||
+        nom.includes(q) ||
+        (a.asocCedula||'').includes(q) ||
+        (a.asocEmail||'').toLowerCase().includes(q) ||
+        (a.asocCargo||'').toLowerCase().includes(q) ||
+        (a.asocCelular||'').includes(q);
+      return matchQ &&
+        (!contrato || a.asocTipoContrato === contrato) &&
+        (!depto    || a.asocDepto === depto);
+    });
+
+    _asocPage = 1;
+    _renderTabla();
+    _renderKPIs();
+    _renderPaginacion();
+  };
+
+  /* ── KPIs ── */
+  function _renderKPIs(){
+    var total     = _asocDatos.length;
+    var completos = _asocDatos.filter(function(a){ return calcCompletitud(a) >= 100; }).length;
+    var el;
+    el = document.getElementById('asocKpiTotal');      if(el) el.textContent = total;
+    el = document.getElementById('asocKpiCompletos');  if(el) el.textContent = completos;
+    el = document.getElementById('asocKpiIncompletos');if(el) el.textContent = total - completos;
+    el = document.getElementById('cnt-asociados');     if(el) el.textContent = total;
+    el = document.getElementById('asocInfo');
+    if(el) el.textContent = _asocFiltrados.length + ' de ' + total + ' asociados';
+  }
+
+  /* ── TABLA ── */
+  function _renderTabla(){
+    var tbody = document.getElementById('asocTblBody');
+    if(!tbody) return;
+    var inicio  = (_asocPage-1) * ASOC_PER_PAGE;
+    var pagina  = _asocFiltrados.slice(inicio, inicio + ASOC_PER_PAGE);
+
+    if(!pagina.length){
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="ei">👤</div><h3>Sin asociados</h3><p>No hay registros con los filtros aplicados.</p></div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = pagina.map(function(a){
+      var pct      = calcCompletitud(a);
+      var pctColor = pct>=100?'var(--ok)':pct>=60?'var(--warn)':'var(--err)';
+      var ced      = a.asocCedula || '—';
+      return '<tr>' +
+        '<td><div class="tr-name">'+ getNombre(a) +'</div>' +
+          '<div class="tr-sub">'+(a.asocEmpresa||'—')+'</div></td>' +
+        '<td><span class="tr-id">'+ ced +'</span></td>' +
+        '<td>'+(a.asocCelular||a.asocTel1||'—')+'</td>' +
+        '<td style="font-size:12px">'+(a.asocEmail||'—')+'</td>' +
+        '<td>'+(a.asocCargo||'—')+'</td>' +
+        '<td style="font-size:12px">'+(a.asocTipoContrato||'—')+'</td>' +
+        '<td>'+ fmtFecha(a.asocFechaIngreso) +'</td>' +
+        '<td><span style="font-size:11px;font-weight:700;color:'+pctColor+'">'+pct+'%</span></td>' +
+        '<td><div class="row-actions">' +
+          '<button class="act-btn" title="Editar" onclick="asocAbrirEdicion(''+_esc(ced)+'')">✏️</button>' +
+          '<button class="act-btn danger" title="Eliminar" onclick="asocEliminar(''+_esc(ced)+'')">🗑️</button>' +
+        '</div></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  /* ── PAGINACIÓN ── */
+  function _renderPaginacion(){
+    var cont = document.getElementById('asocPaginacion');
+    if(!cont) return;
+    var total = Math.ceil(_asocFiltrados.length / ASOC_PER_PAGE);
+    if(total <= 1){ cont.innerHTML=''; return; }
+    var html = '';
+    if(_asocPage>1) html += '<button class="pg-btn" onclick="asocIrPagina('+(_asocPage-1)+')">‹</button>';
+    for(var p=Math.max(1,_asocPage-2);p<=Math.min(total,_asocPage+2);p++){
+      html += '<button class="pg-btn'+(p===_asocPage?' active':'')+'" onclick="asocIrPagina('+p+')">'+p+'</button>';
+    }
+    if(_asocPage<total) html += '<button class="pg-btn" onclick="asocIrPagina('+(_asocPage+1)+')">›</button>';
+    cont.innerHTML = html;
+  }
+
+  window.asocIrPagina = function(p){ _asocPage=p; _renderTabla(); _renderPaginacion(); };
+
+  /* ── EDITAR ── */
+  window.asocAbrirEdicion = function(cedula){
+    var a = _asocDatos.find(function(x){ return x.asocCedula === cedula; });
+    if(!a) return;
+    _asocEditando = cedula;
+    document.getElementById('asocModalTitle').textContent = '✏️ ' + getNombre(a);
+
+    var body = document.getElementById('asocModalBody');
+    body.innerHTML = ASOC_CAMPOS.map(function(c){
+      return '<div style="display:flex;flex-direction:column;gap:4px;">' +
+        '<label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">'+ c.lbl +'</label>' +
+        '<input data-key="'+ c.key +'" value="'+ _esc(a[c.key]||'') +'" ' +
+          'style="padding:9px 12px;font-size:13px;border:1.5px solid var(--border);border-radius:8px;outline:none;font-family:inherit;color:var(--text);background:rgba(255,255,255,.9);" ' +
+          'onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">' +
+        '</div>';
+    }).join('');
+
+    var overlay = document.getElementById('asocModalOverlay');
+    overlay.style.display = 'flex';
+    setTimeout(function(){ overlay.classList.add('show'); }, 10);
+  };
+
+  window.cerrarAsocModal = function(){
+    var overlay = document.getElementById('asocModalOverlay');
+    overlay.classList.remove('show');
+    setTimeout(function(){ overlay.style.display='none'; _asocEditando=null; }, 250);
+  };
+
+  /* ── GUARDAR EDICIÓN ── */
+  window.asocGuardarEdicion = function(){
+    if(!_asocEditando) return;
+    var inputs = document.querySelectorAll('#asocModalBody input[data-key]');
+    var idx = _asocDatos.findIndex(function(x){ return x.asocCedula === _asocEditando; });
+    if(idx < 0) return;
+
+    inputs.forEach(function(inp){ _asocDatos[idx][inp.dataset.key] = inp.value.trim(); });
+    _asocDatos[idx]._updated   = new Date().toISOString();
+    _asocDatos[idx]._editadoPor = _getEmpleado();
+
+    if(window._fbDB){
+      window._fbDB.collection('asociados').doc(_asocEditando)
+        .set(_asocDatos[idx], {merge:true})
+        .then(function(){ showToast('Asociado actualizado en Firebase','✅'); })
+        .catch(function(){ showToast('Guardado localmente (sin conexión)','💾'); });
+    }
+    try{ localStorage.setItem(ASOC_CACHE_KEY, JSON.stringify(_asocDatos)); }catch(e){}
+    if(window.FU_Audit) FU_Audit.log('ASOC_EDITADO','Cédula: '+_asocEditando);
+    cerrarAsocModal();
+    asocFiltrar();
+    showToast('Cambios guardados','✅');
+  };
+
+  /* ── ELIMINAR ── */
+  window.asocEliminar = function(cedula){
+    if(!confirm('¿Eliminar definitivamente al asociado con cédula '+cedula+'?\n\nEsta acción no se puede deshacer.')) return;
+    if(window._fbDB){
+      window._fbDB.collection('asociados').doc(cedula).delete()
+        .catch(function(e){ console.warn('Firebase delete:', e); });
+    }
+    _asocDatos = _asocDatos.filter(function(x){ return x.asocCedula !== cedula; });
+    try{ localStorage.setItem(ASOC_CACHE_KEY, JSON.stringify(_asocDatos)); }catch(e){}
+    if(window.FU_Audit) FU_Audit.log('ASOC_ELIMINADO','Cédula: '+cedula);
+    asocFiltrar();
+    showToast('Asociado eliminado','🗑️');
+  };
+
+  /* ── EXPORTAR CSV PARA OPA ── */
+  window.asocExportarCSV = function(){
+    var filas = _asocFiltrados.length ? _asocFiltrados : _asocDatos;
+    if(!filas.length){ showToast('No hay asociados para exportar','⚠️'); return; }
+    var csv = ASOC_CAMPOS.map(function(c){ return c.lbl; }).join(';') + '\n';
+    csv += filas.map(function(a){
+      return ASOC_CAMPOS.map(function(c){
+        return '"'+(a[c.key]||'').toString().replace(/;/g,'|').replace(/\n/g,' ')+'"';
+      }).join(';');
+    }).join('\n');
+    var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+    var url  = URL.createObjectURL(blob);
+    var el   = document.createElement('a');
+    el.href  = url;
+    el.download = 'FondoUne_Asociados_OPA_'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(el); el.click(); document.body.removeChild(el);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    showToast('CSV exportado ('+filas.length+' registros)','📥');
+    if(window.FU_Audit) FU_Audit.log('ASOC_CSV_EXPORTADO', filas.length+' registros');
+  };
+
+  /* ── HOOK showPanel: carga automática al primer acceso ── */
+  var _asocCargado = false;
+  var _origShowPanel = window.showPanel;
+  window.showPanel = function(id){
+    if(typeof _origShowPanel === 'function') _origShowPanel(id);
+    if(id === 'asociados' && !_asocCargado){
+      _asocCargado = true;
+      window.asocRecargar();
+    }
   };
 
 })();
