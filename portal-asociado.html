@@ -4607,6 +4607,20 @@ function filtrarCategoria(cat, el) {
       inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
     }, 0);
   };
+  /* --- SALUDO AUTOMÁTICO REPARADO --- */
+  document.addEventListener('DOMContentLoaded', function() {
+    var fab = document.querySelector('.fab-felix') || document.getElementById('felixFab');
+    if (fab) {
+      fab.addEventListener('click', function() {
+        setTimeout(function() {
+          var list = document.getElementById('felixMessages');
+          if (list && list.children.length === 0) {
+            appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
+          }
+        }, 350); 
+      });
+    }
+  });
 
 })();
 
