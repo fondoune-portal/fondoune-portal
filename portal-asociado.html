@@ -3,13 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- ═══ REDIRECCIÓN AUTOMÁTICA A VERSIÓN MÓVIL ═══ -->
-<script>
-  (function(){
-    var isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-    if (isMobile) window.location.replace('./portal-asociado-mobile.html');
-  })();
-</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#2D1A0E">
@@ -2372,7 +2365,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   <div class="hdr-div"></div>
   <div class="hdr-portals">
     <div class="hdr-pill">🏠 Portal Asociados</div>
-    <a href="./portal-empleados.html" class="emp-link">🔐 Portal Empleados →</a>
+    <a href="portal-empleados.html" class="emp-link">🔐 Portal Empleados →</a>
   </div>
 </header>
 
@@ -3767,13 +3760,13 @@ var PQRS = (function() {
         </button>
       </div>
       <div class="felix-input-hint">
-        Powered by Gemini 2.5 Flash · <a href="/cdn-cgi/l/email-protection#d8bbaabdbcb1acb7abaeb1aeb1bdb6bcb998beb7b6bcb7adb6bdf6bbb7b5">¿Necesitas más ayuda?</a>
+        Powered by Gemini 2.5 Flash · <a href="mailto:creditosvivienda@fondoune.com">¿Necesitas más ayuda?</a>
       </div>
     </div>
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ═══ SISTEMA FAQ ═══ */
 var FAQ_DATA = [
   /* ── DOCUMENTOS GENERALES ── */
@@ -4361,11 +4354,11 @@ function filtrarCategoria(cat, el) {
   /* ── CONFIGURACIÓN ── */
   var FELIX_CFG = {
     API_KEY:   'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
-    MODEL:     'gemini-2.5-flash',
+    MODEL:     'gemini-2.0-flash',
     ENDPOINT:  'https://generativelanguage.googleapis.com/v1beta/models/',
     MAX_TOKENS: 512,
     TEMP:       0.7,
-    HISTORY_LIMIT: 20
+    HISTORY_LIMIT: 20   // máx turnos en memoria
   };
 
   /* ── CONTEXTO DEL SISTEMA — Félix conoce a FondoUne ── */
@@ -4415,8 +4408,6 @@ function filtrarCategoria(cat, el) {
   /* ── ESTADO ── */
   var isLoading = false;
 
-  /* ── FUNCIÓN PRINCIPAL: ENVIAR MENSAJE A GEMINI ── */
-  async function /* ── HELPER: extraer texto de respuesta Gemini (cualquier forma) ── */
   function _extraerTextoGemini(datos) {
     if (!datos) return null;
     if (datos.candidates && datos.candidates[0] &&
@@ -4427,53 +4418,47 @@ function filtrarCategoria(cat, el) {
            datos.output || datos.result || null;
   }
 
-  /* ── CONSULTA: Apps Script primero, Gemini directo como fallback ── */
-  async function _consultarFelixAsoc(historial) {
-    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbyjEtX8qXtnv29-ZeKlvJna75gFOqtjX8AO6DWm6YV_SZnkHKRscmY7qE32KEFIK8yp/exec';
+  /* ── 1. LLAMADA AL BACKEND (APPS SCRIPT) con fallback a Gemini directo ── */
+  /* ── 1. LLAMADA AL BACKEND (APPS SCRIPT) ── */
+  async function consultarFelix(historial) {
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyjEtX8qXtnv29-ZeKlvJna75gFOqtjX8AO6DWm6YV_SZnkHKRscmY7qE32KEFIK8yp/exec";
+
+    // Obtener solo el último mensaje para que no falle si el historial es muy largo
     var ultimoMensaje = historial.length ? historial[historial.length - 1].parts[0].text : '';
 
-    /* ── Intento 1: Apps Script ── */
     try {
       var resp = await fetch(URL_APPS_SCRIPT, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ texto: ultimoMensaje, historial: historial })
+        body: JSON.stringify({ texto: ultimoMensaje }) // Simplificado para que el Apps Script no se confunda
       });
-      if (resp.ok) {
-        var datos = await resp.json();
-        console.log('[Felix·AS] Respuesta:', JSON.stringify(datos).substring(0, 300));
-        if (!datos.error) {
-          var texto = _extraerTextoGemini(datos);
-          if (texto) return texto;
-        } else { console.warn('[Felix·AS] Error:', datos.error); }
-      } else { console.warn('[Felix·AS] HTTP', resp.status, '— fallback'); }
-    } catch(e) { console.warn('[Felix·AS] falló:', e.message, '— fallback Gemini directo'); }
 
-    /* ── Intento 2: Gemini API directo (fallback automático) ── */
-    console.log('[Felix·FB] Usando Gemini API directo');
-    try {
-      var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
-      var payload = {
-        contents: historial,
-        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 }
-      };
-      var r2 = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!r2.ok) throw new Error('HTTP ' + r2.status);
-      var d2 = await r2.json();
-      var texto2 = _extraerTextoGemini(d2);
-      if (texto2) return texto2;
-      throw new Error('Respuesta vacía');
-    } catch(e2) {
-      console.error('[Felix·FB] Fallback falló:', e2.message);
-      return '😔 Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo.';
+      if (!resp.ok) {
+        return "⚠️ Error del servidor HTTP: " + resp.status;
+      }
+
+      var datos = await resp.json();
+      console.log('Respuesta cruda de Google:', datos);
+
+      if (datos.error) {
+        return "⚠️ Error de Apps Script: " + datos.error;
+      }
+
+      // Intentar extraer de la estructura de Gemini
+      if (datos.candidates && datos.candidates[0] && datos.candidates[0].content && datos.candidates[0].content.parts) {
+        return datos.candidates[0].content.parts[0].text;
+      }
+
+      return "⚠️ Recibí una respuesta, pero no tenía el formato esperado.";
+
+    } catch (e) {
+      console.error('Error total:', e);
+      return '⚠️ Lo siento, tuve un problema de red al intentar contactar con el puente seguro. ' + e.message;
     }
   }
 
-  async felixSendMessage(userText) {
+  /* ── 2. FUNCIÓN PRINCIPAL DE UI DE FELIX ── */
+  async function felixSendMessage(userText) {
     if (!userText.trim() || isLoading) return;
     isLoading = true;
     appendMessage('user', userText);
@@ -4481,60 +4466,73 @@ function filtrarCategoria(cat, el) {
     showTyping(true);
     scrollToBottom();
 
+    // Inyectar system prompt en el primer turno (igual que la versión original)
     if (chatHistory.length === 0) {
       chatHistory.push({ role: 'user',  parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
-      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del Portal de Asociados FondoUne.' }] });
+      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del portal de Empleados.' }] });
     }
+
+  function felixSend() {
+    var inp = document.getElementById('felixInput');
+    if (!inp) return;
+    var text = (inp.value || '').trim();
+    if (!text) return;
+    felixSendMessage(text);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var inp = document.getElementById('felixInput');
+    if (!inp) return;
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        felixSend();
+      }
+    });
+  });
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
     if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
       chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
     }
 
+    // Auditoría
     if (window.FU_Audit) FU_Audit.log('FELIX_IA', 'Consulta: ' + userText.substring(0, 60));
 
-    var reply = await _consultarFelixAsoc(chatHistory);
+    var reply = await consultarFelix(chatHistory);
 
     chatHistory.push({ role: 'model', parts: [{ text: reply }] });
     showTyping(false);
     appendMessage('felix', reply);
     isLoading = false;
-    focusInput();
     scrollToBottom();
+    var inp = document.getElementById('felixInput');
+    if (inp) inp.focus();
   }
 
   /* ── UI HELPERS ── */
   function appendMessage(sender, text) {
     var list = document.getElementById('felixMessages');
     if (!list) return;
-
     var isFelix = sender === 'felix';
-    var now = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-
+    var now = new Date().toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' });
     var div = document.createElement('div');
     div.className = 'felix-msg' + (isFelix ? '' : ' user');
-
-    // Convertir markdown básico a HTML
     var html = formatText(text);
-
     div.innerHTML =
       '<div class="felix-msg-avatar">' + (isFelix ? '🤖' : '👤') + '</div>' +
-      '<div>' +
-        '<div class="felix-msg-bubble">' + html + '</div>' +
-        '<div class="felix-msg-time">' + now + '</div>' +
-      '</div>';
-
+      '<div><div class="felix-msg-bubble">' + html + '</div>' +
+      '<div class="felix-msg-time">' + now + '</div></div>';
     list.appendChild(div);
     scrollToBottom();
   }
 
-  function formatText(text) {
-    return text
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/\n/g, '<br>')
-      .replace(/^/, '<p>').replace(/$/, '</p>');
+  function formatText(t) {
+    return t
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g,'<em>$1</em>')
+      .replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')
+      .replace(/^/,'<p>').replace(/$/,'</p>');
   }
 
   function showTyping(show) {
@@ -4543,7 +4541,7 @@ function filtrarCategoria(cat, el) {
   }
 
   function scrollToBottom() {
-    setTimeout(function() {
+    setTimeout(function(){
       var list = document.getElementById('felixMessages');
       if (list) list.scrollTop = list.scrollHeight;
     }, 50);
@@ -4559,14 +4557,14 @@ function filtrarCategoria(cat, el) {
     if (inp) inp.focus();
   }
 
-  /* ── MENSAJE DE BIENVENIDA ── */
   function showWelcome() {
     var list = document.getElementById('felixMessages');
     if (!list || list.children.length > 0) return;
-    appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente de FondoUne.\n\n¿En qué puedo ayudarte hoy? Puedo orientarte sobre tipos de crédito, documentos necesarios, el proceso de solicitud y mucho más.');
+    appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.
+
+Puedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
   }
 
-  /* ── CHIP CLICK ── */
   window.felixChipClick = function(text) {
     var inp = document.getElementById('felixInput');
     if (inp) inp.value = text;
@@ -4605,3 +4603,12 @@ function filtrarCategoria(cat, el) {
 
   /* Inicializar si el panel ya está abierto al cargar */
   document.addEventListener('DOMContentLoaded', function() {
+    var panel = document.getElementById('faqPanel');
+    if (panel && panel.classList.contains('show')) showWelcome();
+  });
+
+})();
+
+  </script>
+</body>
+</html>
