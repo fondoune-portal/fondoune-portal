@@ -4408,21 +4408,28 @@ function filtrarCategoria(cat, el) {
     panelOpen ? cerrarFelix() : abrirFelix();
   };
 
-  window.abrirFelix = function() {
+window.abrirFelix = function() {
     panelOpen = true;
     var panel   = document.getElementById('felixEmpPanel');
     var overlay = document.getElementById('felixOverlay');
     var wrap    = document.getElementById('felixEmpWrap');
-    if (panel)   { panel.style.display = 'flex'; setTimeout(function(){ panel.classList.add('show'); }, 10); }
+    
+    if (panel) { 
+      panel.style.display = 'flex'; 
+      setTimeout(function(){ panel.classList.add('show'); }, 10); 
+    }
     if (overlay) overlay.classList.add('show');
-    if (wrap && window.innerWidth <= 768) wrap.style.display = 'none'; // <-- OCULTAR FAB EN MÓVIL AL ABRIR
+    if (wrap && window.innerWidth <= 768) wrap.style.display = 'none';
 
     var bubble  = document.getElementById('felixBubble');
-    if (bubble)  bubble.style.display = 'none';
+    if (bubble) bubble.style.display = 'none';
 
-    if (chatHistory.length === 0) setTimeout(showWelcome, 350);
+    // Disparamos showWelcome directo. La propia función showWelcome 
+    // se encargará de verificar si ya saludó o no, gracias al fix anterior.
+    setTimeout(showWelcome, 350);
     setTimeout(focusInput, 400);
   };
+
 
   window.cerrarFelix = function() {
     panelOpen = false;
@@ -4578,11 +4585,17 @@ function filtrarCategoria(cat, el) {
     if (inp) inp.focus();
   }
 
-  function showWelcome() {
+  window.showWelcome = function() {
     var list = document.getElementById('felixMessages');
-    if (!list || list.children.length > 0) return;
+    if (!list) return;
+    
+    // Si ya hay mensajes con la clase 'felix-msg', no volvemos a saludar
+    var mensajesExistentes = list.querySelectorAll('.felix-msg');
+    if (mensajesExistentes.length > 0) return;
+
     appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
   }
+
 
   window.felixChipClick = function(text) {
     if (!panelOpen) abrirFelix();
