@@ -4505,7 +4505,7 @@ window.abrirFelix = function() {
   }
 
   /* ── 2. FUNCIÓN PRINCIPAL DE UI DE FELIX ── */
-  async function felixSendMessage(userText) {
+   async function felixSendMessage(userText) {
     if (!userText.trim() || isLoading) return;
     isLoading = true;
     appendMessage('user', userText);
@@ -4513,15 +4513,29 @@ window.abrirFelix = function() {
     showTyping(true);
     scrollToBottom();
 
-    // Inyectar system prompt en el primer turno (igual que la versión original)
+    // Inyectar system prompt interno para la API
     if (chatHistory.length === 0) {
       chatHistory.push({ role: 'user',  parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
-      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del portal de Empleados.' }] });
+      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del portal de Asociados.' }] });
     }
+    
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
-    if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
-      chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
-    }
+
+    // Auditoría
+    if (window.FU_Audit) FU_Audit.log('FELIX_IA', 'Consulta: ' + userText.substring(0, 60));
+
+    // Llamada al backend
+    var reply = await consultarFelix(chatHistory);
+
+    chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+    showTyping(false);
+    appendMessage('felix', reply);
+    isLoading = false;
+    scrollToBottom();
+    
+    var inp = document.getElementById('felixInput');
+    if (inp) inp.focus();
+  }
 
     // Auditoría
     if (window.FU_Audit) FU_Audit.log('FELIX_IA', 'Consulta: ' + userText.substring(0, 60));
