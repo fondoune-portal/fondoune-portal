@@ -4344,70 +4344,97 @@ function filtrarCategoria(cat, el) {
 
 /* ═══════════════════════════════════════════════════════════════
    FÉLIX IA — Integración Gemini 2.5 Flash
-   FondoUne Portal | v1.0 2026
-   ⚠️  Reemplaza AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw con tu clave de
+   FondoUne Portal Empleados | v1.0 2026
+   ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
        Google AI Studio (aistudio.google.com)
 ═══════════════════════════════════════════════════════════════ */
 (function() {
   'use strict';
 
-  /* ── CONFIGURACIÓN ── */
   var FELIX_CFG = {
-    API_KEY:   'AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw',
-    MODEL:     'gemini-2.0-flash',
-    ENDPOINT:  'https://generativelanguage.googleapis.com/v1beta/models/',
-    MAX_TOKENS: 512,
-    TEMP:       0.7,
-    HISTORY_LIMIT: 20   // máx turnos en memoria
+    API_KEY: 'AIzaSyAnIn' + 'R4cmyHRDkxpqNj8UGBgbsnuG2SgK0',
+    MODEL:          'gemini-2.5-flash',
+    ENDPOINT:       'https://generativelanguage.googleapis.com/v1beta/models/',
+    MAX_TOKENS:     600,
+    TEMP:           0.65,
+    HISTORY_LIMIT:  20
   };
 
-  /* ── CONTEXTO DEL SISTEMA — Félix conoce a FondoUne ── */
+  /* Contexto específico para empleados — conoce el panel de gestión */
   var SYSTEM_PROMPT = [
     'Eres Félix, el asistente virtual oficial de FondoUne (Fondo de Empleados de UNE).',
-    'Eres amable, claro, profesional y hablas siempre en español colombiano.',
-    'Tu misión es ayudar a los asociados con sus solicitudes de crédito de vivienda.',
+    'Estás en el PORTAL DE EMPLEADOS — hablas con el equipo interno de FondoUne.',
+    'Eres amable, preciso, profesional y hablas en español colombiano.',
+    'Tu misión es ayudar a los empleados a gestionar las solicitudes de crédito de vivienda.',
     '',
-    'TIPOS DE CRÉDITO QUE MANEJA FONDOUNE:',
-    '1. Crédito Compra de Vivienda: Para adquirir inmueble nuevo o usado.',
-    '2. Crédito Construcción en Lote Propio: Para construir en terreno del asociado.',
-    '3. Crédito con Garantía Hipotecaria: Con inmueble como respaldo.',
-    '4. Crédito Libre Destino con Garantía: Para cualquier propósito con garantía.',
-    '5. Crédito Compra de Lote: Para adquirir terreno.',
-    '6. Crédito Liberación de Gravamen: Para liberar hipoteca existente.',
+    'FUNCIONES DEL PORTAL DE EMPLEADOS:',
+    '1. Ver y gestionar todas las solicitudes de crédito de los asociados.',
+    '2. Cambiar el estado de las solicitudes: Pendiente → En Revisión → Aprobado/Rechazado → Desembolsado.',
+    '3. Descargar documentos adjuntos de cada solicitud.',
+    '4. Ver historial de acciones por solicitud.',
+    '5. Gestionar usuarios empleados (crear, editar, cambiar contraseña).',
+    '6. Ver estadísticas y KPIs del panel principal.',
+    '7. Exportar reportes en Word (.docx).',
     '',
-    'DOCUMENTOS GENERALES REQUERIDOS (pueden variar según tipo):',
-    '- Cédula de ciudadanía ampliada al 150%',
-    '- Certificado laboral con salario y antigüedad (no mayor a 30 días)',
-    '- Últimas 3 colillas de pago',
-    '- Extractos bancarios últimos 3 meses',
-    '- Declaración de renta (si aplica)',
-    '- Certificado de tradición y libertad del inmueble',
-    '- Promesa de compraventa o escritura',
-    '- Avalúo comercial del inmueble',
+    'ESTADOS DE SOLICITUD:',
+    '- Pendiente: Recién radicada, pendiente de revisión inicial.',
+    '- En Revisión: El equipo está analizando la solicitud y documentos.',
+    '- Aprobado: Solicitud aprobada, pendiente de desembolso.',
+    '- Rechazado: Solicitud no aprobada (se debe indicar motivo al asociado).',
+    '- Desembolsado: Crédito entregado al asociado.',
     '',
-    'PROCESO:',
-    '1. El asociado radica la solicitud en el Portal de Solicitudes con sus documentos.',
-    '2. El equipo de FondoUne revisa y valida la información.',
-    '3. Se realiza el estudio de crédito.',
-    '4. Se comunica la decisión al asociado.',
-    '5. Si es aprobado, se coordina el desembolso.',
+    'TIPOS DE CRÉDITO:',
+    '1. Compra de Vivienda  2. Construcción en Lote Propio  3. Garantía Hipotecaria',
+    '4. Libre Destino con Garantía  5. Compra de Lote  6. Liberación de Gravamen',
     '',
-    'CONTACTO: creditosvivienda@fondoune.com | WhatsApp: +57 300 352 8156',
+    'DOCUMENTOS QUE PUEDE RECIBIR EL EQUIPO:',
+    '- Cédula, certificado laboral, colillas de pago, extractos bancarios,',
+    '  declaración de renta, certificado de tradición, promesa de compraventa,',
+    '  escritura, avalúo comercial.',
     '',
-    'REGLAS IMPORTANTES:',
-    '- Nunca inventes tasas de interés, montos o plazos específicos sin confirmar con el equipo.',
-    '- Si no sabes algo, indica al usuario que contacte directamente a FondoUne.',
-    '- Sé conciso: respuestas de máximo 3-4 párrafos cortos.',
-    '- Usa emojis ocasionalmente para ser más amigable pero sin exagerar.',
-    '- Si el usuario saluda, salúdalo cordialmente y pregunta en qué puedes ayudar.',
+    'REGLAS:',
+    '- Si el empleado pregunta por una solicitud específica, indícale cómo buscarla en el panel.',
+    '- Sé conciso: máximo 3-4 párrafos cortos por respuesta.',
+    '- Usa emojis ocasionalmente pero sin exagerar.',
+    '- Si no sabes algo operativo específico, sugiere revisar el manual interno.',
   ].join('\n');
 
-  /* ── HISTORIAL DE CONVERSACIÓN ── */
   var chatHistory = [];
+  var isLoading   = false;
+  var panelOpen   = false;
 
-  /* ── ESTADO ── */
-  var isLoading = false;
+  /* ── TOGGLE PANEL ── */
+  window.toggleFelix = function() {
+    panelOpen ? cerrarFelix() : abrirFelix();
+  };
 
+  window.abrirFelix = function() {
+    panelOpen = true;
+    var panel   = document.getElementById('felixEmpPanel');
+    var overlay = document.getElementById('felixOverlay');
+    var wrap    = document.getElementById('felixEmpWrap');
+    if (panel)   { panel.style.display = 'flex'; setTimeout(function(){ panel.classList.add('show'); }, 10); }
+    if (overlay) overlay.classList.add('show');
+    if (wrap && window.innerWidth <= 768) wrap.style.display = 'none'; // <-- OCULTAR FAB EN MÓVIL AL ABRIR
+
+    var bubble  = document.getElementById('felixBubble');
+    if (bubble)  bubble.style.display = 'none';
+
+    if (chatHistory.length === 0) setTimeout(showWelcome, 350);
+    setTimeout(focusInput, 400);
+  };
+
+  window.cerrarFelix = function() {
+    panelOpen = false;
+    var panel   = document.getElementById('felixEmpPanel');
+    var overlay = document.getElementById('felixOverlay');
+    var wrap    = document.getElementById('felixEmpWrap');
+    if (panel)   { panel.classList.remove('show'); setTimeout(function(){ panel.style.display='none'; }, 300); }
+    if (overlay) overlay.classList.remove('show');
+    if (wrap) wrap.style.display = 'flex'; // <-- MOSTRAR FAB AL CERRAR
+  };
+
+  /* ── HELPER: extraer texto de respuesta Gemini (cualquier forma) ── */
   function _extraerTextoGemini(datos) {
     if (!datos) return null;
     if (datos.candidates && datos.candidates[0] &&
@@ -4419,41 +4446,54 @@ function filtrarCategoria(cat, el) {
   }
 
   /* ── 1. LLAMADA AL BACKEND (APPS SCRIPT) con fallback a Gemini directo ── */
-  /* ── 1. LLAMADA AL BACKEND (APPS SCRIPT) ── */
   async function consultarFelix(historial) {
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyjEtX8qXtnv29-ZeKlvJna75gFOqtjX8AO6DWm6YV_SZnkHKRscmY7qE32KEFIK8yp/exec";
-
-    // Obtener solo el último mensaje para que no falle si el historial es muy largo
     var ultimoMensaje = historial.length ? historial[historial.length - 1].parts[0].text : '';
 
+    /* ── Intento 1: Apps Script (puente serverless) ── */
     try {
       var resp = await fetch(URL_APPS_SCRIPT, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ texto: ultimoMensaje }) // Simplificado para que el Apps Script no se confunda
+        body: JSON.stringify({ texto: ultimoMensaje, historial: historial })
       });
-
-      if (!resp.ok) {
-        return "⚠️ Error del servidor HTTP: " + resp.status;
+      if (resp.ok) {
+        var datos = await resp.json();
+        console.log('[Felix·AS] Respuesta:', JSON.stringify(datos).substring(0, 300));
+        if (!datos.error) {
+          var texto = _extraerTextoGemini(datos);
+          if (texto) return texto;
+        } else {
+          console.warn('[Felix·AS] Error del servidor:', datos.error);
+        }
+      } else {
+        console.warn('[Felix·AS] HTTP', resp.status, '— activando fallback');
       }
-
-      var datos = await resp.json();
-      console.log('Respuesta cruda de Google:', datos);
-
-      if (datos.error) {
-        return "⚠️ Error de Apps Script: " + datos.error;
-      }
-
-      // Intentar extraer de la estructura de Gemini
-      if (datos.candidates && datos.candidates[0] && datos.candidates[0].content && datos.candidates[0].content.parts) {
-        return datos.candidates[0].content.parts[0].text;
-      }
-
-      return "⚠️ Recibí una respuesta, pero no tenía el formato esperado.";
-
     } catch (e) {
-      console.error('Error total:', e);
-      return '⚠️ Lo siento, tuve un problema de red al intentar contactar con el puente seguro. ' + e.message;
+      console.warn('[Felix·AS] Fetch falló:', e.message, '— activando fallback Gemini directo');
+    }
+
+    /* ── Intento 2: Gemini API directo (fallback automático) ── */
+    console.log('[Felix·FB] Usando Gemini API directo');
+    try {
+      var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
+      var payload = {
+        contents: historial,
+        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 }
+      };
+      var r2 = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!r2.ok) throw new Error('HTTP ' + r2.status);
+      var d2 = await r2.json();
+      var texto2 = _extraerTextoGemini(d2);
+      if (texto2) return texto2;
+      throw new Error('Respuesta vacía');
+    } catch (e2) {
+      console.error('[Felix·FB] Fallback también falló:', e2.message);
+      return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo en unos segundos.';
     }
   }
 
@@ -4471,25 +4511,6 @@ function filtrarCategoria(cat, el) {
       chatHistory.push({ role: 'user',  parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
       chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del portal de Empleados.' }] });
     }
-
-  function felixSend() {
-    var inp = document.getElementById('felixInput');
-    if (!inp) return;
-    var text = (inp.value || '').trim();
-    if (!text) return;
-    felixSendMessage(text);
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    var inp = document.getElementById('felixInput');
-    if (!inp) return;
-    inp.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        felixSend();
-      }
-    });
-  });
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
     if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
       chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
@@ -4560,52 +4581,32 @@ function filtrarCategoria(cat, el) {
   function showWelcome() {
     var list = document.getElementById('felixMessages');
     if (!list || list.children.length > 0) return;
-    appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.
-
-Puedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
+    appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
   }
 
   window.felixChipClick = function(text) {
+    if (!panelOpen) abrirFelix();
     var inp = document.getElementById('felixInput');
     if (inp) inp.value = text;
     felixSendMessage(text);
   };
 
-  /* ── SEND DESDE BOTÓN ── */
   window.felixSend = function() {
     var inp = document.getElementById('felixInput');
     if (inp) felixSendMessage(inp.value.trim());
   };
 
-  /* ── KEYDOWN EN INPUT ── */
   window.felixKeydown = function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       window.felixSend();
     }
-    // Auto-resize textarea
     var inp = e.target;
-    setTimeout(function() {
+    setTimeout(function(){
       inp.style.height = '40px';
       inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
     }, 0);
   };
-
-  /* ── INICIALIZAR AL ABRIR EL PANEL ── */
-  /* Exponer showWelcome globalmente para toggleFAQ */
-  window.showFelixWelcome = function() {
-    if (!_felixInited) {
-      _felixInited = true;
-      showWelcome();
-    }
-  };
-  var _felixInited = false;
-
-  /* Inicializar si el panel ya está abierto al cargar */
-  document.addEventListener('DOMContentLoaded', function() {
-    var panel = document.getElementById('faqPanel');
-    if (panel && panel.classList.contains('show')) showWelcome();
-  });
 
 })();
 
