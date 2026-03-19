@@ -4586,17 +4586,28 @@ window.abrirFelix = function() {
   }
 
   window.showWelcome = function() {
-    var list = document.getElementById('felixMessages');
-    if (!list) return;
+    alert("1. Entró a showWelcome");
     
-    // Si ya hay mensajes con la clase 'felix-msg', no volvemos a saludar
+    var list = document.getElementById('felixMessages');
+    if (!list) {
+      alert("2. ERROR: No encontró el contenedor felixMessages");
+      return;
+    }
+    
+    alert("3. Encontró el contenedor. Hijos actuales: " + list.children.length);
+    
     var mensajesExistentes = list.querySelectorAll('.felix-msg');
-    if (mensajesExistentes.length > 0) return;
+    alert("4. Mensajes con clase felix-msg: " + mensajesExistentes.length);
+    
+    if (mensajesExistentes.length > 0) {
+      alert("5. Cancelando saludo porque ya hay mensajes");
+      return;
+    }
 
+    alert("6. Todo bien, procediendo a inyectar el saludo");
     appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
   }
-
-
+   
   window.felixChipClick = function(text) {
     if (!panelOpen) abrirFelix();
     var inp = document.getElementById('felixInput');
