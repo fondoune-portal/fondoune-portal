@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- ═══ REDIRECCIÓN AUTOMÁTICA A VERSIÓN MÓVIL ═══ -->
+<script>
+  (function(){
+    var isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    if (isMobile) window.location.replace('./portal-asociado-mobile.html');
+  })();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#2D1A0E">
@@ -3712,7 +3719,7 @@ var PQRS = (function() {
             <div class="felix-chat-name">Félix · FondoUne IA</div>
             <div class="felix-chat-status">
               <span class="felix-status-dot"></span>
-              Asistente activo · Gemini 2.0 Flash
+              Asistente activo · Gemini 2.5 Flash
             </div>
           </div>
         </div>
@@ -3760,7 +3767,7 @@ var PQRS = (function() {
         </button>
       </div>
       <div class="felix-input-hint">
-        Powered by Gemini 2.0 Flash · <a href="/cdn-cgi/l/email-protection#d8bbaabdbcb1acb7abaeb1aeb1bdb6bcb998beb7b6bcb7adb6bdf6bbb7b5">¿Necesitas más ayuda?</a>
+        Powered by Gemini 2.5 Flash · <a href="/cdn-cgi/l/email-protection#d8bbaabdbcb1acb7abaeb1aeb1bdb6bcb998beb7b6bcb7adb6bdf6bbb7b5">¿Necesitas más ayuda?</a>
       </div>
     </div>
   </div>
@@ -4343,7 +4350,7 @@ function filtrarCategoria(cat, el) {
   <script>
 
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Integración Gemini 2.0 Flash
+   FÉLIX IA — Integración Gemini 2.5 Flash
    FondoUne Portal | v1.0 2026
    ⚠️  Reemplaza AIzaSyCVnJ5PvN1YpszBH_guLyb9tQfCqfuM1xw con tu clave de
        Google AI Studio (aistudio.google.com)
