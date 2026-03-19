@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- ═══ REDIRECCIÓN AUTOMÁTICA A VERSIÓN MÓVIL ═══ -->
+<script>
+  (function(){
+    var isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    if (isMobile) window.location.replace('./portal-asociado-mobile.html');
+  })();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#2D1A0E">
@@ -3760,13 +3767,13 @@ var PQRS = (function() {
         </button>
       </div>
       <div class="felix-input-hint">
-        Powered by Gemini 2.5 Flash · <a href="mailto:creditosvivienda@fondoune.com">¿Necesitas más ayuda?</a>
+        Powered by Gemini 2.5 Flash · <a href="/cdn-cgi/l/email-protection#b2d1c0d7d6dbc6ddc1c4dbc4dbd7dcd6d3f2d4dddcd6ddc7dcd79cd1dddf">¿Necesitas más ayuda?</a>
       </div>
     </div>
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ═══ SISTEMA FAQ ═══ */
 var FAQ_DATA = [
   /* ── DOCUMENTOS GENERALES ── */
@@ -4516,7 +4523,7 @@ window.abrirFelix = function() {
     // Inyectar system prompt en el primer turno (igual que la versión original)
     if (chatHistory.length === 0) {
       chatHistory.push({ role: 'user',  parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
-      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del portal de Empleados.' }] });
+      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del Portal de Asociados FondoUne.' }] });
     }
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
     if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
@@ -4588,6 +4595,9 @@ window.abrirFelix = function() {
    // Creamos una variable para recordar si ya saludamos
   var felixYaSaludo = false;
 
+  /* Alias para compatibilidad con la llamada del panel */
+  window.showFelixWelcome = function() { window.showWelcome(); };
+
   window.showWelcome = function() {
     var list = document.getElementById('felixMessages');
     if (!list) return;
@@ -4633,15 +4643,4 @@ window.abrirFelix = function() {
         setTimeout(function() {
           var list = document.getElementById('felixMessages');
           if (list && list.children.length === 0) {
-            appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
-          }
-        }, 350); 
-      });
-    }
-  });
-
-})();
-
-  </script>
-</body>
-</html>
+            appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos de
