@@ -355,13 +355,11 @@ body::after {
 
 /* ═══ FELIX CHAT ═══ */
 .felix-view {
-  display: none; flex-direction: column;
-  position: fixed;
-  top: calc(var(--top-h) + var(--safe-top));
-  bottom: calc(var(--tab-h) + var(--safe-bot));
-  left: 0; right: 0;
-  background: var(--bg);
-  z-index: 50;
+  display: none;
+  flex-direction: column;
+  height: calc(100vh - var(--top-h) - var(--safe-top) - var(--tab-h) - var(--safe-bot) - 16px);
+  overflow: hidden;
+  padding: 0 !important;
 }
 .felix-view.active { display: flex; }
 .felix-header {
@@ -947,10 +945,9 @@ body::after {
     </div>
   </section>
 
-</main>
 
-<!-- ═══ FÉLIX VIEW (fixed full) ═══ -->
-<div class="felix-view" id="view-felix">
+  <!-- ══ VIEW: FÉLIX ══ -->
+  <div class="felix-view view" id="view-felix">
   <div class="felix-header">
     <div class="felix-avatar">🤖</div>
     <div>
@@ -982,7 +979,9 @@ body::after {
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </button>
   </div>
-</div>
+  </div>
+
+</main>
 
 <!-- ═══ BOTTOM TAB BAR ═══ -->
 <nav class="tabbar">
@@ -1047,30 +1046,23 @@ body::after {
 
 /* ═══ NAV ═══ */
 var currentView = 'solicitud';
-window.goView = function goView(name) {
-  // Views normales
-  var views = ['solicitud','estado','datos','pqrs'];
+window.goView = function(name) {
+  // Todas las vistas (incluido felix) tratadas igual
+  var views = ['solicitud','estado','datos','pqrs','felix'];
   views.forEach(function(v){
     var el = document.getElementById('view-'+v);
     var tb = document.getElementById('tab-'+v);
     if(el) el.classList[v===name?'add':'remove']('active');
     if(tb) tb.classList[v===name?'add':'remove']('active');
   });
-  // Felix es especial (fixed overlay)
-  var felixView = document.getElementById('view-felix');
-  var felixTab  = document.getElementById('tab-felix');
+  // Felix: mensaje bienvenida e input
   if(name==='felix'){
-    felixView.classList.add('active');
-    felixTab.classList.add('active');
-    if(window.felixHistory.length===0) setTimeout(felixBienvenida, 300);
-    setTimeout(function(){ var inp=document.getElementById('felixInput'); if(inp)inp.focus(); },400);
-  } else {
-    felixView.classList.remove('active');
-    if(felixTab) felixTab.classList.remove('active');
-    // scroll top on view change
-    var main = document.getElementById('mainScroll');
-    if(main) main.scrollTop = 0;
+    if(window.felixHistory.length===0) setTimeout(felixBienvenida, 350);
+    setTimeout(function(){ var inp=document.getElementById('felixInput'); if(inp)inp.focus(); },450);
   }
+  // Scroll al inicio en vistas normales
+  var main = document.getElementById('mainScroll');
+  if(main && name!=='felix') main.scrollTop = 0;
   currentView = name;
   if(window.FU_Audit) FU_Audit.log('NAV',name);
 }
