@@ -1690,14 +1690,14 @@ window.felixKeydown = function felixKeydown(e){
 
   /* SUCCESS — dos notas ascendentes suaves (iOS confirm style) */
   function playSuccess() {
-    tone(659, 'sine', 0.20, 0.005, 0.12, 0.00);  // E5
-    tone(880, 'sine', 0.18, 0.005, 0.18, 0.10);  // A5
+    tone(659, 'sine', 0.42, 0.008, 0.22, 0.00);  // E5
+    tone(880, 'sine', 0.38, 0.008, 0.28, 0.10);  // A5
   }
 
   /* ERROR — tono descendente breve (Material error) */
   function playError() {
-    tone(330, 'sine', 0.20, 0.005, 0.08, 0.00);  // E4
-    tone(220, 'sine', 0.15, 0.005, 0.14, 0.07);  // A3
+    tone(330, 'sine', 0.42, 0.008, 0.18, 0.00);  // E4
+    tone(220, 'sine', 0.34, 0.008, 0.22, 0.07);  // A3
   }
 
   /* FELIX_MSG — pop suave cuando Félix responde */
@@ -1708,14 +1708,14 @@ window.felixKeydown = function felixKeydown(e){
 
   /* CLICK — tap material (botones primarios) */
   function playClick() {
-    tone(440, 'sine', 0.10, 0.002, 0.06, 0.00);
+    tone(440, 'sine', 0.28, 0.004, 0.12, 0.00);
   }
 
   /* NOTIFICATION — ping amistoso (nueva solicitud, estado cambiado) */
   function playNotif() {
-    tone(523,  'sine', 0.16, 0.005, 0.10, 0.00);  // C5
-    tone(659,  'sine', 0.14, 0.005, 0.12, 0.08);  // E5
-    tone(784,  'sine', 0.12, 0.005, 0.18, 0.16);  // G5
+    tone(523,  'sine', 0.38, 0.008, 0.18, 0.00);  // C5
+    tone(659,  'sine', 0.34, 0.008, 0.20, 0.10);  // E5
+    tone(784,  'sine', 0.28, 0.008, 0.26, 0.20);  // G5
   }
 
   /* SEND — whoosh corto al enviar mensaje a Félix */
@@ -1731,7 +1731,7 @@ window.felixKeydown = function felixKeydown(e){
       osc.frequency.setValueAtTime(300, t);
       osc.frequency.exponentialRampToValueAtTime(800, t + 0.12);
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.12, t + 0.02);
+      gain.gain.linearRampToValueAtTime(0.28, t + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
       osc.start(t); osc.stop(t + 0.18);
     } catch(e) {}
