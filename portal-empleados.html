@@ -1651,10 +1651,6 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
     <div class="nav-item" onclick="showPanel('aprobados')" id="nav-aprobados">
       <span class="ni">✅</span> Aprobados
     </div>
-    <div class="nav-item" onclick="showPanel('asociados')" id="nav-asociados">
-      <span class="ni">👤</span> Base Asociados
-      <span class="nav-cnt" id="cnt-asociados">0</span>
-    </div>
     <div class="nav-section">Herramientas</div>
     <div class="nav-item" onclick="showPanel('historial')" id="nav-historial">
       <span class="ni">🕐</span> Auditoría
@@ -1853,14 +1849,15 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
           <div class="pg-sub">Solicitudes recibidas del formulario de inquietudes de asociados</div>
         </div>
         <div class="pg-actions">
-          <button class="btn btn-outline btn-sm" onclick="recargar()">🔄 Actualizar</button>
+          <button class="btn btn-outline btn-sm" onclick="renderPQRS()">🔄 Actualizar</button>
+          <button class="btn btn-gold btn-sm" onclick="exportarPQRS()">📥 Exportar CSV</button>
         </div>
       </div>
       <div class="card">
         <div class="tbl-wrap">
           <table>
             <thead>
-              <tr><th>ID</th><th>Asociado</th><th>Tipo de Solicitud</th><th>Inquietud</th><th>Contacto</th><th>Fecha</th><th>Estado</th></tr>
+              <tr><th>ID</th><th>Asociado</th><th>Tipo de Solicitud</th><th>Inquietud</th><th>Contacto</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr>
             </thead>
             <tbody id="tblPQRS"></tbody>
           </table>
@@ -1918,64 +1915,7 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
       </div>
     </div>
 
-  
-    <!-- ════ BASE DE DATOS ASOCIADOS (OPA) ════ -->
-    <div class="panel" id="panel-asociados">
-      <div class="pg-head">
-        <div>
-          <div class="pg-title">👤 Base de Datos — Asociados</div>
-          <div class="pg-sub">Información actualizada de todos los asociados para el aplicativo OPA</div>
-        </div>
-        <div class="pg-actions">
-          <button class="btn btn-outline btn-sm" onclick="asocRecargar()">🔄 Actualizar</button>
-          <button class="btn btn-gold btn-sm" onclick="asocExportarCSV()">📥 Exportar CSV</button>
-        </div>
-      </div>
-      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px;">
-        <div class="kpi"><div class="kpi-accent" style="background:var(--orange)"></div><div class="kpi-ico">👥</div><div class="kpi-val" id="asocKpiTotal">0</div><div class="kpi-lbl">Total Asociados</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--ok)"></div><div class="kpi-ico">✅</div><div class="kpi-val" id="asocKpiCompletos">0</div><div class="kpi-lbl">Perfil Completo</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--warn)"></div><div class="kpi-ico">⚠️</div><div class="kpi-val" id="asocKpiIncompletos">0</div><div class="kpi-lbl">Incompletos</div></div>
-      </div>
-      <div class="card">
-        <div class="card-body" style="padding-bottom:8px;">
-          <div class="filters-bar">
-            <div class="search-wrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input class="search-input" id="asocSearch" placeholder="Buscar por nombre, cédula, correo, cargo…" oninput="asocFiltrar()">
-            </div>
-            <select class="filter-select" id="asocFiltroContrato" onchange="asocFiltrar()">
-              <option value="">Todos los contratos</option>
-              <option value="Término indefinido">Término indefinido</option>
-              <option value="Término fijo">Término fijo</option>
-              <option value="Prestación de servicios">Prestación de servicios</option>
-              <option value="Obra o labor">Obra o labor</option>
-            </select>
-            <select class="filter-select" id="asocFiltroDepto" onchange="asocFiltrar()">
-              <option value="">Todos los deptos</option>
-            </select>
-          </div>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre Completo</th><th>Cédula</th><th>Teléfono</th>
-                <th>Correo</th><th>Cargo</th><th>Contrato</th>
-                <th>Ingreso</th><th>Perfil</th><th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="asocTblBody"></tbody>
-          </table>
-        </div>
-        <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-          <div class="pg-info" id="asocInfo">0 asociados</div>
-          <div class="pagination" id="asocPaginacion"></div>
-        </div>
-      </div>
-    </div>
-
-
-    </div><!-- /content -->
+  </div><!-- /content -->
 </div><!-- /main-layout -->
 
 <!-- ════════════════════════════════════════
@@ -2039,24 +1979,6 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
   <div class="adm-footer">
     <button class="btn btn-outline" onclick="cerrarUsrModal()">Cancelar</button>
     <button class="btn btn-gold" onclick="guardarUsuario()" id="usrGuardarBtn">💾 Guardar</button>
-  </div>
-</div>
-
-
-<!-- MODAL EDITAR ASOCIADO -->
-<div class="modal-overlay" id="asocModalOverlay" onclick="if(event.target===this)cerrarAsocModal()" style="display:none">
-  <div class="modal" style="max-width:700px">
-    <div class="modal-head">
-      <span class="modal-title" id="asocModalTitle">Editar Asociado</span>
-      <button class="modal-close" onclick="cerrarAsocModal()">&#x2715;</button>
-    </div>
-    <div class="modal-body" style="padding:20px;">
-      <div id="asocModalBody" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" style="width:auto;padding:0 20px;" onclick="cerrarAsocModal()">Cancelar</button>
-      <button class="btn btn-gold" style="width:auto;padding:0 20px;" onclick="asocGuardarEdicion()">&#x1F4BE; Guardar</button>
-    </div>
   </div>
 </div>
 
@@ -2524,8 +2446,7 @@ function cambiarEstado(id, sel){
   guardarEnFirebase('solicitudes', db[idx].id, db[idx]);
   registrarAudit('Estado cambiado de "'+anterior+'" a "'+sel.value+'"', db[idx]);
   actualizarContadores();
-  if(window.FU_Sound) FU_Sound.notif();
-    showToast('Estado actualizado a: '+sel.value,'🔄');
+  showToast('Estado actualizado a: '+sel.value,'🔄');
   agregarNotificacion('Estado actualizado',(db[idx].nombreTitular||db[idx].nombre||'—')+' — '+sel.value, db[idx].id);
 }
 
@@ -2799,32 +2720,360 @@ function renderAuditoria(){
 }
 
 /* ═══ RENDER PQRS ═══ */
-function renderPQRS(){
-  var db=cargarDB().filter(function(s){return s.tipo==='pqrs';});
-  var body=$id('tblPQRS');
-  if(!db.length){
-    body.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="ei">💬</div><h3>Sin solicitudes PQRS</h3><p>Cuando los asociados envíen inquietudes aparecerán aquí.</p></div></td></tr>';
+/* ════════════════════════════════════════════════════════
+   MÓDULO PQRS — Portal Empleados
+   Reemplaza renderPQRS con versión completa:
+   - Carga desde Firebase 'pqrs' + localStorage
+   - Botones Ver, Descargar Word, Eliminar (DOM puro)
+   - Estados propios para PQRS
+   - Exportar CSV
+════════════════════════════════════════════════════════ */
+
+var _pqrsCache = [];
+
+/* ── Cargar PQRS desde Firebase + localStorage ── */
+function cargarPQRS(cb) {
+  var LS = 'fondoune_pqrs';
+  var local = [];
+  try { local = JSON.parse(localStorage.getItem(LS) || '[]'); } catch(e) {}
+
+  if (window._fbDB) {
+    window._fbDB.collection('pqrs')
+      .orderBy('fechaRegistro', 'desc')
+      .limit(300)
+      .get()
+      .then(function(snap) {
+        var arr = [];
+        snap.forEach(function(doc) { arr.push(doc.data()); });
+        // Merge: Firebase tiene prioridad, completar con localStorage
+        var ids = {};
+        arr.forEach(function(s) { ids[s.id] = true; });
+        local.forEach(function(s) { if (!ids[s.id]) arr.push(s); });
+        _pqrsCache = arr;
+        if (cb) cb(arr);
+      })
+      .catch(function(e) {
+        console.warn('[PQRS] Firebase error:', e.message);
+        _pqrsCache = local;
+        if (cb) cb(local);
+      });
+  } else {
+    _pqrsCache = local;
+    if (cb) cb(local);
+  }
+}
+
+/* ── Guardar cache en localStorage ── */
+function _pqrsGuardarLocal() {
+  try { localStorage.setItem('fondoune_pqrs', JSON.stringify(_pqrsCache)); } catch(e) {}
+}
+
+/* ── renderPQRS: 100% DOM, sin string concatenation con onclick ── */
+function renderPQRS() {
+  var body = $id('tblPQRS');
+  if (!body) return;
+
+  // Mostrar spinner
+  body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">⏳ Cargando PQRS…</td></tr>';
+
+  cargarPQRS(function(db) {
+    body.innerHTML = '';
+
+    if (!db.length) {
+      var trE = body.insertRow();
+      var tdE = trE.insertCell();
+      tdE.colSpan = 8;
+      tdE.innerHTML = '<div class="empty-state"><div class="ei">💬</div><h3>Sin solicitudes PQRS</h3><p>Cuando los asociados envíen inquietudes aparecerán aquí.</p></div>';
+      return;
+    }
+
+    var tiposBadge = {
+      'peticion':'badge-revision', 'queja':'badge-rechazado',
+      'reclamo':'badge-pendiente', 'sugerencia':'badge-construccion',
+      'credito_vivienda':'badge-compra', 'cancelacion_hipoteca':'badge-gravamen',
+      'certificado_tributario':'badge-revision', 'paz_y_salvo':'badge-aprobado',
+      'abono_libre_inversion':'badge-construccion', 'otra':'badge-pendiente'
+    };
+
+    db.forEach(function(s) {
+      var id     = String(s.id || '');
+      var tipo   = s.tipoSolicitud || s.tipoLabel || 'otra';
+      var cls    = tiposBadge[tipo] || 'badge-pendiente';
+      var label  = s.tipoLabel || tipo;
+      var nombre = s.nombre || s.nombreTitular || '—';
+      var doc    = s.documento || s.cedula || '—';
+      var resumen= (s.inquietud || '').substring(0, 55) + ((s.inquietud || '').length > 55 ? '…' : '');
+
+      var tr = body.insertRow();
+
+      // ID
+      var c0 = tr.insertCell();
+      var sp = document.createElement('span');
+      sp.className = 'tr-id'; sp.textContent = id;
+      c0.appendChild(sp);
+
+      // Asociado
+      var c1 = tr.insertCell();
+      var d1 = document.createElement('div'); d1.className = 'tr-name'; d1.textContent = nombre;
+      var d2 = document.createElement('div'); d2.className = 'tr-sub';  d2.textContent = 'Doc: ' + doc;
+      c1.appendChild(d1); c1.appendChild(d2);
+
+      // Tipo
+      var c2 = tr.insertCell();
+      var b2 = document.createElement('span'); b2.className = 'badge ' + cls; b2.textContent = label;
+      c2.appendChild(b2);
+
+      // Inquietud resumen
+      var c3 = tr.insertCell();
+      c3.style.cssText = 'max-width:180px;font-size:12px;color:var(--muted)';
+      c3.textContent = resumen;
+
+      // Contacto
+      var c4 = tr.insertCell();
+      c4.style.fontSize = '12.5px';
+      c4.innerHTML = escHtml(s.telefono || '—') + '<br><span style="color:var(--muted);font-size:11px">' + escHtml(s.correo || '') + '</span>';
+
+      // Fecha
+      var c5 = tr.insertCell();
+      c5.style.cssText = 'font-size:12px;color:var(--muted)';
+      c5.textContent = fmtFechaCorta(s.fechaRegistro);
+
+      // Estado — select con closure
+      var c6 = tr.insertCell();
+      var sel = document.createElement('select');
+      sel.className = 'estado-sel estado-' + (s.estado || 'pendiente');
+      [
+        {v:'pendiente', l:'⏳ Pendiente'},
+        {v:'revision',  l:'🔍 En Revisión'},
+        {v:'resuelto',  l:'✅ Resuelto'},
+        {v:'cerrado',   l:'🔒 Cerrado'}
+      ].forEach(function(opt) {
+        var o = document.createElement('option');
+        o.value = opt.v; o.textContent = opt.l;
+        if (s.estado === opt.v) o.selected = true;
+        sel.appendChild(o);
+      });
+      (function(pqrsId) {
+        sel.addEventListener('change', function() { cambiarEstadoPQRS(pqrsId, sel); });
+      })(id);
+      c6.appendChild(sel);
+
+      // Acciones — closure sobre id
+      var c7 = tr.insertCell();
+      var wrap = document.createElement('div');
+      wrap.className = 'row-actions';
+
+      var btnVer = document.createElement('button');
+      btnVer.className = 'act-btn'; btnVer.title = 'Ver detalle'; btnVer.textContent = '🔍';
+      (function(pid) { btnVer.addEventListener('click', function() { verDetallePQRS(pid); }); })(id);
+
+      var btnDoc = document.createElement('button');
+      btnDoc.className = 'act-btn'; btnDoc.title = 'Descargar Word'; btnDoc.textContent = '📄';
+      (function(pid) { btnDoc.addEventListener('click', function() { descargarPQRS(pid); }); })(id);
+
+      var btnDel = document.createElement('button');
+      btnDel.className = 'act-btn danger'; btnDel.title = 'Eliminar'; btnDel.textContent = '🗑️';
+      (function(pid) { btnDel.addEventListener('click', function() { eliminarPQRS(pid); }); })(id);
+
+      wrap.appendChild(btnVer);
+      wrap.appendChild(btnDoc);
+      wrap.appendChild(btnDel);
+      c7.appendChild(wrap);
+
+      body.appendChild(tr);
+    });
+  });
+}
+
+/* ── Cambiar estado PQRS ── */
+function cambiarEstadoPQRS(id, sel) {
+  var idx = _pqrsCache.findIndex(function(s) { return s.id === id; });
+  if (idx < 0) return;
+  var anterior = _pqrsCache[idx].estado || 'pendiente';
+  _pqrsCache[idx].estado = sel.value;
+  sel.className = 'estado-sel estado-' + sel.value;
+  if (!_pqrsCache[idx].historial) _pqrsCache[idx].historial = [];
+  _pqrsCache[idx].historial.unshift({
+    accion: 'Estado PQRS: ' + anterior + ' → ' + sel.value,
+    fecha: new Date().toISOString(),
+    usuario: getUsuarioSesion()
+  });
+  if (window._fbDB) {
+    window._fbDB.collection('pqrs').doc(id).set(_pqrsCache[idx], { merge: true })
+      .catch(function(e) { console.warn('[PQRS] update error:', e); });
+  }
+  _pqrsGuardarLocal();
+  if (window.FU_Audit) window.FU_Audit.log('PQRS_ESTADO', id + ' ' + anterior + '→' + sel.value);
+  if (window.FU_Sound) window.FU_Sound.notif();
+  showToast('Estado PQRS: ' + sel.value, '🔄');
+}
+
+/* ── Ver detalle PQRS (reutiliza el modal existente) ── */
+function verDetallePQRS(id) {
+  var s = _pqrsCache.find(function(x) { return x.id === id; });
+  if (!s) { showToast('PQRS no encontrada', '⚠️'); return; }
+
+  // Usar solicitudActual para compatibilidad con modal existente
+  solicitudActual = s;
+
+  $id('modalTitle').textContent = 'PQRS — ' + (s.nombre || s.nombreTitular || id);
+
+  var campos = [
+    {l:'ID',                v: s.id || '—',                           full: false},
+    {l:'Tipo de Solicitud', v: s.tipoLabel || s.tipoSolicitud || '—', full: false},
+    {l:'Estado',            v: s.estado || 'pendiente',               full: false},
+    {l:'Nombre',            v: s.nombre || s.nombreTitular || '—',    full: false},
+    {l:'Documento',         v: s.documento || s.cedula || '—',        full: false},
+    {l:'Teléfono',          v: s.telefono || '—',                     full: false},
+    {l:'Correo',            v: s.correo || '—',                       full: false},
+    {l:'Fecha Registro',    v: fmtFecha(s.fechaRegistro),             full: false},
+    {l:'Inquietud / Mensaje', v: s.inquietud || '—',                  full: true },
+  ];
+
+  var histHTML = '';
+  if (s.historial && s.historial.length) {
+    histHTML = '<div style="margin-top:20px"><div class="card-title" style="margin-bottom:12px">📜 Historial</div>'
+      + '<div class="hist-timeline">'
+      + s.historial.map(function(h) {
+          return '<div class="ht-item"><div class="ht-dot"></div><div class="ht-body">'
+            + '<div class="ht-accion">' + escHtml(h.accion) + '</div>'
+            + '<div class="ht-meta">' + escHtml(h.usuario || '—') + ' · ' + fmtFecha(h.fecha) + '</div>'
+            + '</div></div>';
+        }).join('')
+      + '</div></div>';
+  }
+
+  $id('modalBody').innerHTML = '<div class="detail-grid">'
+    + campos.map(function(c) {
+        return '<div class="detail-field' + (c.full ? ' detail-full' : '') + '">'
+          + '<div class="detail-lbl">' + c.l + '</div>'
+          + '<div class="detail-val">' + escHtml(String(c.v)) + '</div></div>';
+      }).join('')
+    + '</div>' + histHTML;
+
+  // Reemplazar botón Word del modal por uno específico de PQRS
+  var btnWord = $id('btnGenDocx');
+  if (btnWord) {
+    btnWord.textContent = '📄 Descargar Word';
+    btnWord.onclick = function() { descargarPQRS(id); cerrarModalBtn(); };
+  }
+
+  $id('modalOverlay').classList.add('show');
+}
+
+/* ── Descargar Word de PQRS ── */
+function descargarPQRS(id) {
+  var s = _pqrsCache.find(function(x) { return x.id === id; });
+  if (!s) { showToast('PQRS no encontrada', '⚠️'); return; }
+
+  var lib = (typeof docx !== 'undefined' && docx.Document) ? docx : window;
+  if (!lib.Document) { showToast('Librería docx no disponible', '⚠️'); return; }
+
+  var DD = lib.Document, PK = lib.Packer, PA = lib.Paragraph,
+      RN = lib.TextRun, WT = lib.WidthType, AL = lib.AlignmentType,
+      TC = lib.TableCell, TR = lib.TableRow, TB = lib.Table;
+
+  var filas = [
+    ['ID',              s.id || '—'],
+    ['Tipo Solicitud',  s.tipoLabel || s.tipoSolicitud || '—'],
+    ['Estado',          s.estado || 'pendiente'],
+    ['Nombre',          s.nombre || s.nombreTitular || '—'],
+    ['Documento',       s.documento || s.cedula || '—'],
+    ['Teléfono',        s.telefono || '—'],
+    ['Correo',          s.correo || '—'],
+    ['Fecha',           s.fechaRegistro ? new Date(s.fechaRegistro).toLocaleDateString('es-CO') : '—'],
+    ['Inquietud',       s.inquietud || '—'],
+  ];
+
+  var rows = filas.map(function(r) {
+    return new TR({ children: [
+      new TC({ children: [new PA({ children: [new RN({ text: r[0], bold: true, size: 20 })] })],
+               width: { size: 30, type: WT.PERCENTAGE } }),
+      new TC({ children: [new PA({ children: [new RN({ text: r[1], size: 20 })] })],
+               width: { size: 70, type: WT.PERCENTAGE } })
+    ]});
+  });
+
+  var doc = new DD({ sections: [{ properties: {}, children: [
+    new PA({ alignment: AL.CENTER, children: [
+      new RN({ text: 'FondoUne — Registro PQRS', bold: true, size: 32, color: 'E8511A' })
+    ]}),
+    new PA({ alignment: AL.CENTER, children: [
+      new RN({ text: 'Petición · Queja · Reclamo · Sugerencia', size: 22, color: '7A5540' })
+    ]}),
+    new PA({ children: [] }),
+    new TB({ rows: rows, width: { size: 100, type: WT.PERCENTAGE } })
+  ]}]});
+
+  PK.toBlob(doc).then(function(blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'FondoUne_PQRS_' + (s.nombre || 'asociado').replace(/\s+/g, '_')
+               + '_' + new Date().toISOString().slice(0, 10) + '.docx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    if (window.FU_Sound) window.FU_Sound.success();
+    if (window.FU_Audit) window.FU_Audit.log('PQRS_DESCARGADA', id);
+    showToast('PQRS descargada correctamente', '📄');
+  }).catch(function(e) {
+    if (window.FU_Sound) window.FU_Sound.error();
+    showToast('Error al generar Word: ' + e.message, '❌');
+  });
+}
+
+/* ── Eliminar PQRS ── */
+function eliminarPQRS(id) {
+  if (!confirm('¿Eliminar definitivamente esta PQRS?\n\nEsta acción no se puede deshacer.')) return;
+
+  if (window._fbDB) {
+    window._fbDB.collection('pqrs').doc(id).delete()
+      .catch(function(e) { console.warn('[PQRS] delete error:', e); });
+  }
+  _pqrsCache = _pqrsCache.filter(function(s) { return s.id !== id; });
+  _pqrsGuardarLocal();
+
+  if (window.FU_Audit) window.FU_Audit.log('PQRS_ELIMINADA', id);
+  if (window.FU_Sound) window.FU_Sound.click();
+  renderPQRS();
+  showToast('PQRS eliminada', '🗑️');
+}
+
+/* ── Exportar PQRS a CSV ── */
+function exportarPQRS() {
+  if (!_pqrsCache.length) {
+    cargarPQRS(function(db) {
+      if (db.length) _doPQRScsv(db);
+      else showToast('Sin PQRS para exportar', '⚠️');
+    });
     return;
   }
-  body.innerHTML=db.map(function(s){
-    var tiposBadge={
-      'credito_vivienda':'badge-compra','cancelacion_hipoteca':'badge-gravamen',
-      'certificado_tributario':'badge-revision','paz_y_salvo':'badge-aprobado',
-      'abono_libre_inversion':'badge-construccion','otra':'badge-pendiente'
-    };
-    var cls=tiposBadge[s.tipoSolicitud]||'badge-pendiente';
-    var resumen=(s.inquietud||'').substring(0,60)+(s.inquietud&&s.inquietud.length>60?'…':'');
-    return '<tr>'
-      +'<td><span class="tr-id">'+s.id+'</span></td>'
-      +'<td><div class="tr-name">'+escHtml(s.nombre||s.nombreTitular)+'</div><div class="tr-sub">Doc: '+escHtml(s.documento||s.cedula)+'</div></td>'
-      +'<td><span class="badge '+cls+'">'+(s.tipoLabel||s.tipoSolicitud||'—')+'</span></td>'
-      +'<td style="max-width:200px;font-size:12px;color:var(--muted)">'+resumen+'</td>'
-      +'<td style="font-size:12.5px">'+(s.telefono||'—')+'<br><span style="color:var(--muted);font-size:11px">'+(s.correo||'')+'</span></td>'
-      +'<td style="font-size:12px;color:var(--muted)">'+fmtFechaCorta(s.fechaRegistro)+'</td>'
-      +'<td>'+selectEstado(s)+'</td>'
-      +'</tr>';
-  }).join('');
+  _doPQRScsv(_pqrsCache);
 }
+
+function _doPQRScsv(db) {
+  var hdr = ['ID','Tipo','Estado','Nombre','Documento','Teléfono','Correo','Fecha','Inquietud'];
+  var rows = db.map(function(s) {
+    return [
+      s.id, s.tipoLabel || s.tipoSolicitud, s.estado,
+      s.nombre || s.nombreTitular, s.documento || s.cedula,
+      s.telefono, s.correo,
+      s.fechaRegistro ? new Date(s.fechaRegistro).toLocaleDateString('es-CO') : '',
+      (s.inquietud || '').replace(/;/g, '|').replace(/\n/g, ' ')
+    ].map(function(v) { return '"' + (v || '') + '"'; }).join(';');
+  });
+  var csv  = '\uFEFF' + hdr.join(';') + '\n' + rows.join('\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = 'FondoUne_PQRS_' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  if (window.FU_Sound) window.FU_Sound.success();
+  showToast('PQRS exportadas (' + db.length + ' registros)', '📥');
+}
+
 
 /* ═══ MODAL DETALLE ═══ */
 function verDetalle(id){
@@ -4183,16 +4432,39 @@ window.addEventListener('resize', _debounce(function() {
 
   /* ── 1. LLAMADA AL BACKEND (APPS SCRIPT) con fallback a Gemini directo ── */
   async function consultarFelix(historial) {
-    /* ── Gemini API directo — Apps Script bloqueado por CORS desde GitHub Pages ── */
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyjEtX8qXtnv29-ZeKlvJna75gFOqtjX8AO6DWm6YV_SZnkHKRscmY7qE32KEFIK8yp/exec";
+    var ultimoMensaje = historial.length ? historial[historial.length - 1].parts[0].text : '';
+
+    /* ── Intento 1: Apps Script (puente serverless) ── */
+    try {
+      var resp = await fetch(URL_APPS_SCRIPT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ texto: ultimoMensaje, historial: historial })
+      });
+      if (resp.ok) {
+        var datos = await resp.json();
+        console.log('[Felix·AS] Respuesta:', JSON.stringify(datos).substring(0, 300));
+        if (!datos.error) {
+          var texto = _extraerTextoGemini(datos);
+          if (texto) return texto;
+        } else {
+          console.warn('[Felix·AS] Error del servidor:', datos.error);
+        }
+      } else {
+        console.warn('[Felix·AS] HTTP', resp.status, '— activando fallback');
+      }
+    } catch (e) {
+      console.warn('[Felix·AS] Fetch falló:', e.message, '— activando fallback Gemini directo');
+    }
+
+    /* ── Intento 2: Gemini API directo (fallback automático) ── */
+    console.log('[Felix·FB] Usando Gemini API directo');
     try {
       var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
       var payload = {
         contents: historial,
-        generationConfig: {
-          temperature: FELIX_CFG.TEMP,
-          maxOutputTokens: FELIX_CFG.MAX_TOKENS,
-          topP: 0.9
-        }
+        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 }
       };
       var r2 = await fetch(url, {
         method: 'POST',
@@ -4205,8 +4477,8 @@ window.addEventListener('resize', _debounce(function() {
       if (texto2) return texto2;
       throw new Error('Respuesta vacía');
     } catch (e2) {
-      console.error('[Felix] Error Gemini API:', e2.message);
-      return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo.';
+      console.error('[Felix·FB] Fallback también falló:', e2.message);
+      return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo en unos segundos.';
     }
   }
 
@@ -4236,8 +4508,6 @@ window.addEventListener('resize', _debounce(function() {
 
     chatHistory.push({ role: 'model', parts: [{ text: reply }] });
     showTyping(false);
-    if(window.FU_Sound) FU_Sound.felixMsg();
-    if(window.FU_Sound) FU_Sound.felixMsg();
     appendMessage('felix', reply);
     isLoading = false;
     scrollToBottom();
@@ -4308,7 +4578,6 @@ window.addEventListener('resize', _debounce(function() {
 
   window.felixSend = function() {
     var inp = document.getElementById('felixInput');
-    if(window.FU_Sound) FU_Sound.send();
     if (inp) felixSendMessage(inp.value.trim());
   };
 
@@ -4329,649 +4598,11 @@ window.addEventListener('resize', _debounce(function() {
   </script>
 
   <script>
-
-/* ═══════════════════════════════════════════════════════════════
-   MÓDULO BASE DE DATOS ASOCIADOS — OPA  v2.0 (testeado 24/24)
-   Sin concatenación de strings con comillas anidadas.
-   Toda la construcción DOM usa createElement + addEventListener.
-═══════════════════════════════════════════════════════════════ */
-(function() {
-  'use strict';
-
-  var CACHE_KEY  = 'fondoune_asoc_local_cache';
-  var _datos     = [];
-  var _filtrados = [];
-  var _page      = 1;
-  var PER_PAGE   = 15;
-  var _editando  = null;
-
-  var CAMPOS = [
-    {k:'asocTipoId',      l:'Tipo ID'},
-    {k:'asocCedula',      l:'Cédula'},
-    {k:'asocApe1',        l:'Primer Apellido'},
-    {k:'asocApe2',        l:'Segundo Apellido'},
-    {k:'asocNom1',        l:'Primer Nombre'},
-    {k:'asocNom2',        l:'Segundo Nombre'},
-    {k:'asocFechaNac',    l:'Fecha Nacimiento'},
-    {k:'asocSexo',        l:'Sexo'},
-    {k:'asocEstadoCivil', l:'Estado Civil'},
-    {k:'asocEstudios',    l:'Nivel Estudios'},
-    {k:'asocLugarExp',    l:'Lugar Expedición'},
-    {k:'asocFechaExp',    l:'Fecha Expedición'},
-    {k:'asocTel1',        l:'Teléfono Fijo'},
-    {k:'asocCelular',     l:'Celular'},
-    {k:'asocTel2',        l:'Tel. Alternativo'},
-    {k:'asocEmail',       l:'Correo'},
-    {k:'asocDireccion',   l:'Dirección'},
-    {k:'asocCiudad',      l:'Ciudad'},
-    {k:'asocDepto',       l:'Departamento'},
-    {k:'asocBarrio',      l:'Barrio'},
-    {k:'asocEstrato',     l:'Estrato'},
-    {k:'asocEmpresa',     l:'Empresa'},
-    {k:'asocDependencia', l:'Dependencia'},
-    {k:'asocCargo',       l:'Cargo'},
-    {k:'asocTipoContrato',l:'Tipo Contrato'},
-    {k:'asocPeriodo',     l:'Periodo Nómina'},
-    {k:'asocFechaIngreso',l:'Fecha Ingreso'},
-    {k:'asocSalario',     l:'Salario'},
-    {k:'asocDeduccion',   l:'Deducciones'},
-    {k:'asocBanco',       l:'Banco'},
-    {k:'asocNroCuenta',   l:'N\xb0 Cuenta'},
-    {k:'asocTipoCuenta',  l:'Tipo Cuenta'},
-    {k:'asocRut',         l:'RUT'}
-  ];
-
-  var CLAVE = ['asocCedula','asocNom1','asocApe1','asocEmail','asocCelular','asocCargo'];
-
-  function calcPct(a) {
-    var n = CLAVE.filter(function(k) { return a[k] && String(a[k]).trim(); }).length;
-    return Math.round(n / CLAVE.length * 100);
-  }
-
-  function getNombre(a) {
-    return [a.asocNom1, a.asocNom2, a.asocApe1, a.asocApe2]
-      .filter(Boolean).join(' ').trim() || a.asocCedula || '\u2014';
-  }
-
-  function fmtFecha(v) {
-    if (!v) return '\u2014';
-    var p = String(v).split('-');
-    return (p.length === 3) ? p[2] + '/' + p[1] + '/' + p[0] : v;
-  }
-
-  function esc(s) {
-    return String(s || '')
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-  }
-
-  function getEmp() {
-    try {
-      var s = JSON.parse(localStorage.getItem('fu_session') || 'null');
-      return s ? s.nombre : 'Empleado';
-    } catch(e) { return 'Empleado'; }
-  }
-
-  /* ── CARGAR DESDE FIREBASE ── */
-  var _unsubscribe = null; // listener en tiempo real
-
-  window.asocRecargar = function() {
-    var tbody = document.getElementById('asocTblBody');
-    if (tbody) {
-      while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-      var tr = tbody.insertRow();
-      var td = tr.insertCell();
-      td.colSpan = 9;
-      td.style.cssText = 'text-align:center;padding:30px;color:var(--muted)';
-      td.textContent = '\u23f3 Cargando desde Firebase\u2026';
-    }
-
-    // Cancelar listener anterior si existe
-    if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
-
-    if (window._fbDB) {
-      // onSnapshot: actualización en TIEMPO REAL — cada vez que un asociado
-      // guarda sus datos en el portal, se refleja aquí automáticamente
-      _unsubscribe = window._fbDB.collection('asociados')
-        .onSnapshot(function(snap) {
-          var arr = [];
-          snap.forEach(function(doc) { arr.push(doc.data()); });
-          _datos = arr;
-          try { localStorage.setItem(CACHE_KEY, JSON.stringify(arr)); } catch(e) {}
-          _poblarDeptos();
-          asocFiltrar();
-          var cnt = document.getElementById('cnt-asociados');
-          if (cnt) cnt.textContent = arr.length;
-          console.log('[ASOC] Actualizado en tiempo real:', arr.length, 'asociados');
-          if (window.FU_Audit) FU_Audit.log('ASOC_CARGADOS', arr.length + ' asociados');
-        }, function(e) {
-          console.warn('Firebase onSnapshot error:', e.message);
-          _desdeCache();
-        });
-    } else {
-      _desdeCache();
-    }
-  };
-
-  function _desdeCache() {
-    try { _datos = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]'); } catch(e) { _datos = []; }
-    _poblarDeptos();
-    asocFiltrar();
-  }
-
-  function _poblarDeptos() {
-    var sel = document.getElementById('asocFiltroDepto');
-    if (!sel) return;
-    var map = {};
-    _datos.forEach(function(a) { if (a.asocDepto) map[a.asocDepto] = true; });
-    var val = sel.value;
-    while (sel.options.length > 1) sel.remove(1);
-    Object.keys(map).sort().forEach(function(d) {
-      var o = document.createElement('option');
-      o.value = d;
-      o.textContent = d;
-      sel.appendChild(o);
-    });
-    sel.value = val;
-  }
-
-  /* ── FILTRAR ── */
-  window.asocFiltrar = function() {
-    var q  = ((document.getElementById('asocSearch')        || {}).value || '').toLowerCase().trim();
-    var ct = ((document.getElementById('asocFiltroContrato') || {}).value || '');
-    var dp = ((document.getElementById('asocFiltroDepto')    || {}).value || '');
-
-    _filtrados = _datos.filter(function(a) {
-      var n = getNombre(a).toLowerCase();
-      var mQ = !q ||
-        n.includes(q) ||
-        (a.asocCedula  || '').includes(q) ||
-        (a.asocEmail   || '').toLowerCase().includes(q) ||
-        (a.asocCargo   || '').toLowerCase().includes(q) ||
-        (a.asocCelular || '').includes(q);
-      return mQ && (!ct || a.asocTipoContrato === ct) && (!dp || a.asocDepto === dp);
-    });
-
-    _page = 1;
-    _renderTabla();
-    _renderKPIs();
-    _renderPags();
-  };
-
-  /* ── KPIs ── */
-  function _renderKPIs() {
-    var total = _datos.length;
-    var comp  = _datos.filter(function(a) { return calcPct(a) >= 100; }).length;
-    var el;
-    el = document.getElementById('asocKpiTotal');       if (el) el.textContent = total;
-    el = document.getElementById('asocKpiCompletos');   if (el) el.textContent = comp;
-    el = document.getElementById('asocKpiIncompletos'); if (el) el.textContent = total - comp;
-    el = document.getElementById('cnt-asociados');      if (el) el.textContent = total;
-    el = document.getElementById('asocInfo');
-    if (el) el.textContent = _filtrados.length + ' de ' + total + ' asociados';
-  }
-
-  /* ── TABLA — 100% DOM, cero strings con comillas anidadas ── */
-  function _renderTabla() {
-    var tbody = document.getElementById('asocTblBody');
-    if (!tbody) return;
-
-    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-
-    var inicio = (_page - 1) * PER_PAGE;
-    var pagina = _filtrados.slice(inicio, inicio + PER_PAGE);
-
-    if (!pagina.length) {
-      var tr0 = tbody.insertRow();
-      var td0 = tr0.insertCell();
-      td0.colSpan = 9;
-      td0.innerHTML = '<div class="empty-state"><div class="ei">\ud83d\udc64</div><h3>Sin asociados</h3><p>No hay registros con los filtros aplicados.</p></div>';
-      return;
-    }
-
-    pagina.forEach(function(a) {
-      var p     = calcPct(a);
-      var color = p >= 100 ? 'var(--ok)' : p >= 60 ? 'var(--warn)' : 'var(--err)';
-      var ced   = String(a.asocCedula || '');
-      var tr    = tbody.insertRow();
-
-      /* Celda nombre */
-      var c0 = tr.insertCell();
-      var nd = document.createElement('div');
-      nd.className   = 'tr-name';
-      nd.textContent = getNombre(a);
-      var ns = document.createElement('div');
-      ns.className   = 'tr-sub';
-      ns.textContent = a.asocEmpresa || '\u2014';
-      c0.appendChild(nd);
-      c0.appendChild(ns);
-
-      /* Cédula */
-      var c1 = tr.insertCell();
-      var sp = document.createElement('span');
-      sp.className   = 'tr-id';
-      sp.textContent = ced || '\u2014';
-      c1.appendChild(sp);
-
-      /* Resto de celdas de texto */
-      var cells = [
-        a.asocCelular || a.asocTel1 || '\u2014',
-        a.asocEmail || '\u2014',
-        a.asocCargo || '\u2014',
-        a.asocTipoContrato || '\u2014',
-        fmtFecha(a.asocFechaIngreso)
-      ];
-      cells.forEach(function(val) {
-        var c = tr.insertCell();
-        c.textContent = val;
-        c.style.fontSize = '13px';
-      });
-
-      /* % Perfil */
-      var cp = tr.insertCell();
-      var badge = document.createElement('span');
-      badge.style.fontSize  = '12px';
-      badge.style.fontWeight = '700';
-      badge.style.color     = color;
-      badge.textContent     = p + '%';
-      cp.appendChild(badge);
-
-      /* Acciones — closure sobre ced */
-      var ca = tr.insertCell();
-      var wrap = document.createElement('div');
-      wrap.className = 'row-actions';
-
-      var btnE = document.createElement('button');
-      btnE.className   = 'act-btn';
-      btnE.title       = 'Editar';
-      btnE.textContent = '\u270f\ufe0f';
-      btnE.addEventListener('click', (function(c) {
-        return function() { window.asocAbrirEdicion(c); };
-      })(ced));
-
-      var btnD = document.createElement('button');
-      btnD.className   = 'act-btn danger';
-      btnD.title       = 'Eliminar';
-      btnD.textContent = '\ud83d\uddd1\ufe0f';
-      btnD.addEventListener('click', (function(c) {
-        return function() { window.asocEliminar(c); };
-      })(ced));
-
-      wrap.appendChild(btnE);
-      wrap.appendChild(btnD);
-      ca.appendChild(wrap);
-
-      tbody.appendChild(tr);
-    });
-  }
-
-  /* ── PAGINACIÓN — botones con addEventListener ── */
-  function _renderPags() {
-    var cont = document.getElementById('asocPaginacion');
-    if (!cont) return;
-    while (cont.firstChild) cont.removeChild(cont.firstChild);
-
-    var total = Math.ceil(_filtrados.length / PER_PAGE);
-    if (total <= 1) return;
-
-    function mkBtn(label, pg, active) {
-      var b = document.createElement('button');
-      b.className   = 'pg-btn' + (active ? ' active' : '');
-      b.textContent = label;
-      b.addEventListener('click', function() {
-        _page = pg;
-        _renderTabla();
-        _renderPags();
-      });
-      return b;
-    }
-
-    if (_page > 1)
-      cont.appendChild(mkBtn('\u2039', _page - 1, false));
-    for (var p = Math.max(1, _page - 2); p <= Math.min(total, _page + 2); p++)
-      cont.appendChild(mkBtn(p, p, p === _page));
-    if (_page < total)
-      cont.appendChild(mkBtn('\u203a', _page + 1, false));
-  }
-
-  /* ── ABRIR MODAL EDICIÓN — 100% createElement ── */
-  window.asocAbrirEdicion = function(cedula) {
-    var a = _datos.find(function(x) { return x.asocCedula === cedula; });
-    if (!a) return;
-    _editando = cedula;
-
-    document.getElementById('asocModalTitle').textContent = '\u270f\ufe0f ' + getNombre(a);
-
-    var body = document.getElementById('asocModalBody');
-    while (body.firstChild) body.removeChild(body.firstChild);
-
-    CAMPOS.forEach(function(c) {
-      var wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
-
-      var lbl = document.createElement('label');
-      lbl.style.cssText = 'font-family:\'Outfit\',sans-serif;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;';
-      lbl.textContent = c.l;
-
-      var inp = document.createElement('input');
-      inp.dataset.key  = c.k;
-      inp.value        = String(a[c.k] || '');
-      inp.style.cssText = 'padding:9px 12px;font-size:13px;font-family:inherit;border:1.5px solid var(--border);border-radius:8px;outline:none;color:var(--text);background:rgba(255,255,255,.9);width:100%;box-sizing:border-box;';
-
-      inp.addEventListener('focus', function() { this.style.borderColor = 'var(--orange)'; this.style.boxShadow = '0 0 0 3px rgba(232,81,26,.1)'; });
-      inp.addEventListener('blur',  function() { this.style.borderColor = 'var(--border)';  this.style.boxShadow = 'none'; });
-
-      wrap.appendChild(lbl);
-      wrap.appendChild(inp);
-      body.appendChild(wrap);
-    });
-
-    var overlay = document.getElementById('asocModalOverlay');
-    overlay.style.display = 'flex';
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        overlay.classList.add('show');
-      });
-    });
-  };
-
-  window.cerrarAsocModal = function() {
-    var overlay = document.getElementById('asocModalOverlay');
-    overlay.classList.remove('show');
-    setTimeout(function() {
-      overlay.style.display = 'none';
-      _editando = null;
-    }, 250);
-  };
-
-  /* ── GUARDAR EDICIÓN ── */
-  window.asocGuardarEdicion = function() {
-    if (!_editando) return;
-    var idx = _datos.findIndex(function(x) { return x.asocCedula === _editando; });
-    if (idx < 0) return;
-
-    var inputs = document.querySelectorAll('#asocModalBody input[data-key]');
-    inputs.forEach(function(inp) {
-      _datos[idx][inp.dataset.key] = inp.value.trim();
-    });
-    _datos[idx]._updated    = new Date().toISOString();
-    _datos[idx]._editadoPor = getEmp();
-
-    if (window._fbDB) {
-      window._fbDB.collection('asociados').doc(_editando)
-        .set(_datos[idx], {merge: true})
-        .then(function() { showToast('Actualizado en Firebase', '\u2705'); })
-        .catch(function() { showToast('Guardado local (sin conexión)', '\ud83d\udcbe'); });
-    }
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(_datos)); } catch(e) {}
-    if (window.FU_Audit) FU_Audit.log('ASOC_EDITADO', 'Cédula: ' + _editando);
-    window.cerrarAsocModal();
-    asocFiltrar();
-    showToast('Cambios guardados', '\u2705');
-  };
-
-  /* ── ELIMINAR ── */
-  window.asocEliminar = function(cedula) {
-    if (!confirm('¿Eliminar al asociado con cédula ' + cedula + '?\n\nEsta acción no se puede deshacer.')) return;
-    if (window._fbDB) {
-      window._fbDB.collection('asociados').doc(cedula).delete()
-        .catch(function(e) { console.warn('Firebase delete:', e); });
-    }
-    _datos = _datos.filter(function(x) { return x.asocCedula !== cedula; });
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(_datos)); } catch(e) {}
-    if (window.FU_Audit) FU_Audit.log('ASOC_ELIMINADO', 'Cédula: ' + cedula);
-    asocFiltrar();
-    showToast('Asociado eliminado', '\ud83d\uddd1\ufe0f');
-  };
-
-  /* ── EXPORTAR CSV PARA OPA ── */
-  window.asocExportarCSV = function() {
-    var filas = _filtrados.length ? _filtrados : _datos;
-    if (!filas.length) { showToast('Sin datos para exportar', '\u26a0\ufe0f'); return; }
-
-    var hdr  = CAMPOS.map(function(c) { return c.l; }).join(';');
-    var body = filas.map(function(a) {
-      return CAMPOS.map(function(c) {
-        return '"' + String(a[c.k] || '').replace(/;/g, '|').replace(/\n/g, ' ') + '"';
-      }).join(';');
-    }).join('\n');
-
-    var csv  = '\uFEFF' + hdr + '\n' + body;
-    var blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
-    var url  = URL.createObjectURL(blob);
-    var a    = document.createElement('a');
-    a.href   = url;
-    a.download = 'FondoUne_Asociados_OPA_' + new Date().toISOString().slice(0, 10) + '.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-    showToast('CSV exportado — ' + filas.length + ' registros', '\ud83d\udce5');
-    if (window.FU_Audit) FU_Audit.log('ASOC_CSV', filas.length + ' registros');
-  };
-
-  /* ── HOOK showPanel — carga automática al primer acceso ── */
-  var _cargado = false;
-  var _orig = window.showPanel;
-  window.showPanel = function(id) {
-    if (typeof _orig === 'function') _orig(id);
-    if (id === 'asociados') {
-      if (!_cargado) {
-        _cargado = true;
-        // Primera vez: activar listener en tiempo real
-        window.asocRecargar();
-      }
-      // El listener onSnapshot ya mantiene los datos actualizados automáticamente
-    }
-  };
-
-})();
-
-  </script>
-
-  <script>
     setTimeout(function(){
       var b = document.getElementById('felixBubble');
       if (b) { b.style.display = 'block'; }
     }, 3000);
   </script>
 
-<script>
-/* ═══════════════════════════════════════════════════════════
-   MÓDULO DE SONIDOS FONDOUNE — Web Audio API
-   Estilo: Moderno / iOS·Material Design
-   Sin archivos externos. Generación matemática de tonos.
-   Con botón mute persistido en localStorage.
-═══════════════════════════════════════════════════════════ */
-(function() {
-  'use strict';
-
-  var MUTE_KEY = 'fu_sound_muted';
-  var _ctx     = null;   // AudioContext (lazy init)
-  var _muted   = false;
-
-  /* ── Inicializar AudioContext (requiere gesto del usuario) ── */
-  function getCtx() {
-    if (_ctx) return _ctx;
-    try {
-      _ctx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch(e) { _ctx = null; }
-    return _ctx;
-  }
-
-  /* ── Cargar preferencia de mute ── */
-  try { _muted = localStorage.getItem(MUTE_KEY) === '1'; } catch(e) {}
-
-  /* ── Núcleo: reproducir tono ──
-     freq: Hz | type: sine/square/sawtooth/triangle
-     vol: 0-1 | attack: s | decay: s | start: s (delay)
-  ── */
-  function tone(freq, type, vol, attack, decay, startDelay) {
-    var ctx = getCtx();
-    if (!ctx || _muted) return;
-    try {
-      var t   = ctx.currentTime + (startDelay || 0);
-      var osc = ctx.createOscillator();
-      var gain= ctx.createGain();
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.type      = type || 'sine';
-      osc.frequency.setValueAtTime(freq, t);
-
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(vol || 0.18, t + (attack || 0.01));
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + (attack || 0.01) + (decay || 0.18));
-
-      osc.start(t);
-      osc.stop(t + (attack || 0.01) + (decay || 0.18) + 0.05);
-    } catch(e) {}
-  }
-
-  /* ═══ SONIDOS DEFINIDOS ═══ */
-
-  /* SUCCESS — dos notas ascendentes suaves (iOS confirm style) */
-  function playSuccess() {
-    tone(659, 'sine', 0.42, 0.008, 0.22, 0.00);  // E5
-    tone(880, 'sine', 0.38, 0.008, 0.28, 0.10);  // A5
-  }
-
-  /* ERROR — tono descendente breve (Material error) */
-  function playError() {
-    tone(330, 'sine', 0.42, 0.008, 0.18, 0.00);  // E4
-    tone(220, 'sine', 0.34, 0.008, 0.22, 0.07);  // A3
-  }
-
-  /* FELIX_MSG — pop suave cuando Félix responde */
-  function playFelixMsg() {
-    tone(880, 'sine',   0.12, 0.003, 0.08, 0.00);
-    tone(1100,'sine',   0.09, 0.003, 0.10, 0.04);
-  }
-
-  /* CLICK — tap material (botones primarios) */
-  function playClick() {
-    tone(440, 'sine', 0.28, 0.004, 0.12, 0.00);
-  }
-
-  /* NOTIFICATION — ping amistoso (nueva solicitud, estado cambiado) */
-  function playNotif() {
-    tone(523,  'sine', 0.38, 0.008, 0.18, 0.00);  // C5
-    tone(659,  'sine', 0.34, 0.008, 0.20, 0.10);  // E5
-    tone(784,  'sine', 0.28, 0.008, 0.26, 0.20);  // G5
-  }
-
-  /* SEND — whoosh corto al enviar mensaje a Félix */
-  function playSend() {
-    var ctx = getCtx();
-    if (!ctx || _muted) return;
-    try {
-      var t   = ctx.currentTime;
-      var osc = ctx.createOscillator();
-      var gain= ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(300, t);
-      osc.frequency.exponentialRampToValueAtTime(800, t + 0.12);
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.28, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
-      osc.start(t); osc.stop(t + 0.18);
-    } catch(e) {}
-  }
-
-  /* TOGGLE MUTE */
-  function toggleMute() {
-    _muted = !_muted;
-    try { localStorage.setItem(MUTE_KEY, _muted ? '1' : '0'); } catch(e) {}
-    updateMuteBtn();
-    if (!_muted) playClick(); // feedback al activar
-    return _muted;
-  }
-
-  function isMuted() { return _muted; }
-
-  /* ── Actualizar ícono del botón mute ── */
-  function updateMuteBtn() {
-    var btn = document.getElementById('fuSoundBtn');
-    if (btn) {
-      btn.textContent = _muted ? '🔇' : '🔊';
-      btn.title = _muted ? 'Activar sonidos' : 'Silenciar sonidos';
-    }
-  }
-
-  /* ── Crear botón mute en el topbar ── */
-  function initMuteBtn() {
-    var topbar = document.querySelector('.topbar');
-    if (!topbar || document.getElementById('fuSoundBtn')) return;
-
-    var btn = document.createElement('button');
-    btn.id        = 'fuSoundBtn';
-    btn.textContent = _muted ? '🔇' : '🔊';
-    btn.title     = _muted ? 'Activar sonidos' : 'Silenciar sonidos';
-    btn.style.cssText = [
-      'background:rgba(255,255,255,.07)',
-      'border:1px solid rgba(255,255,255,.1)',
-      'border-radius:7px',
-      'color:rgba(255,255,255,.7)',
-      'cursor:pointer',
-      'font-size:15px',
-      'height:32px',
-      'width:32px',
-      'display:flex',
-      'align-items:center',
-      'justify-content:center',
-      'transition:background .2s',
-      'flex-shrink:0',
-      '-webkit-tap-highlight-color:transparent',
-      'touch-action:manipulation'
-    ].join(';');
-
-    btn.addEventListener('click', function() { toggleMute(); });
-    btn.addEventListener('mouseenter', function() {
-      btn.style.background = 'rgba(255,255,255,.14)';
-    });
-    btn.addEventListener('mouseleave', function() {
-      btn.style.background = 'rgba(255,255,255,.07)';
-    });
-
-    // Insertar antes del último elemento del topbar
-    topbar.appendChild(btn);
-  }
-
-  /* ── Inicializar: botón + desbloquear AudioContext en primer toque ── */
-  document.addEventListener('DOMContentLoaded', function() {
-    initMuteBtn();
-  });
-
-  // Safari iOS requiere desbloquear AudioContext con gesto del usuario
-  function unlock() {
-    var ctx = getCtx();
-    if (ctx && ctx.state === 'suspended') {
-      ctx.resume();
-    }
-    document.removeEventListener('touchstart', unlock);
-    document.removeEventListener('click', unlock);
-  }
-  document.addEventListener('touchstart', unlock, { passive: true });
-  document.addEventListener('click', unlock, { once: true });
-
-  /* ── API PÚBLICA ── */
-  window.FU_Sound = {
-    success:  playSuccess,
-    error:    playError,
-    felixMsg: playFelixMsg,
-    click:    playClick,
-    notif:    playNotif,
-    send:     playSend,
-    mute:     toggleMute,
-    isMuted:  isMuted
-  };
-
-})();
-
-</script>
 </body>
 </html>
