@@ -59,26 +59,96 @@ window._fbIniciado = false;
     enabled: true,
     volume: 0.3,
     
-        // Definición de sonidos (usando frecuencias y patrones de audio modernos y corporativos)
+    // Definición de sonidos (usando frecuencias y patrones de audio)
     sounds: {
-      // Sonidos de Felix (Chatbot)
-      felixOpen: { freq: [440, 659.25], duration: [0.08, 0.15], type: 'sine' },      // Acorde suave ascendente (A4 -> E5)
-      felixClose: { freq: [659.25, 440], duration: [0.08, 0.15], type: 'sine' },     // Acorde suave descendente (E5 -> A4)
-      felixSend: { freq: [350], duration: [0.05], type: 'sine' },                    // 'Pop' grave, corto y sutil
-      felixReceive: { freq: [783.99, 1046.50], duration: [0.08, 0.2], type: 'sine' },// Campanita de cristal doble (G5 -> C6)
+      // Sonidos de Felix
+      felixOpen: { freq: [800, 1200], duration: [0.1, 0.15], type: 'sine' },
+      felixClose: { freq: [1200, 800], duration: [0.1, 0.15], type: 'sine' },
+      felixSend: { freq: [600, 900], duration: [0.08, 0.12], type: 'triangle' },
+      felixReceive: { freq: [900, 1100, 900], duration: [0.06, 0.08, 0.06], type: 'sine' },
       
-      // Sonidos de UI (Botones y Notificaciones)
-      click: { freq: [300], duration: [0.03], type: 'sine' },                        // Click imperceptible y seco
-      success: { freq: [523.25, 659.25, 783.99], duration: [0.05, 0.05, 0.15], type: 'sine' }, // Arpegio rápido de éxito (C5, E5, G5)
-      error: { freq: [250, 200], duration: [0.1, 0.2], type: 'triangle' },           // Tono grave doble para error (suave, sin estridencia)
-      notification: { freq: [880], duration: [0.15], type: 'sine' },                 // Campanada simple elegante
+      // Sonidos de UI
+      click: { freq: [800], duration: [0.05], type: 'sine' },
+      success: { freq: [600, 800, 1000], duration: [0.08, 0.08, 0.12], type: 'sine' },
+      error: { freq: [400, 300], duration: [0.1, 0.2], type: 'sawtooth' },
+      notification: { freq: [1000, 1200], duration: [0.1, 0.1], type: 'sine' },
       
-      // Sonidos de acciones (Manejo de archivos)
-      stateChange: { freq: [587.33, 739.99], duration: [0.08, 0.12], type: 'sine' }, // Transición armónica (D5 -> F#5)
-      download: { freq: [440, 349.23, 293.66], duration: [0.05, 0.05, 0.15], type: 'sine' }, // Sonido en cascada de bajada
-      upload: { freq: [293.66, 349.23, 440], duration: [0.05, 0.05, 0.15], type: 'sine' }    // Sonido en cascada de subida
+      // Sonidos de acciones
+      stateChange: { freq: [700, 900], duration: [0.1, 0.15], type: 'triangle' },
+      download: { freq: [600, 800, 1000, 1200], duration: [0.05, 0.05, 0.05, 0.1], type: 'sine' },
+      upload: { freq: [800, 1000, 1200], duration: [0.08, 0.08, 0.12], type: 'triangle' }
     },
 
+    // Crear contexto de audio (lazy loading)
+    _context: null,
+    getContext: function() {
+      if (!this._context) {
+        try {
+          var AudioContext = window.AudioContext || window.webkitAudioContext;
+          this._context = new AudioContext();
+        } catch(e) {
+          console.warn('[Sound] AudioContext no disponible:', e);
+          this.enabled = false;
+        }
+      }
+      return this._context;
+    },
+
+    // Reproducir sonido sintetizado
+    play: function(soundName) {
+      if (!this.enabled) return;
+      
+      var sound = this.sounds[soundName];
+      if (!sound) {
+        console.warn('[Sound] Sonido no encontrado:', soundName);
+        return;
+      }
+
+      try {
+        var ctx = this.getContext();
+        if (!ctx) return;
+
+        // Reanudar contexto si está suspendido (política de navegadores)
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+
+        var currentTime = ctx.currentTime;
+        var frequencies = Array.isArray(sound.freq) ? sound.freq : [sound.freq];
+        var durations = Array.isArray(sound.duration) ? sound.duration : [sound.duration];
+
+        // Crear oscilador y ganancia para cada nota
+        frequencies.forEach(function(freq, i) {
+          var oscillator = ctx.createOscillator();
+          var gainNode = ctx.createGain();
+          
+          oscillator.type = sound.type || 'sine';
+          oscillator.frequency.setValueAtTime(freq, currentTime);
+          
+          // Envelope ADSR simple
+          var duration = durations[i] || durations[0] || 0.1;
+          var attackTime = duration * 0.1;
+          var releaseTime = duration * 0.3;
+          
+          gainNode.gain.setValueAtTime(0, currentTime);
+          gainNode.gain.linearRampToValueAtTime(this.volume, currentTime + attackTime);
+          gainNode.gain.setValueAtTime(this.volume, currentTime + duration - releaseTime);
+          gainNode.gain.linearRampToValueAtTime(0, currentTime + duration);
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          
+          oscillator.start(currentTime);
+          oscillator.stop(currentTime + duration);
+          
+          // Avanzar tiempo para siguiente nota
+          currentTime += duration;
+        }.bind(this));
+
+      } catch(e) {
+        console.warn('[Sound] Error al reproducir:', soundName, e);
+      }
+    },
 
     // Toggle para activar/desactivar sonidos
     toggle: function() {
