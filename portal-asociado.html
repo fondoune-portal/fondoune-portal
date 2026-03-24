@@ -2345,6 +2345,496 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 
   </style>
 </head>
+<!-- ═══════════════════════════════════════════════════════
+     PANTALLA DE BIENVENIDA — FONDOUNE PORTAL ASOCIADO
+     Se inyecta en el DOM antes de cualquier otro contenido.
+     Se oculta con animación de salida cuando el asociado
+     ingresa su nombre y hace clic en "Ingresar".
+     ══════════════════════════════════════════════════════ -->
+<style>
+/* ── WELCOME SCREEN ── */
+#fu-welcome {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  background: #1A0A03;
+  transition: opacity .55s cubic-bezier(.4,0,.2,1), transform .55s cubic-bezier(.4,0,.2,1);
+}
+#fu-welcome.exiting {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+/* Fondo mesh premium oscuro */
+#fu-welcome::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 90% 70% at 15% 20%, rgba(232,81,26,0.28) 0%, transparent 55%),
+    radial-gradient(ellipse 65% 60% at 85% 75%, rgba(192,57,43,0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 80% at 50% 50%, rgba(45,26,14,0.9) 0%, transparent 70%);
+  animation: wBgFloat 14s ease-in-out infinite alternate;
+}
+@keyframes wBgFloat {
+  0%   { transform: scale(1) translate(0,0); }
+  50%  { transform: scale(1.03) translate(-8px, 12px); }
+  100% { transform: scale(1.01) translate(10px, -6px); }
+}
+/* Grain sutil */
+#fu-welcome::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* Orbes decorativos */
+.fu-w-orb {
+  position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
+  filter: blur(60px); will-change: transform;
+}
+.fu-w-orb-1 {
+  width: 520px; height: 520px;
+  top: -180px; right: -160px;
+  background: radial-gradient(circle, rgba(232,81,26,0.20) 0%, transparent 68%);
+  animation: orbF1 16s ease-in-out infinite alternate;
+}
+.fu-w-orb-2 {
+  width: 420px; height: 420px;
+  bottom: -140px; left: -120px;
+  background: radial-gradient(circle, rgba(192,57,43,0.18) 0%, transparent 68%);
+  animation: orbF2 19s ease-in-out infinite alternate;
+}
+.fu-w-orb-3 {
+  width: 300px; height: 300px;
+  top: 55%; left: 55%;
+  background: radial-gradient(circle, rgba(255,150,80,0.09) 0%, transparent 70%);
+  animation: orbF1 22s ease-in-out infinite alternate-reverse;
+}
+@keyframes orbF1 {
+  0%   { transform: translate(0,0) scale(1); }
+  100% { transform: translate(20px,-24px) scale(1.07); }
+}
+@keyframes orbF2 {
+  0%   { transform: translate(0,0) scale(1); }
+  100% { transform: translate(-16px,18px) scale(1.05); }
+}
+
+/* Contenedor principal de la card */
+.fu-w-card {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 460px;
+  margin: 20px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 28px;
+  padding: 44px 40px 40px;
+  backdrop-filter: saturate(180%) blur(32px);
+  -webkit-backdrop-filter: saturate(180%) blur(32px);
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.55),
+    0 8px 24px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+  animation: wCardIn .7s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes wCardIn {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Logo area */
+.fu-w-logo {
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 32px;
+  animation: wFadeUp .6s .1s cubic-bezier(.22,1,.36,1) both;
+}
+.fu-w-logo-mark {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #E8511A, #C94010);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 28px rgba(232,81,26,0.50), inset 0 1px 0 rgba(255,255,255,0.22);
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+.fu-w-logo-mark svg { width: 26px; height: 26px; }
+.fu-w-logo-text { display: flex; flex-direction: column; }
+.fu-w-logo-name {
+  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px;
+  color: #fff; letter-spacing: -0.4px; line-height: 1;
+}
+.fu-w-logo-name span { color: #FF7D45; }
+.fu-w-logo-sub {
+  font-size: 10px; color: rgba(255,255,255,0.38);
+  text-transform: uppercase; letter-spacing: 1.8px;
+  margin-top: 4px; font-weight: 400;
+}
+
+/* Divider decorativo */
+.fu-w-divider {
+  width: 40px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, #E8511A, transparent);
+  margin: 0 auto 28px;
+  animation: wFadeUp .6s .18s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* Textos */
+.fu-w-title {
+  font-family: 'Outfit', sans-serif; font-weight: 800;
+  font-size: 26px; color: #fff; text-align: center;
+  letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 10px;
+  animation: wFadeUp .6s .22s cubic-bezier(.22,1,.36,1) both;
+}
+.fu-w-title .accent { color: #FF7D45; }
+.fu-w-subtitle {
+  font-size: 13.5px; color: rgba(255,255,255,0.52);
+  text-align: center; line-height: 1.65; margin-bottom: 32px;
+  animation: wFadeUp .6s .28s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* Campo de nombre */
+.fu-w-field {
+  position: relative; margin-bottom: 14px;
+  animation: wFadeUp .6s .34s cubic-bezier(.22,1,.36,1) both;
+}
+.fu-w-field-label {
+  font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 1.8px; text-transform: uppercase;
+  color: rgba(255,255,255,0.38); margin-bottom: 8px; display: block;
+}
+.fu-w-input {
+  width: 100%; height: 54px;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  color: #fff;
+  font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600;
+  padding: 0 18px;
+  outline: none;
+  transition: border-color .22s, background .22s, box-shadow .22s;
+  letter-spacing: 0.2px;
+  box-sizing: border-box;
+  caret-color: #FF7D45;
+}
+.fu-w-input::placeholder {
+  color: rgba(255,255,255,0.22); font-weight: 400; font-size: 15px;
+}
+.fu-w-input:focus {
+  border-color: rgba(232,81,26,0.65);
+  background: rgba(255,255,255,0.10);
+  box-shadow: 0 0 0 3px rgba(232,81,26,0.18);
+}
+.fu-w-input.shake {
+  animation: inputShake .35s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes inputShake {
+  0%,100% { transform: translateX(0); }
+  20%  { transform: translateX(-7px); }
+  40%  { transform: translateX(7px); }
+  60%  { transform: translateX(-5px); }
+  80%  { transform: translateX(5px); }
+}
+
+/* Saludo dinámico debajo del input */
+.fu-w-greeting {
+  font-size: 12px; color: #FF9F6B;
+  text-align: center; min-height: 18px;
+  margin-top: 6px; margin-bottom: 2px;
+  font-family: 'Outfit', sans-serif; font-weight: 600;
+  opacity: 0; transition: opacity .3s;
+  letter-spacing: 0.2px;
+}
+.fu-w-greeting.show { opacity: 1; }
+
+/* Botón principal */
+.fu-w-btn {
+  width: 100%; height: 54px; margin-top: 18px;
+  background: linear-gradient(135deg, #E8511A 0%, #C94010 60%, #A83308 100%);
+  border: none; border-radius: 14px;
+  color: #fff; font-family: 'Outfit', sans-serif;
+  font-size: 15px; font-weight: 800; letter-spacing: 0.3px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  position: relative; overflow: hidden;
+  box-shadow:
+    0 6px 24px rgba(232,81,26,0.50),
+    inset 0 1px 0 rgba(255,255,255,0.22);
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+  animation: wFadeUp .6s .40s cubic-bezier(.22,1,.36,1) both;
+}
+.fu-w-btn::before {
+  content: '';
+  position: absolute; top:0; left:-100%; width:55%; height:100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+  transform: skewX(-15deg);
+  transition: left .65s ease;
+}
+.fu-w-btn:hover::before { left: 160%; }
+.fu-w-btn:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 10px 36px rgba(232,81,26,0.60), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+.fu-w-btn:active { transform: scale(0.98); }
+.fu-w-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* Footer info */
+.fu-w-footer {
+  margin-top: 22px; text-align: center;
+  font-size: 11px; color: rgba(255,255,255,0.22);
+  line-height: 1.6;
+  animation: wFadeUp .6s .46s cubic-bezier(.22,1,.36,1) both;
+}
+.fu-w-footer a {
+  color: rgba(232,81,26,0.7); text-decoration: none;
+  transition: color .2s;
+}
+.fu-w-footer a:hover { color: #FF7D45; }
+
+/* Badges de seguridad */
+.fu-w-badges {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; margin-top: 16px;
+  animation: wFadeUp .6s .50s cubic-bezier(.22,1,.36,1) both;
+}
+.fu-w-badge {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10.5px; color: rgba(255,255,255,0.28);
+  font-family: 'Outfit', sans-serif; font-weight: 600;
+}
+.fu-w-badge svg { width: 13px; height: 13px; opacity: 0.5; }
+
+@keyframes wFadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Reducir movimiento */
+@media (prefers-reduced-motion: reduce) {
+  #fu-welcome::before, .fu-w-orb-1, .fu-w-orb-2, .fu-w-orb-3 { animation: none; }
+  .fu-w-card, .fu-w-logo, .fu-w-divider, .fu-w-title, .fu-w-subtitle,
+  .fu-w-field, .fu-w-btn, .fu-w-footer, .fu-w-badges { animation: none; opacity: 1; transform: none; }
+}
+</style>
+
+<!-- ══ HTML: PANTALLA DE BIENVENIDA ══ -->
+<div id="fu-welcome" role="dialog" aria-modal="true" aria-label="Bienvenida al Portal FondoUne">
+  <!-- Orbes decorativos -->
+  <div class="fu-w-orb fu-w-orb-1" aria-hidden="true"></div>
+  <div class="fu-w-orb fu-w-orb-2" aria-hidden="true"></div>
+  <div class="fu-w-orb fu-w-orb-3" aria-hidden="true"></div>
+
+  <div class="fu-w-card">
+    <!-- Logo -->
+    <div class="fu-w-logo">
+      <div class="fu-w-logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="9 22 9 12 15 12 15 22" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="fu-w-logo-text">
+        <div class="fu-w-logo-name">Fondo<span>Une</span></div>
+        <div class="fu-w-logo-sub">Portal Asociados</div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="fu-w-divider" aria-hidden="true"></div>
+
+    <!-- Textos de bienvenida -->
+    <h1 class="fu-w-title">¡Bienvenido a tu<br><span class="accent">portal de crédito</span>!</h1>
+    <p class="fu-w-subtitle">Gestiona tu solicitud de crédito vivienda de forma rápida y segura. Ingresa tu nombre para personalizar tu experiencia.</p>
+
+    <!-- Campo nombre -->
+    <div class="fu-w-field">
+      <label class="fu-w-field-label" for="fu-w-name-input">Tu nombre</label>
+      <input
+        id="fu-w-name-input"
+        class="fu-w-input"
+        type="text"
+        placeholder="Ej: María García"
+        maxlength="50"
+        autocomplete="name"
+        autocapitalize="words"
+        spellcheck="false"
+      >
+      <div class="fu-w-greeting" id="fu-w-greeting" aria-live="polite"></div>
+    </div>
+
+    <!-- Botón ingresar -->
+    <button class="fu-w-btn" id="fu-w-enter-btn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+        <polyline points="10 17 15 12 10 7"/>
+        <line x1="15" y1="12" x2="3" y2="12"/>
+      </svg>
+      Ingresar al portal
+    </button>
+
+    <!-- Badges de confianza -->
+    <div class="fu-w-badges" aria-label="Indicadores de seguridad">
+      <div class="fu-w-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Conexión segura
+      </div>
+      <div class="fu-w-badge" aria-hidden="true">·</div>
+      <div class="fu-w-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        Datos protegidos
+      </div>
+      <div class="fu-w-badge" aria-hidden="true">·</div>
+      <div class="fu-w-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        Disponible 24/7
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p class="fu-w-footer">
+      Solo empleados y asociados de <strong style="color:rgba(255,255,255,.36)">UNE</strong> y empresas vinculadas.<br>
+      ¿Tienes dudas? <a href="mailto:fondoune@fondoune.com">fondoune@fondoune.com</a>
+    </p>
+  </div>
+</div>
+
+<script>
+/* ═══ LÓGICA PANTALLA DE BIENVENIDA — FondoUne ═══ */
+(function() {
+  'use strict';
+
+  var STORAGE_KEY = 'fu_asociado_nombre_v1';
+  var GREETINGS   = ['¡Hola,', '¡Bienvenido,', '¡Qué gusto verte,', '¡Buenas,'];
+  var _greetIdx   = Math.floor(Math.random() * GREETINGS.length);
+
+  var screen  = document.getElementById('fu-welcome');
+  var input   = document.getElementById('fu-w-name-input');
+  var greeting= document.getElementById('fu-w-greeting');
+  var btn     = document.getElementById('fu-w-enter-btn');
+
+  /* ── Si ya pasó por aquí antes, saltar directo ── */
+  var savedName = sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
+  if (savedName) {
+    window.FU_AsociadoNombre = savedName;
+    screen.style.display = 'none';
+    _injectNameInPortal(savedName);
+    return;
+  }
+
+  /* ── Mostrar saludo dinámico mientras escribe ── */
+  input.addEventListener('input', function() {
+    var val = input.value.trim();
+    var firstName = val.split(' ')[0];
+    if (firstName.length >= 2) {
+      greeting.textContent = GREETINGS[_greetIdx] + ' ' + capitalize(firstName) + '! 👋';
+      greeting.classList.add('show');
+    } else {
+      greeting.classList.remove('show');
+    }
+  });
+
+  /* ── Enter para ingresar ── */
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); _ingresar(); }
+  });
+
+  btn.addEventListener('click', function() { _ingresar(); });
+
+  /* ── Enfocar el input al cargar ── */
+  setTimeout(function() { if (input) input.focus(); }, 750);
+
+  /* ── Función principal: validar y entrar ── */
+  function _ingresar() {
+    var nombre = input.value.trim();
+    if (!nombre || nombre.length < 2) {
+      input.classList.remove('shake');
+      void input.offsetWidth; // reflow para reiniciar animación
+      input.classList.add('shake');
+      input.focus();
+      return;
+    }
+
+    /* Guardar nombre (sesión + localStorage para recordar) */
+    var nombreFormateado = formatearNombre(nombre);
+    sessionStorage.setItem(STORAGE_KEY, nombreFormateado);
+    localStorage.setItem(STORAGE_KEY, nombreFormateado);
+    window.FU_AsociadoNombre = nombreFormateado;
+
+    /* Animar salida */
+    screen.classList.add('exiting');
+    setTimeout(function() {
+      screen.style.display = 'none';
+      _injectNameInPortal(nombreFormateado);
+    }, 580);
+  }
+
+  /* ── Inyectar nombre en el hero del portal ── */
+  function _injectNameInPortal(nombre) {
+    /* Esperar a que el DOM esté listo */
+    function tryInject() {
+      var heroH1 = document.querySelector('.hero h1');
+      if (heroH1) {
+        var primerNombre = nombre.split(' ')[0];
+        /* Añadir saludo personal al inicio del h1 */
+        var eyebrow = document.querySelector('.hero-eyebrow');
+        if (eyebrow && !eyebrow.dataset.personalizado) {
+          eyebrow.dataset.personalizado = '1';
+          /* Actualizar el eyebrow chip con el nombre */
+          eyebrow.innerHTML = '🏡 <span>Hola, <strong>' + primerNombre + '</strong> — Tu portal de crédito vivienda</span>';
+        }
+        /* Personalizar el h1 si tiene la clase .hi */
+        var hiSpan = heroH1.querySelector('.hi');
+        if (hiSpan && !hiSpan.dataset.personalizado) {
+          hiSpan.dataset.personalizado = '1';
+          /* Guardar texto original y añadir nombre */
+          var originalText = heroH1.innerHTML;
+          if (!originalText.includes(primerNombre)) {
+            heroH1.innerHTML = '¡Hola, <span class="hi">' + primerNombre + '</span>!<br>' +
+              '<span style="font-size:0.72em;font-weight:600;opacity:0.85">Tu solicitud de crédito vivienda</span>';
+          }
+        }
+      }
+      /* Actualizar la bienvenida de Félix si ya está inicializado */
+      if (window.showFelixWelcome) {
+        window._fu_welcomeNombre = nombre.split(' ')[0];
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tryInject);
+    } else {
+      setTimeout(tryInject, 100);
+    }
+  }
+
+  /* ── Utilidades ── */
+  function capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  }
+  function formatearNombre(s) {
+    return s.replace(/\w\S*/g, function(w) {
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    });
+  }
+
+  /* ── Exponer función global para cerrar sesión (nombre) ── */
+  window.FU_CerrarSesionNombre = function() {
+    sessionStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.reload();
+  };
+
+})();
+</script>
+
 <body>
 <!-- ── Mesh background layers ── -->
 <div class="mesh-grain" aria-hidden="true"></div>
