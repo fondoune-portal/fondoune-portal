@@ -4643,18 +4643,17 @@ window.addEventListener('resize', _debounce(function() {
 <script>
 
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Integración Gemini 2.5 Flash
-   FondoUne Portal Empleados | v1.0 2026
-   ⚠️  Reemplaza REEMPLAZAR_CON_TU_API_KEY con tu clave de
-       Google AI Studio (aistudio.google.com)
+   FÉLIX IA — Proxy seguro via Cloud Function
+   FondoUne Portal Empleados | v2.0 2026
+   ✅ API Key de Gemini almacenada en Secret Manager (servidor)
+      — nunca visible en el código fuente del navegador —
 ═══════════════════════════════════════════════════════════════ */
 (function() {
   'use strict';
 
   var FELIX_CFG = {
-    API_KEY: 'AIzaSyAnIn' + 'R4cmyHRDkxpqNj8UGBgbsnuG2SgK0',
-    MODEL:          'gemini-2.5-flash',
-    ENDPOINT:       'https://generativelanguage.googleapis.com/v1beta/models/',
+    // API_KEY eliminada — ahora vive en Secret Manager de Google Cloud
+    PROXY_URL:      'https://us-central1-fondoune-portal-33446.cloudfunctions.net/geminiProxy',
     MAX_TOKENS:     600,
     TEMP:           0.65,
     HISTORY_LIMIT:  20
@@ -4753,54 +4752,24 @@ window.addEventListener('resize', _debounce(function() {
            datos.output || datos.result || null;
   }
 
-  /* ── 1. LLAMADA AL BACKEND (APPS SCRIPT) con fallback a Gemini directo ── */
+  /* ── 1. LLAMADA AL PROXY SEGURO (Cloud Function) ── */
   async function consultarFelix(historial) {
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyjEtX8qXtnv29-ZeKlvJna75gFOqtjX8AO6DWm6YV_SZnkHKRscmY7qE32KEFIK8yp/exec";
     var ultimoMensaje = historial.length ? historial[historial.length - 1].parts[0].text : '';
+    var historialPrevio = historial.slice(0, -1);
 
-    /* ── Intento 1: Apps Script (puente serverless) ── */
     try {
-      var resp = await fetch(URL_APPS_SCRIPT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ texto: ultimoMensaje, historial: historial })
-      });
-      if (resp.ok) {
-        var datos = await resp.json();
-        console.log('[Felix·AS] Respuesta:', JSON.stringify(datos).substring(0, 300));
-        if (!datos.error) {
-          var texto = _extraerTextoGemini(datos);
-          if (texto) return texto;
-        } else {
-          console.warn('[Felix·AS] Error del servidor:', datos.error);
-        }
-      } else {
-        console.warn('[Felix·AS] HTTP', resp.status, '— activando fallback');
-      }
-    } catch (e) {
-      console.warn('[Felix·AS] Fetch falló:', e.message, '— activando fallback Gemini directo');
-    }
-
-    /* ── Intento 2: Gemini API directo (fallback automático) ── */
-    console.log('[Felix·FB] Usando Gemini API directo');
-    try {
-      var url = FELIX_CFG.ENDPOINT + FELIX_CFG.MODEL + ':generateContent?key=' + FELIX_CFG.API_KEY;
-      var payload = {
-        contents: historial,
-        generationConfig: { temperature: FELIX_CFG.TEMP, maxOutputTokens: FELIX_CFG.MAX_TOKENS, topP: 0.9 }
-      };
-      var r2 = await fetch(url, {
+      var resp = await fetch(FELIX_CFG.PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ texto: ultimoMensaje, historial: historialPrevio })
       });
-      if (!r2.ok) throw new Error('HTTP ' + r2.status);
-      var d2 = await r2.json();
-      var texto2 = _extraerTextoGemini(d2);
-      if (texto2) return texto2;
-      throw new Error('Respuesta vacía');
-    } catch (e2) {
-      console.error('[Felix·FB] Fallback también falló:', e2.message);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      var datos = await resp.json();
+      var texto = _extraerTextoGemini(datos);
+      if (texto) return texto;
+      throw new Error('Respuesta vacía del proxy');
+    } catch (e) {
+      console.error('[Felix·Proxy] Error:', e.message);
       return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo en unos segundos.';
     }
   }
