@@ -2730,8 +2730,12 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     return;
   }
 
-  /* ── Mostrar saludo dinámico mientras escribe ── */
-  input.addEventListener('input', function() {
+/* ── Mostrar saludo dinámico mientras escribe (debounce 200ms → mejora INP) ── */
+  function debounce(fn, delay) {
+    var timer;
+    return function() { clearTimeout(timer); timer = setTimeout(fn, delay); };
+  }
+  input.addEventListener('input', debounce(function() {
     var val = input.value.trim();
     var firstName = val.split(' ')[0];
     if (firstName.length >= 2) {
@@ -2740,7 +2744,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     } else {
       greeting.classList.remove('show');
     }
-  });
+  }, 200));
 
   /* ── Enter para ingresar ── */
   input.addEventListener('keydown', function(e) {
