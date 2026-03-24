@@ -609,13 +609,35 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   transform: translateY(-1px);
 }
 /* ── Botón Cerrar Sesión ── */
-<button id="btn-cerrar-sesion" class="btn-cerrar-sesion" title="Cerrar sesión y cambiar nombre">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-    <polyline points="16 17 21 12 16 7"/>
-    <line x1="21" y1="12" x2="9" y2="12"/>
-  </svg>
-  <span>Cerrar sesión</span>
+.btn-cerrar-sesion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.20);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.80);
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+.btn-cerrar-sesion:hover {
+  background: rgba(232,81,26,0.20);
+  border-color: rgba(232,81,26,0.60);
+  color: #FF7D45;
+}
+.btn-cerrar-sesion svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
 </button>
 
 }
