@@ -608,6 +608,33 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   color: #fff;
   transform: translateY(-1px);
 }
+/* ── Botón Cerrar Sesión ── */
+.btn-cerrar-sesion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.75);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s;
+  letter-spacing: 0.2px;
+}
+.btn-cerrar-sesion:hover {
+  background: rgba(232,81,26,0.18);
+  border-color: rgba(232,81,26,0.50);
+  color: #FF7D45;
+}
+.btn-cerrar-sesion svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
 
 /* ═══════════════════════════════════════════════════
    SECCIÓN: DATOS DEL ASOCIADO
@@ -2862,6 +2889,16 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     <div class="hdr-pill">🏠 Portal Asociados</div>
     <a href="portal-empleados.html" class="emp-link">🔐 Portal Empleados →</a>
   </div>
+   <!-- Botón Cerrar Sesión -->
+<button onclick="window.FUCerrarSesionNombre()" class="btn-cerrar-sesion" title="Cerrar sesión y cambiar nombre">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+  <span>Cerrar sesión</span>
+</button>
+   </div>
 </header>
 
 <div class="hero">
