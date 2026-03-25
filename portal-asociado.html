@@ -5396,5 +5396,26 @@ window.abrirFelix = function() {
 })();
 
 </script>
-     <script>
-    document.getElementById('btn-
+<script>
+  /* ═══════════════════════════════════════════════════════════
+     EVENT LISTENER PARA BOTÓN DE CERRAR SESIÓN
+  ═══════════════════════════════════════════════════════════ */
+  document.addEventListener('DOMContentLoaded', function() {
+    var btnCerrarSesion = document.getElementById('btn-cerrar-sesion');
+    if (btnCerrarSesion) {
+      btnCerrarSesion.addEventListener('click', function() {
+        // Reproducir sonido de click
+        if (window.FU_Sound && typeof window.FU_Sound.click === 'function') {
+          window.FU_Sound.click();
+        }
+        
+        // Llamar a la función de cerrar sesión
+        if (typeof window.FU_CerrarSesionNombre === 'function') {
+          window.FU_CerrarSesionNombre();
+        }
+      });
+    }
+  });
+</script>
+</body>
+</html>
