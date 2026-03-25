@@ -2543,10 +2543,14 @@ function guardarDB(d) {
 }
 
 /* Guardar un documento en Firebase + localStorage */
-function guardarEnFirebase(coleccion, id, datos) {
+function guardarEnFirebase(coleccion, id, datos, onOk, onErr) {
   if (window._fbDB) {
     window._fbDB.collection(coleccion).doc(id).set(datos, { merge: true })
-      .catch(function(e) { console.warn('Firebase guardar error:', e); });
+      .then(function() { if (onOk) onOk(); })
+      .catch(function(e) {
+        console.warn('Firebase guardar error:', e);
+        if (onErr) onErr(e);
+      });
   }
 }
 
@@ -2695,9 +2699,19 @@ function cambiarEstado(id, sel){
     accion:'Estado cambiado: '+anterior+' → '+sel.value,
     fecha:new Date().toISOString(), usuario:getUsuarioSesion()
   });
+  // Enriquecer campos visibles para el portal de asociados
+  var etiquetas = { pendiente:'Pendiente', revision:'En Revisión', aprobado:'Aprobado', rechazado:'Rechazado', desembolsado:'Desembolsado' };
+  db[idx].estadoLabel   = etiquetas[sel.value] || sel.value;
+  db[idx].estadoUpdated = new Date().toISOString();
+  db[idx].asesor        = db[idx].asesor || getUsuarioSesion();
+  db[idx].cedula        = (db[idx].cedula || db[idx].documento || '').replace(/\./g,'').replace(/\s/g,'').trim();
+
   guardarDB(db);
-  // Sincronizar cambio en Firebase
-  guardarEnFirebase('solicitudes', db[idx].id, db[idx]);
+  // Sincronizar cambio en Firebase con feedback visual
+  guardarEnFirebase('solicitudes', db[idx].id, db[idx],
+    function() { showToast('☁️ Estado sincronizado en la nube: ' + sel.value, '☁️'); },
+    function()  { showToast('⚠️ Guardado local. Sin conexión a Firebase.', '⚠️'); }
+  );
   registrarAudit('Estado cambiado de "'+anterior+'" a "'+sel.value+'"', db[idx]);
   actualizarContadores();
   showToast('Estado actualizado a: '+sel.value,'🔄');
