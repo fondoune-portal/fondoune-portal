@@ -2754,6 +2754,13 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   var greeting= document.getElementById('fu-w-greeting');
   var btn     = document.getElementById('fu-w-enter-btn');
 
+  /* ── Exponer función global para cerrar sesión (DEBE estar antes del early return) ── */
+  window.FU_CerrarSesionNombre = function() {
+    sessionStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.reload();
+  };
+
   /* ── Si ya pasó por aquí antes, saltar directo ── */
   var savedName = sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
   if (savedName) {
@@ -2861,13 +2868,6 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
       return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
     });
   }
-
-  /* ── Exponer función global para cerrar sesión (nombre) ── */
-  window.FU_CerrarSesionNombre = function() {
-    sessionStorage.removeItem('fu_asociado_nombre_v1');
-    localStorage.removeItem('fu_asociado_nombre_v1');
-    window.location.reload();
-  };
 
 })();
 </script>
