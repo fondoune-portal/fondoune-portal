@@ -4049,11 +4049,11 @@ var ASOC = (function () {
     sincronizarPrincipal();
 
         var cedula = (data['asocCedula'] || '').replace(/\./g,'').replace(/\s/g,'').trim();
-        if (window.fbDB && window.fbDB !== null && cedula) {
+        if (window._fbDB && window._fbDB !== null && cedula) {
           data.updated = new Date().toISOString();
           data.source  = 'portal-asociado';
           data.nombre  = [data['asocNom1'], data['asocNom2'], data['asocApe1'], data['asocApe2']].filter(Boolean).join(' ');
-          window.fbDB.collection('asociados').doc(cedula).set(data, { merge: true })
+          window._fbDB.collection('asociados').doc(cedula).set(data, { merge: true })
             .then(function() {
               if (window.FUSound) FUSound.success();
               var bar = document.getElementById('asocSavedBar');
@@ -4285,8 +4285,8 @@ var PQRS = (function() {
     } catch(e) {}
 
     // Guardar en Firebase si está activo
-        if (window.fbDB && window.fbDB !== null) {
-          window.fbDB.collection('pqrs').doc(registro.id).set(registro)
+        if (window._fbDB && window._fbDB !== null) {
+          window._fbDB.collection('pqrs').doc(registro.id).set(registro)
             .then(function(){ console.log('✅ PQRS en Firebase:', registro.id); })
             .catch(function(e){ console.warn('Firebase PQRS error:', e.message); });
         }
@@ -5310,15 +5310,25 @@ var SEG = (function() {
     if (!raw || raw.replace(/\./g,'').replace(/\s/g,'').length < 4) { msg('err','⚠️ Ingresa al menos 4 caracteres de tu cédula o radicado.'); return; }
     document.getElementById('segResults').style.display = 'none';
     msg('info','🔍 Buscando tus solicitudes...');
-    if (window.fbDB && window.fbDB !== null) {
+    if (window._fbDB && window._fbDB !== null) {
       var cedNorm = raw.replace(/\./g,'').replace(/,/g,'').trim();
+      var rawUp   = raw.toUpperCase().trim();
       Promise.all([
-        window.fbDB.collection('solicitudes').where('cedula','==',cedNorm).get(),
-        window.fbDB.collection('solicitudes').where('cedula','==',raw).get(),
-        window.fbDB.collection('solicitudes').where('radicado','==',raw).get()
+        window._fbDB.collection('solicitudes').where('cedula','==',cedNorm).get(),
+        window._fbDB.collection('solicitudes').where('cedula','==',raw).get(),
+        window._fbDB.collection('solicitudes').where('radicado','==',raw).get(),
+        window._fbDB.collection('solicitudes').where('id','==',raw).get(),
+        window._fbDB.collection('solicitudes').where('id','==',rawUp).get(),
+        window._fbDB.collection('solicitudes').doc(raw).get()
+          .then(function(d){ return { forEach: function(fn){ if(d.exists) fn(d); } }; })
+          .catch(function(){ return { forEach: function(){} }; })
       ]).then(function(snaps) {
         var docs = {};
-        snaps.forEach(function(snap){ snap.forEach(function(d){ docs[d.id]=d.data(); }); });
+        snaps.forEach(function(snap){
+          if (snap && typeof snap.forEach === 'function') {
+            snap.forEach(function(d){ if(d.exists !== false) docs[d.id] = d.data(); });
+          }
+        });
         var lista = Object.values(docs);
         lista.sort(function(a,b){ return new Date(b.fechaRegistro||0)-new Date(a.fechaRegistro||0); });
         ocultarMsg(); renderLista(lista);
