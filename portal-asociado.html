@@ -2452,6 +2452,56 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
 .hero-cta-btn {
   animation: ctaPulse 2.2s ease-out 1.2s 2;
 }
+
+/* ══ GUIDE CARD TAG (nuevo/recomendado) ══ */
+.guide-card-tag {
+  display: inline-flex; align-items: center;
+  background: linear-gradient(135deg, rgba(232,81,26,0.12), rgba(201,64,16,0.08));
+  border: 1px solid rgba(232,81,26,0.28);
+  color: #C94010; font-family: 'Outfit', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: .8px;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+  margin-bottom: 8px; margin-top: -2px;
+}
+
+/* ══ SEPARADOR DE SECCIÓN ══ */
+.section-divider {
+  margin: 36px 0 24px;
+}
+.section-divider-inner {
+  display: flex; align-items: center; gap: 16px;
+  background: rgba(255,255,255,0.82);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(240,216,204,0.9);
+  border-left: 4px solid var(--fu-blue, #1A6CA8);
+  border-radius: 14px; padding: 18px 22px;
+  box-shadow: 0 2px 12px rgba(45,26,14,0.07);
+}
+.section-divider-icon {
+  font-size: 26px; flex-shrink: 0;
+  width: 48px; height: 48px;
+  background: rgba(26,108,168,0.08); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.section-divider-text { flex: 1; }
+.section-divider-title {
+  font-family: 'Outfit', sans-serif; font-weight: 700;
+  font-size: 15px; color: var(--fu-dark, #2D1A0E); margin-bottom: 3px;
+}
+.section-divider-sub {
+  font-size: 12.5px; color: var(--muted, #7A5540); line-height: 1.5;
+}
+.section-divider-badge {
+  flex-shrink: 0;
+  background: rgba(26,108,168,0.10); border: 1px solid rgba(26,108,168,0.22);
+  color: var(--fu-blue, #1A6CA8); font-family: 'Outfit', sans-serif;
+  font-size: 10.5px; font-weight: 700; padding: 5px 13px;
+  border-radius: 20px; letter-spacing: .3px; white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .section-divider-badge { display: none; }
+  .section-divider-inner { flex-wrap: wrap; }
+}
 </style>
 </head>
 <!-- ═══════════════════════════════════════════════════════
@@ -3043,8 +3093,9 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
         <div class="guide-card-bar"></div>
         <span class="guide-card-badge">Opcion 1</span>
         <span class="guide-card-ico">&#x1F4CB;</span>
-        <div class="guide-card-name">Solicitud de Crédito Vivienda</div>
-        <div class="guide-card-desc">Radica tu solicitud de crédito vivienda en 5 pasos. Tus datos se pre-llenan automáticamente.</div>
+        <div class="guide-card-name">Radicar Solicitud de Crédito</div>
+        <div class="guide-card-tag">⚡ Proceso completo — Recomendado</div>
+        <div class="guide-card-desc">Wizard guiado en 5 pasos: verifica elegibilidad, completa datos, elige tipo de crédito, genera checklist y radica. Queda registrado en el sistema.</div>
         <div class="guide-card-steps">
           <div class="guide-step"><span class="guide-step-n">1</span><span>Verifica tu elegibilidad</span></div>
           <div class="guide-step"><span class="guide-step-n">2</span><span>Confirma tus datos personales</span></div>
@@ -3096,6 +3147,18 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   </div>
   <!-- FIN BANNER GUIA -->
 
+  <!-- ══ SEPARADOR: HERRAMIENTA DE CHECKLIST ══ -->
+  <div class="section-divider">
+    <div class="section-divider-inner">
+      <div class="section-divider-icon">📄</div>
+      <div class="section-divider-text">
+        <div class="section-divider-title">Generador de Checklist Word</div>
+        <div class="section-divider-sub">¿Ya tienes un radicado asignado por el área? Usa esta herramienta para generar e imprimir tu lista de documentos en formato Word.</div>
+      </div>
+      <div class="section-divider-badge">Herramienta complementaria</div>
+    </div>
+  </div>
+
   <div class="type-row">
     <div class="tc on" id="tc-compra" onclick="APP.selTipo('compra')">
       <div class="tc-bar"></div>
@@ -3127,6 +3190,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
         <div class="fc-head-t" id="fTit">Compra de Vivienda</div>
         <div class="fc-head-s" id="fSub">Completa los datos para generar la lista de chequeo</div>
       </div>
+      <div style="margin-left:auto;flex-shrink:0;background:rgba(26,108,168,0.10);border:1px solid rgba(26,108,168,0.22);color:#1A6CA8;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.3px;white-space:nowrap;">📄 Genera checklist Word</div>
     </div>
 
     <div class="fc-body">
