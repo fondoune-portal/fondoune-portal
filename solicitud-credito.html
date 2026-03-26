@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FondoUne — Solicitud de Crédito Vivienda</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<script>
+/* ══ FIREBASE CONFIG ══ */
+var FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyAUkk6h6IaDOvxRWRFGiV2USTzd6ZbJ3Qg",
+  authDomain:        "fondoune-portal-33446.firebaseapp.com",
+  projectId:         "fondoune-portal-33446",
+  storageBucket:     "fondoune-portal-33446.firebasestorage.app",
+  messagingSenderId: "901082593837",
+  appId:             "1:901082593837:web:91292ed594e171715fd6a4"
+};
+
+/* ══ EMAILJS CONFIG ══ — Reemplaza con tus IDs reales de EmailJS */
+var EMAILJS_CONFIG = {
+  publicKey:   'TU_PUBLIC_KEY_EMAILJS',      // EmailJS → Account → Public Key
+  serviceId:   'TU_SERVICE_ID',              // EmailJS → Email Services → Service ID
+  templateId:  'TU_TEMPLATE_ID',            // EmailJS → Email Templates → Template ID
+  destinatario: 'creditos.vivienda@fondoune.com.co'  // Correo destino del área
+};
+
+window._fbDB = null;
+(function() {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    window._fbDB = firebase.firestore();
+    console.log('✅ Firebase OK');
+  } catch(e) { console.warn('Firebase:', e.message); }
+})();
+</script>
+
+<style>
+:root {
+  --fu-dark:       #2D1A0E;
+  --fu-orange:     #E8511A;
+  --fu-orange-d:   #C94010;
+  --fu-orange-lt:  #FFF0EA;
+  --fu-red:        #C0392B;
+  --bg:            #F5EDE7;
+  --surface:       #FFFFFF;
+  --border:        #F0D8CC;
+  --text:          #2D1A0E;
+  --muted:         #7A5540;
+  --muted-lt:      #C4A090;
+  --ok:            #0D7A4E;
+  --ok-lt:         #E8F8F0;
+  --err:           #C0392B;
+  --err-lt:        #FDECEA;
+  --step-active:   #E8511A;
+  --step-done:     #0D7A4E;
+  --step-idle:     #C4A090;
+  --lg-radius:     20px;
+  --lg-radius-sm:  14px;
+  --safe-top:      env(safe-area-inset-top, 0px);
+  --safe-bottom:   env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232,81,26,0.35); border-radius: 99px; }
+::selection { background: rgba(232,81,26,0.22); color: var(--fu-dark); }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: contain;
+}
+
+/* ══ FONDO ANIMADO ══ */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: -3; pointer-events: none;
+  background: radial-gradient(ellipse 110% 80% at 50% 50%, #FDF0E8 0%, #F5E6DC 40%, #EDD8CC 100%);
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background:
+    radial-gradient(ellipse 65% 55% at 8% 12%,  rgba(232,81,26,0.20) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 45% at 92% 8%,  rgba(201,64,16,0.13) 0%, transparent 50%),
+    radial-gradient(ellipse 55% 60% at 78% 88%, rgba(192,57,43,0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 50% at 20% 85%, rgba(232,81,26,0.10) 0%, transparent 50%);
+  animation: meshFloat 18s ease-in-out infinite alternate;
+}
+@keyframes meshFloat {
+  0%   { transform: translate(0,0) scale(1); }
+  50%  { transform: translate(-8px,10px) scale(0.99); }
+  100% { transform: translate(-4px,-12px) scale(1.02); }
+}
+
+/* ══ HEADER ══ */
+.hdr {
+  background: rgba(45,26,14,0.88);
+  -webkit-backdrop-filter: saturate(200%) blur(28px);
+  backdrop-filter: saturate(200%) blur(28px);
+  height: calc(64px + var(--safe-top));
+  padding: 0 28px;
+  padding-top: var(--safe-top);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 200;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+.logo { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+.logo-mark {
+  width: 36px; height: 36px;
+  background: var(--fu-orange);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-mark svg { width: 20px; height: 20px; }
+.logo-wordmark { display: flex; flex-direction: column; line-height: 1; }
+.logo-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 19px; color: #fff; }
+.logo-name span { color: var(--fu-orange); }
+.logo-tagline { font-size: 9.5px; color: rgba(255,255,255,.42); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px; }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.hdr-badge {
+  background: rgba(232,81,26,0.18); border: 1px solid rgba(232,81,26,0.35);
+  color: var(--fu-orange); font-family: 'Outfit', sans-serif;
+  font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 20px;
+  letter-spacing: .4px;
+}
+.hdr-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; border: 1.5px solid rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.72); font-family: 'Outfit', sans-serif;
+  font-size: 11.5px; font-weight: 600; padding: 5px 14px; border-radius: 20px;
+  text-decoration: none; transition: all .22s; cursor: pointer;
+}
+.hdr-back:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.5); color: #fff; }
+
+/* ══ LAYOUT ══ */
+.wrap { max-width: 780px; margin: 0 auto; padding: 36px 20px 80px; }
+
+/* ══ HERO MINI ══ */
+.hero-mini {
+  background: linear-gradient(135deg, rgba(45,26,14,0.92) 0%, rgba(232,81,26,0.72) 60%, rgba(192,57,43,0.55) 100%);
+  border-radius: var(--lg-radius);
+  padding: 36px 40px;
+  margin-bottom: 32px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 8px 40px rgba(45,26,14,0.18), inset 0 1px 0 rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.hero-mini::before {
+  content: '';
+  position: absolute; top: -60px; right: -60px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%);
+  border-radius: 50%;
+}
+.hero-mini::after {
+  content: '';
+  position: absolute; bottom: -40px; left: 20%;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(232,81,26,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.24);
+  color: #fff; font-family: 'Outfit', sans-serif; font-size: 10.5px;
+  font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+  padding: 4px 14px; border-radius: 20px; margin-bottom: 14px;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.hero-mini h1 {
+  font-family: 'Outfit', sans-serif; font-weight: 800;
+  font-size: 28px; color: #fff; letter-spacing: -0.4px; margin-bottom: 10px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.hero-mini h1 em { color: #FFBFA0; font-style: normal; }
+.hero-mini p { color: rgba(255,255,255,0.72); font-size: 13.5px; line-height: 1.7; max-width: 520px; }
+
+/* ══ STEPPER ══ */
+.stepper {
+  display: flex; align-items: flex-start; justify-content: center;
+  gap: 0; margin-bottom: 32px; position: relative;
+}
+.stepper::before {
+  content: '';
+  position: absolute; top: 20px; left: 10%; right: 10%;
+  height: 2px; background: var(--border); z-index: 0;
+}
+.step-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; flex: 1; position: relative; z-index: 1; cursor: default;
+}
+.step-circle {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700;
+  transition: all .35s cubic-bezier(.22,1,.36,1);
+  border: 2.5px solid transparent;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(45,26,14,0.10);
+}
+.step-item.idle .step-circle {
+  border-color: var(--border); color: var(--muted-lt);
+}
+.step-item.active .step-circle {
+  border-color: var(--step-active); color: var(--step-active);
+  background: var(--fu-orange-lt, #FFF0EA);
+  box-shadow: 0 0 0 4px rgba(232,81,26,0.15), 0 4px 16px rgba(232,81,26,0.25);
+  transform: scale(1.08);
+}
+.step-item.done .step-circle {
+  border-color: var(--step-done); background: var(--step-done); color: #fff;
+}
+.step-label {
+  font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 600;
+  text-align: center; line-height: 1.3; max-width: 80px;
+  color: var(--muted-lt); transition: color .3s;
+}
+.step-item.active .step-label { color: var(--step-active); }
+.step-item.done .step-label { color: var(--step-done); }
+
+/* Línea de progreso */
+.step-line {
+  position: absolute; top: 20px; left: 50%; right: -50%;
+  height: 2px; z-index: 0;
+  transition: background .4s;
+}
+.step-item.done .step-line { background: var(--step-done); }
+.step-item:last-child .step-line { display: none; }
+
+/* ══ PANEL CARD ══ */
+.panel {
+  background: rgba(255,255,255,0.88);
+  -webkit-backdrop-filter: saturate(200%) blur(32px);
+  backdrop-filter: saturate(200%) blur(32px);
+  border-radius: var(--lg-radius);
+  border: 1px solid rgba(255,255,255,0.80);
+  box-shadow: 0 8px 40px rgba(45,26,14,0.10), inset 0 1px 0 rgba(255,255,255,0.9);
+  overflow: hidden;
+  animation: panelIn .38s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes panelIn {
+  from { opacity:0; transform:translateY(14px) scale(.98); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.panel-head {
+  background: linear-gradient(135deg, rgba(45,26,14,0.94), rgba(92,46,16,0.85), rgba(232,81,26,0.70));
+  padding: 22px 28px;
+  display: flex; align-items: center; gap: 14px;
+  position: relative; overflow: hidden;
+  border-bottom: 2px solid rgba(232,81,26,0.4);
+}
+.panel-head::after {
+  content: '';
+  position: absolute; top: -40px; right: -30px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(232,81,26,0.2), transparent 70%);
+  border-radius: 50%; pointer-events: none;
+}
+.panel-head-ico {
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.panel-head-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; color: #fff; }
+.panel-head-sub { font-size: 11.5px; color: rgba(255,255,255,0.52); margin-top: 3px; }
+.panel-step-tag {
+  margin-left: auto;
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.20);
+  color: rgba(255,255,255,0.80); font-family: 'Outfit', sans-serif;
+  font-size: 10.5px; font-weight: 700; padding: 4px 12px;
+  border-radius: 20px; letter-spacing: .4px; white-space: nowrap; flex-shrink: 0;
+}
+
+.panel-body { padding: 28px 28px 8px; }
+.panel-foot {
+  padding: 20px 28px 24px;
+  display: flex; gap: 12px; align-items: center;
+  border-top: 1px solid rgba(240,216,204,0.4);
+  background: rgba(253,246,243,0.6);
+}
+
+/* ══ FORM ELEMENTS ══ */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.form-row.single { grid-template-columns: 1fr; }
+.form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label {
+  font-family: 'Outfit', sans-serif; font-size: 11.5px; font-weight: 700;
+  color: var(--fu-dark); letter-spacing: 0.3px; text-transform: uppercase;
+}
+.form-label .req { color: var(--fu-orange); margin-left: 2px; }
+.form-input, .form-select, .form-textarea {
+  height: 46px; padding: 0 14px;
+  background: rgba(255,255,255,0.85);
+  border: 1.5px solid rgba(240,216,204,0.9);
+  border-radius: 11px;
+  font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text);
+  outline: none; transition: border-color .2s, box-shadow .2s, background .2s;
+  width: 100%;
+}
+.form-textarea { height: auto; min-height: 90px; padding: 12px 14px; resize: vertical; }
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--fu-orange);
+  box-shadow: 0 0 0 3px rgba(232,81,26,0.13);
+  background: #fff;
+}
+.form-input.err { border-color: var(--err); box-shadow: 0 0 0 3px rgba(192,57,43,0.12); }
+.form-hint { font-size: 11px; color: var(--muted-lt); line-height: 1.5; }
+.form-hint.err-msg { color: var(--err); }
+.form-select {
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A5540' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  background-size: 14px; padding-right: 36px;
+}
+.form-sep {
+  font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 1.8px; text-transform: uppercase; color: var(--fu-orange);
+  margin: 24px 0 16px; padding-bottom: 8px;
+  border-bottom: 2px solid rgba(232,81,26,0.15);
+  display: flex; align-items: center; gap: 8px;
+}
+.form-sep::before { content:''; display:inline-block; width:3px; height:13px; background: var(--fu-orange); border-radius:2px; }
+.form-sep:first-child { margin-top: 0; }
+
+/* ══ TIPO CARDS ══ */
+.tipo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px; }
+.tipo-card {
+  background: rgba(255,255,255,0.78);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border: 2px solid rgba(240,216,204,0.8);
+  border-radius: var(--lg-radius-sm); padding: 20px 14px 16px;
+  cursor: pointer; transition: all .22s cubic-bezier(.22,1,.36,1);
+  text-align: center; position: relative; overflow: hidden;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.tipo-card:hover { border-color: rgba(232,81,26,0.35); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,81,26,0.10); }
+.tipo-card.sel {
+  border-color: var(--fu-orange);
+  background: rgba(255,240,234,0.88);
+  box-shadow: 0 6px 24px rgba(232,81,26,0.18);
+}
+.tipo-card-bar { position: absolute; top:0; left:0; width:100%; height:3px; background: rgba(240,216,204,0.5); transition: background .2s; }
+.tipo-card.sel .tipo-card-bar { background: var(--fu-orange); }
+.tipo-card-ico { font-size: 30px; display: block; margin-bottom: 10px; }
+.tipo-card-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; color: var(--fu-dark); margin-bottom: 4px; }
+.tipo-card-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.tipo-card-check {
+  position: absolute; top: 10px; right: 10px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--fu-orange); display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: scale(0); transition: all .2s cubic-bezier(.34,1.56,.64,1);
+}
+.tipo-card.sel .tipo-card-check { opacity: 1; transform: scale(1); }
+.tipo-card-check svg { width: 11px; height: 11px; color: #fff; }
+
+/* ══ CHECKLIST DOCS ══ */
+.doc-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.doc-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 16px;
+  background: rgba(255,255,255,0.72); border: 1.5px solid rgba(240,216,204,0.7);
+  border-radius: 10px; cursor: pointer; transition: all .18s;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.doc-item:hover { border-color: rgba(232,81,26,0.3); background: rgba(255,240,234,0.55); }
+.doc-item.checked { border-color: rgba(13,122,78,0.4); background: rgba(232,248,240,0.55); }
+.doc-check-box {
+  width: 22px; height: 22px; min-width: 22px; border-radius: 6px;
+  border: 2px solid var(--border); background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .18s cubic-bezier(.34,1.56,.64,1); margin-top: 1px;
+}
+.doc-item.checked .doc-check-box { background: var(--ok); border-color: var(--ok); }
+.doc-check-box svg { width: 12px; height: 12px; color: #fff; opacity: 0; transform: scale(0); transition: all .18s; }
+.doc-item.checked .doc-check-box svg { opacity: 1; transform: scale(1); }
+.doc-name { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--fu-dark); line-height: 1.4; }
+.doc-note { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.doc-section-title {
+  font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
+  margin: 18px 0 8px; padding: 0; display: flex; align-items: center; gap: 8px;
+}
+.doc-section-title::before { content:''; flex:1; height:1px; background: var(--border); }
+.doc-section-title::after { content:''; flex:1; height:1px; background: var(--border); }
+.doc-progress {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: var(--ok-lt);
+  border: 1px solid rgba(13,122,78,0.25); border-radius: 10px;
+  margin-bottom: 16px;
+}
+.doc-progress-bar-wrap { flex: 1; height: 6px; background: rgba(13,122,78,0.2); border-radius: 99px; overflow: hidden; }
+.doc-progress-bar { height: 100%; background: var(--ok); border-radius: 99px; transition: width .4s cubic-bezier(.22,1,.36,1); }
+.doc-progress-txt { font-family: 'Outfit', sans-serif; font-size: 11.5px; font-weight: 700; color: var(--ok); white-space: nowrap; }
+
+/* ══ RESUMEN ══ */
+.resumen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+.resumen-item {
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.75); border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.resumen-lbl { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted-lt); margin-bottom: 4px; }
+.resumen-val { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: var(--fu-dark); }
+.resumen-val.big { font-size: 20px; color: var(--fu-orange); }
+.resumen-tipo-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 20px;
+  font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700;
+}
+.badge-compra    { background: #FFF0EA; color: #C94010; border: 1px solid rgba(232,81,26,0.25); }
+.badge-construc  { background: #F0FDF4; color: #065F46; border: 1px solid rgba(13,122,78,0.25); }
+.badge-gravamen  { background: #FFFBEB; color: #92400E; border: 1px solid rgba(234,179,8,0.25); }
+
+/* ══ ALERTA INFO ══ */
+.alert {
+  display: flex; gap: 10px; padding: 13px 16px;
+  border-radius: 10px; font-size: 12.5px; line-height: 1.6;
+  margin-bottom: 16px;
+}
+.alert.info { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; }
+.alert.warn { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
+.alert.ok   { background: var(--ok-lt); border: 1px solid rgba(13,122,78,0.3); color: var(--ok); }
+.alert.err  { background: var(--err-lt); border: 1px solid rgba(192,57,43,0.3); color: var(--err); }
+.alert-ico  { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+/* ══ BOTONES ══ */
+.btn-primary {
+  flex: 1; height: 50px; padding: 0 28px;
+  background: linear-gradient(135deg, #E8511A 0%, #C94010 60%, #A83308 100%);
+  color: #fff; border: none; border-radius: 13px;
+  font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 800;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 20px rgba(232,81,26,0.40), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+  position: relative; overflow: hidden; letter-spacing: 0.2px;
+}
+.btn-primary::before {
+  content: ''; position: absolute; top:0; left:-100%; width:60%; height:100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+  transform: skewX(-15deg); transition: left .55s ease;
+}
+.btn-primary:hover::before { left: 160%; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232,81,26,0.48); }
+.btn-primary:active { transform: scale(.97); }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+.btn-secondary {
+  height: 50px; padding: 0 22px;
+  background: rgba(255,255,255,0.65);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  color: var(--muted); border: 1.5px solid rgba(240,216,204,0.9);
+  border-radius: 13px; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+}
+.btn-secondary:hover { border-color: rgba(232,81,26,0.35); color: var(--fu-orange); background: rgba(255,240,234,0.85); transform: translateY(-1px); }
+
+.btn-spinner {
+  width: 16px; height: 16px;
+  border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin .7s linear infinite; display: none;
+}
+.btn-primary.loading .btn-spinner { display: block; }
+.btn-primary.loading .btn-ico { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══ SUCCESS SCREEN ══ */
+.success-wrap {
+  text-align: center; padding: 48px 28px 36px;
+  display: none; flex-direction: column; align-items: center; gap: 0;
+}
+.success-wrap.show { display: flex; animation: panelIn .45s cubic-bezier(.22,1,.36,1) both; }
+.success-ico-wrap {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--ok-lt); border: 2px solid rgba(13,122,78,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 38px; margin-bottom: 20px;
+  animation: popIn .5s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from { opacity:0; transform:scale(.6); } to { opacity:1; transform:scale(1); } }
+.success-title { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 24px; color: var(--fu-dark); margin-bottom: 10px; }
+.success-sub { font-size: 13.5px; color: var(--muted); line-height: 1.7; max-width: 440px; margin-bottom: 24px; }
+.success-radicado {
+  background: var(--fu-orange-lt, #FFF0EA);
+  border: 1px solid rgba(232,81,26,0.25);
+  border-radius: 14px; padding: 16px 28px; margin-bottom: 28px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.success-radicado-lbl { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.success-radicado-num { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; color: var(--fu-orange); letter-spacing: 2px; }
+.success-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+/* ══ ELEGIBILIDAD PRE-CHECK ══ */
+.elegib-items { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.elegib-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: 11px;
+  background: rgba(255,255,255,0.75); border: 1.5px solid rgba(240,216,204,0.7);
+  font-size: 13.5px; color: var(--fu-dark); font-weight: 500;
+}
+.elegib-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  background: var(--border); transition: background .3s;
+}
+.elegib-item.ok .elegib-dot { background: var(--ok); }
+.elegib-item.err .elegib-dot { background: var(--err); }
+
+/* ══ MISC ══ */
+.monto-preview {
+  padding: 14px 20px;
+  background: rgba(255,240,234,0.6); border: 1px solid rgba(232,81,26,0.2);
+  border-radius: 11px; text-align: center; margin-top: 8px;
+}
+.monto-preview-num { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 26px; color: var(--fu-orange); }
+.monto-preview-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.plazo-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.plazo-chip {
+  padding: 7px 16px; border-radius: 20px; font-family: 'Outfit', sans-serif;
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+  border: 1.5px solid var(--border); color: var(--muted);
+  background: rgba(255,255,255,0.75);
+  transition: all .18s; -webkit-tap-highlight-color: transparent;
+}
+.plazo-chip:hover { border-color: rgba(232,81,26,0.35); color: var(--fu-orange); }
+.plazo-chip.sel { border-color: var(--fu-orange); background: var(--fu-orange); color: #fff; box-shadow: 0 3px 10px rgba(232,81,26,0.3); }
+
+@keyframes fadeInUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+.step-panel { display: none; }
+.step-panel.active { display: block; animation: fadeInUp .32s cubic-bezier(.22,1,.36,1) both; }
+
+@media (max-width: 640px) {
+  .hero-mini { padding: 28px 22px; }
+  .hero-mini h1 { font-size: 22px; }
+  .tipo-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr 1fr; }
+  .resumen-grid { grid-template-columns: 1fr; }
+  .panel-body { padding: 20px 18px 8px; }
+  .panel-foot { padding: 16px 18px 20px; flex-direction: column; }
+  .btn-primary, .btn-secondary { width: 100%; }
+  .stepper::before { left: 5%; right: 5%; }
+  .step-label { font-size: 9px; max-width: 60px; }
+  .step-circle { width: 34px; height: 34px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <a href="./portal-asociado.html" class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </div>
+    <div class="logo-wordmark">
+      <span class="logo-name">Fondo<span>Une</span></span>
+      <span class="logo-tagline">Créditos Vivienda</span>
+    </div>
+  </a>
+  <div class="hdr-right">
+    <span class="hdr-badge">🏗️ En Pruebas</span>
+    <a href="./portal-asociado.html" class="hdr-back">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      Portal
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero-mini">
+    <div class="hero-eyebrow">📋 Nueva Solicitud</div>
+    <h1>Solicitud de <em>Crédito Vivienda</em></h1>
+    <p>Completa los pasos a continuación para radicar tu solicitud. El área de Créditos Vivienda la revisará y te contactará en los próximos días hábiles.</p>
+  </div>
+
+  <!-- STEPPER -->
+  <div class="stepper" id="stepper">
+    <div class="step-item active" data-step="1">
+      <div class="step-circle">1</div>
+      <div class="step-label">Elegibilidad</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="step-item idle" data-step="2">
+      <div class="step-circle">2</div>
+      <div class="step-label">Datos Personales</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="step-item idle" data-step="3">
+      <div class="step-circle">3</div>
+      <div class="step-label">Crédito e Inmueble</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="step-item idle" data-step="4">
+      <div class="step-circle">4</div>
+      <div class="step-label">Documentos</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="step-item idle" data-step="5">
+      <div class="step-circle">5</div>
+      <div class="step-label">Confirmación</div>
+      <div class="step-line"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PASO 1: ELEGIBILIDAD ══════════════ -->
+  <div class="panel">
+    <div id="step1-panel" class="step-panel active">
+      <div class="panel-head">
+        <div class="panel-head-ico">✅</div>
+        <div>
+          <div class="panel-head-title">Elegibilidad y Tipo de Crédito</div>
+          <div class="panel-head-sub">Verifica si cumples los requisitos básicos</div>
+        </div>
+        <span class="panel-step-tag">Paso 1 de 5</span>
+      </div>
+      <div class="panel-body">
+
+        <p class="form-sep">Selecciona el tipo de crédito</p>
+        <div class="tipo-grid">
+          <div class="tipo-card" data-tipo="compra" onclick="selTipo(this)">
+            <div class="tipo-card-bar"></div>
+            <div class="tipo-card-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="tipo-card-ico">🏠</span>
+            <div class="tipo-card-name">Compra de Vivienda</div>
+            <div class="tipo-card-desc">Adquisición de inmueble nuevo o usado</div>
+          </div>
+          <div class="tipo-card" data-tipo="construccion" onclick="selTipo(this)">
+            <div class="tipo-card-bar"></div>
+            <div class="tipo-card-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="tipo-card-ico">🔨</span>
+            <div class="tipo-card-name">Construcción y Mejoras</div>
+            <div class="tipo-card-desc">Construir, ampliar o mejorar tu vivienda</div>
+          </div>
+          <div class="tipo-card" data-tipo="gravamen" onclick="selTipo(this)">
+            <div class="tipo-card-bar"></div>
+            <div class="tipo-card-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="tipo-card-ico">📄</span>
+            <div class="tipo-card-name">Gravamen Hipotecario</div>
+            <div class="tipo-card-desc">Cancelación o constitución de hipoteca</div>
+          </div>
+        </div>
+        <div id="tipo-err" class="alert err" style="display:none; margin-top:12px;">
+          <span class="alert-ico">⚠️</span> Por favor selecciona un tipo de crédito para continuar.
+        </div>
+
+        <p class="form-sep" style="margin-top:24px;">Datos de identificación</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Número de Cédula <span class="req">*</span></label>
+            <input class="form-input" type="text" id="elig-cedula" placeholder="Ej: 1045678901" maxlength="12" inputmode="numeric">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Empresa Empleadora <span class="req">*</span></label>
+            <select class="form-select" id="elig-empresa">
+              <option value="">— Selecciona —</option>
+              <option>UNE EPM Telecomunicaciones</option>
+              <option>EPM</option>
+              <option>Edatel</option>
+              <option>Orbitel</option>
+              <option>Otra empresa vinculada</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tiempo en la empresa <span class="req">*</span></label>
+            <select class="form-select" id="elig-antiguedad">
+              <option value="">— Selecciona —</option>
+              <option value="menos1">Menos de 1 año</option>
+              <option value="1a2">1 a 2 años</option>
+              <option value="2a5">2 a 5 años</option>
+              <option value="mas5">Más de 5 años</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">¿Tienes otro crédito vivienda activo? <span class="req">*</span></label>
+            <select class="form-select" id="elig-creditoActivo">
+              <option value="">— Selecciona —</option>
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="elegib-check-wrap" style="display:none; margin-top:4px;">
+          <div class="elegib-items" id="elegib-items"></div>
+          <div id="elegib-alert"></div>
+        </div>
+
+      </div>
+      <div class="panel-foot">
+        <button class="btn-primary" onclick="irPaso2()">
+          <span class="btn-ico">Verificar y Continuar</span>
+          <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          <span class="btn-spinner"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════ PASO 2: DATOS PERSONALES ══════════════ -->
+    <div id="step2-panel" class="step-panel">
+      <div class="panel-head">
+        <div class="panel-head-ico">👤</div>
+        <div>
+          <div class="panel-head-title">Datos Personales y Laborales</div>
+          <div class="panel-head-sub">Información del asociado solicitante</div>
+        </div>
+        <span class="panel-step-tag">Paso 2 de 5</span>
+      </div>
+      <div class="panel-body">
+
+        <div id="autofill-alert" class="alert info" style="display:none;">
+          <span class="alert-ico">⚡</span>
+          Hemos prellenado tus datos desde tu perfil guardado. Verifica y corrige si es necesario.
+        </div>
+
+        <p class="form-sep">Información personal</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Primer Nombre <span class="req">*</span></label>
+            <input class="form-input" type="text" id="p-nombre1" placeholder="Ej: Juan">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo Nombre</label>
+            <input class="form-input" type="text" id="p-nombre2" placeholder="Ej: Carlos">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Primer Apellido <span class="req">*</span></label>
+            <input class="form-input" type="text" id="p-apellido1" placeholder="Ej: Pérez">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo Apellido</label>
+            <input class="form-input" type="text" id="p-apellido2" placeholder="Ej: López">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Correo Electrónico <span class="req">*</span></label>
+            <input class="form-input" type="email" id="p-email" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono / Celular <span class="req">*</span></label>
+            <input class="form-input" type="tel" id="p-telefono" placeholder="Ej: 3001234567" maxlength="10" inputmode="numeric">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Ciudad de Residencia <span class="req">*</span></label>
+            <input class="form-input" type="text" id="p-ciudad" placeholder="Ej: Medellín">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dirección de Residencia</label>
+            <input class="form-input" type="text" id="p-direccion" placeholder="Ej: Cra 45 # 30-20 Apto 401">
+          </div>
+        </div>
+
+        <p class="form-sep">Información laboral</p>
+        <div class="form-row triple">
+          <div class="form-group">
+            <label class="form-label">Salario Básico (COP) <span class="req">*</span></label>
+            <input class="form-input" type="text" id="p-salario" placeholder="Ej: 4.500.000" inputmode="numeric">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo de Contrato <span class="req">*</span></label>
+            <select class="form-select" id="p-contrato">
+              <option value="">— Tipo —</option>
+              <option>Término indefinido</option>
+              <option>Término fijo</option>
+              <option>Prestación de servicios</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cargo Actual</label>
+            <input class="form-input" type="text" id="p-cargo" placeholder="Ej: Analista">
+          </div>
+        </div>
+      </div>
+      <div class="panel-foot">
+        <button class="btn-secondary" onclick="irPaso(1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Atrás
+        </button>
+        <button class="btn-primary" onclick="irPaso3()">
+          <span class="btn-ico">Continuar</span>
+          <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          <span class="btn-spinner"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════ PASO 3: CRÉDITO E INMUEBLE ══════════════ -->
+    <div id="step3-panel" class="step-panel">
+      <div class="panel-head">
+        <div class="panel-head-ico">🏡</div>
+        <div>
+          <div class="panel-head-title">Información del Crédito e Inmueble</div>
+          <div class="panel-head-sub">Detalles del monto y el bien a financiar</div>
+        </div>
+        <span class="panel-step-tag">Paso 3 de 5</span>
+      </div>
+      <div class="panel-body">
+
+        <p class="form-sep">Condiciones del crédito</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Monto Solicitado (COP) <span class="req">*</span></label>
+            <input class="form-input" type="text" id="c-monto" placeholder="Ej: 80.000.000" inputmode="numeric" oninput="actualizarMonto()">
+            <span class="form-hint">Ingresa el valor en pesos colombianos</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Plazo Deseado <span class="req">*</span></label>
+            <div style="margin-top:4px;">
+              <div class="plazo-chips">
+                <div class="plazo-chip" onclick="selPlazo(this,'60')">5 años</div>
+                <div class="plazo-chip" onclick="selPlazo(this,'120')">10 años</div>
+                <div class="plazo-chip" onclick="selPlazo(this,'180')">15 años</div>
+                <div class="plazo-chip" onclick="selPlazo(this,'240')">20 años</div>
+              </div>
+              <input type="hidden" id="c-plazo">
+            </div>
+          </div>
+        </div>
+        <div id="monto-preview-wrap" style="display:none;">
+          <div class="monto-preview">
+            <div class="monto-preview-num" id="monto-preview-num">$ 0</div>
+            <div class="monto-preview-lbl">Monto solicitado</div>
+          </div>
+        </div>
+
+        <p class="form-sep" style="margin-top:24px;">Datos del inmueble</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Municipio del Inmueble <span class="req">*</span></label>
+            <input class="form-input" type="text" id="i-municipio" placeholder="Ej: Medellín, Bello, Itagüí…">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Valor Comercial Estimado (COP) <span class="req">*</span></label>
+            <input class="form-input" type="text" id="i-valorComercial" placeholder="Ej: 200.000.000" inputmode="numeric">
+          </div>
+        </div>
+
+        <!-- Campos específicos por tipo -->
+        <div id="campos-compra" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Matrícula Inmobiliaria</label>
+              <input class="form-input" type="text" id="i-matricula" placeholder="Ej: 001-12345">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estado del Inmueble <span class="req">*</span></label>
+              <select class="form-select" id="i-estado">
+                <option value="">— Selecciona —</option>
+                <option>Nuevo (sobre planos)</option>
+                <option>Nuevo (construido)</option>
+                <option>Usado</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row single">
+            <div class="form-group">
+              <label class="form-label">Dirección del Inmueble</label>
+              <input class="form-input" type="text" id="i-direccionInmueble" placeholder="Ej: Cra 50 # 18-40">
+            </div>
+          </div>
+        </div>
+
+        <div id="campos-construccion" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tipo de Obra <span class="req">*</span></label>
+              <select class="form-select" id="i-tipoObra">
+                <option value="">— Selecciona —</option>
+                <option>Construcción nueva</option>
+                <option>Ampliación</option>
+                <option>Mejoras / Remodelación</option>
+                <option>Terminados</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">¿Ya tiene lote propio?</label>
+              <select class="form-select" id="i-lotePropio">
+                <option value="">— Selecciona —</option>
+                <option value="si">Sí</option>
+                <option value="no">No, lo adquiero también</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row single">
+            <div class="form-group">
+              <label class="form-label">Descripción breve de la obra</label>
+              <textarea class="form-textarea" id="i-descripcionObra" placeholder="Describe qué se va a construir o mejorar…"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div id="campos-gravamen" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tipo de Trámite <span class="req">*</span></label>
+              <select class="form-select" id="i-tramiteGravamen">
+                <option value="">— Selecciona —</option>
+                <option>Cancelación de hipoteca</option>
+                <option>Constitución de hipoteca</option>
+                <option>Levantamiento de gravamen</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Entidad Financiera Actual</label>
+              <input class="form-input" type="text" id="i-entidadFinanciera" placeholder="Banco o entidad que tiene la hipoteca">
+            </div>
+          </div>
+          <div class="form-row single">
+            <div class="form-group">
+              <label class="form-label">Matrícula Inmobiliaria <span class="req">*</span></label>
+              <input class="form-input" type="text" id="i-matriculaGrav" placeholder="Ej: 001-12345">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row single" style="margin-top:8px;">
+          <div class="form-group">
+            <label class="form-label">Observaciones adicionales</label>
+            <textarea class="form-textarea" id="c-observaciones" placeholder="Información adicional que desees indicar al área de Créditos Vivienda…"></textarea>
+          </div>
+        </div>
+
+      </div>
+      <div class="panel-foot">
+        <button class="btn-secondary" onclick="irPaso(2)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Atrás
+        </button>
+        <button class="btn-primary" onclick="irPaso4()">
+          <span class="btn-ico">Continuar</span>
+          <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          <span class="btn-spinner"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════ PASO 4: DOCUMENTOS ══════════════ -->
+    <div id="step4-panel" class="step-panel">
+      <div class="panel-head">
+        <div class="panel-head-ico">📂</div>
+        <div>
+          <div class="panel-head-title">Documentos Requeridos</div>
+          <div class="panel-head-sub">Marca los documentos que ya tienes listos</div>
+        </div>
+        <span class="panel-step-tag">Paso 4 de 5</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="alert info">
+          <span class="alert-ico">💡</span>
+          <span>No es necesario tener todos los documentos ahora. Indica cuáles ya tienes para que el área sepa en qué punto vas. Deberás presentarlos físicamente al momento de formalizar.</span>
+        </div>
+
+        <div class="doc-progress">
+          <div class="doc-progress-bar-wrap"><div class="doc-progress-bar" id="doc-progress-bar" style="width:0%"></div></div>
+          <span class="doc-progress-txt" id="doc-progress-txt">0 de 0 documentos</span>
+        </div>
+
+        <div class="doc-list" id="doc-list">
+          <!-- Generado dinámicamente según tipo de crédito -->
+        </div>
+
+      </div>
+      <div class="panel-foot">
+        <button class="btn-secondary" onclick="irPaso(3)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Atrás
+        </button>
+        <button class="btn-primary" onclick="irPaso5()">
+          <span class="btn-ico">Ver Resumen</span>
+          <svg class="btn-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          <span class="btn-spinner"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════ PASO 5: CONFIRMACIÓN ══════════════ -->
+    <div id="step5-panel" class="step-panel">
+      <div class="panel-head">
+        <div class="panel-head-ico">📋</div>
+        <div>
+          <div class="panel-head-title">Resumen y Confirmación</div>
+          <div class="panel-head-sub">Revisa tu solicitud antes de enviarla</div>
+        </div>
+        <span class="panel-step-tag">Paso 5 de 5</span>
+      </div>
+      <div class="panel-body">
+        <div id="resumen-body"></div>
+        <div id="envio-alert"></div>
+      </div>
+      <div class="panel-foot">
+        <button class="btn-secondary" onclick="irPaso(4)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Atrás
+        </button>
+        <button class="btn-primary" id="btn-enviar" onclick="enviarSolicitud()">
+          <span class="btn-ico">📨 Radicar Solicitud</span>
+          <span class="btn-spinner"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════ ÉXITO ══════════════ -->
+    <div id="success-panel" class="success-wrap">
+      <div class="success-ico-wrap">🎉</div>
+      <div class="success-title">¡Solicitud Radicada!</div>
+      <div class="success-sub">Tu solicitud fue registrada exitosamente. El área de Créditos Vivienda la revisará y te contactará en los próximos <strong>3 a 5 días hábiles</strong> al correo y teléfono que indicaste.</div>
+      <div class="success-radicado">
+        <span class="success-radicado-lbl">Número de Radicado</span>
+        <span class="success-radicado-num" id="radicado-num">—</span>
+      </div>
+      <div class="success-actions">
+        <button class="btn-secondary" onclick="descargarChecklist()">
+          📄 Descargar Checklist Word
+        </button>
+        <a href="./portal-asociado.html" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+          🏠 Volver al Portal
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /panel -->
+</div><!-- /wrap -->
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   ESTADO GLOBAL
+═══════════════════════════════════════════════════════ */
+var STATE = {
+  paso: 1,
+  tipo: '',         // compra | construccion | gravamen
+  plazo: '',
+  docs: [],         // IDs de docs marcados
+  radicado: '',
+  datos: {}
+};
+
+/* ═══════════════════════════════════════════════════════
+   DOCUMENTOS POR TIPO
+═══════════════════════════════════════════════════════ */
+var DOCS = {
+  comunes: [
+    { id: 'cedula',       nombre: 'Fotocopia de Cédula de Ciudadanía',           nota: 'Ambas caras, legible' },
+    { id: 'certLaboral',  nombre: 'Certificado Laboral',                          nota: 'Con salario, cargo y fecha de ingreso — vigencia máx. 30 días' },
+    { id: 'desprendible', nombre: 'Últimos 3 desprendibles de pago',              nota: '' },
+    { id: 'extractos',    nombre: 'Extractos bancarios últimos 3 meses',          nota: 'Cuenta donde se deposita el salario' },
+    { id: 'rut',          nombre: 'RUT actualizado (si aplica)',                   nota: 'Sólo si tienes ingresos adicionales declarados' },
+  ],
+  compra: [
+    { id: 'promisorioVenta', nombre: 'Promesa de Compraventa o Minuta',           nota: 'Firmada por vendedor y comprador' },
+    { id: 'escritura',       nombre: 'Escritura pública del inmueble',            nota: 'Copia del propietario actual' },
+    { id: 'libertad',        nombre: 'Certificado de Libertad y Tradición',       nota: 'Fecha de expedición no mayor a 30 días' },
+    { id: 'avaluo',          nombre: 'Avalúo comercial del inmueble',             nota: 'Realizado por perito autorizado' },
+    { id: 'pazSalvo',        nombre: 'Paz y salvo predial y de valorización',     nota: '' },
+  ],
+  construccion: [
+    { id: 'licencia',         nombre: 'Licencia de construcción o permiso de obra', nota: 'Emitida por la entidad competente' },
+    { id: 'planos',           nombre: 'Planos aprobados de la obra',              nota: '' },
+    { id: 'presupuesto',      nombre: 'Presupuesto de obra detallado',            nota: 'Firmado por maestro o ingeniero residente' },
+    { id: 'escrituraLote',    nombre: 'Escritura del lote o inmueble propio',     nota: 'Si ya posee el lote' },
+    { id: 'libertadCons',     nombre: 'Certificado de Libertad y Tradición del lote', nota: 'Fecha de expedición no mayor a 30 días' },
+  ],
+  gravamen: [
+    { id: 'escrituraGrav',    nombre: 'Escritura pública del inmueble',            nota: 'Copia del registro actual' },
+    { id: 'libertadGrav',     nombre: 'Certificado de Libertad y Tradición',       nota: 'Vigente — máx. 30 días de expedición' },
+    { id: 'pazSalvoHip',      nombre: 'Paz y salvo con entidad hipotecante',       nota: 'Banco o entidad que tiene la hipoteca actual' },
+    { id: 'estadoCuenta',     nombre: 'Estado de cuenta del crédito hipotecario',  nota: 'Emitido por la entidad financiera actual' },
+  ]
+};
+
+/* ═══════════════════════════════════════════════════════
+   NAVEGACIÓN WIZARD
+═══════════════════════════════════════════════════════ */
+function irPaso(n) {
+  // ocultar panel actual
+  document.getElementById('step' + STATE.paso + '-panel').classList.remove('active');
+  // actualizar stepper
+  actualizarStepper(n);
+  STATE.paso = n;
+  document.getElementById('step' + n + '-panel').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function actualizarStepper(pasoActual) {
+  document.querySelectorAll('.step-item').forEach(function(el) {
+    var s = parseInt(el.dataset.step);
+    el.classList.remove('active','done','idle');
+    if (s < pasoActual) el.classList.add('done');
+    else if (s === pasoActual) el.classList.add('active');
+    else el.classList.add('idle');
+
+    // actualizar icono done
+    var circle = el.querySelector('.step-circle');
+    if (s < pasoActual) {
+      circle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    } else {
+      circle.textContent = s;
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   PASO 1 — ELEGIBILIDAD
+═══════════════════════════════════════════════════════ */
+function selTipo(card) {
+  document.querySelectorAll('.tipo-card').forEach(function(c){ c.classList.remove('sel'); });
+  card.classList.add('sel');
+  STATE.tipo = card.dataset.tipo;
+  document.getElementById('tipo-err').style.display = 'none';
+}
+
+function irPaso2() {
+  // validar tipo
+  if (!STATE.tipo) {
+    document.getElementById('tipo-err').style.display = 'flex';
+    return;
+  }
+  // validar campos
+  var cedula    = document.getElementById('elig-cedula').value.trim();
+  var empresa   = document.getElementById('elig-empresa').value;
+  var antig     = document.getElementById('elig-antiguedad').value;
+  var creditoAc = document.getElementById('elig-creditoActivo').value;
+  if (!cedula || !empresa || !antig || !creditoAc) {
+    mostrarAlertEligib('warn','⚠️ Completa todos los campos para verificar tu elegibilidad.');
+    return;
+  }
+
+  // Verificar elegibilidad
+  var items = [];
+  var elegible = true;
+
+  items.push({ ok: cedula.length >= 6, txt: 'Cédula ingresada correctamente' });
+  items.push({ ok: empresa !== '', txt: 'Empresa empleadora vinculada al Fondo' });
+  var okAntig = antig !== 'menos1';
+  if (!okAntig) elegible = false;
+  items.push({ ok: okAntig, txt: 'Antigüedad mínima de 1 año en la empresa' });
+  var okCredito = creditoAc === 'no';
+  if (!okCredito) elegible = false;
+  items.push({ ok: okCredito, txt: 'Sin crédito de vivienda activo en el Fondo' });
+
+  // mostrar resultados
+  var wrap = document.getElementById('elegib-check-wrap');
+  wrap.style.display = 'block';
+  var lista = document.getElementById('elegib-items');
+  lista.innerHTML = items.map(function(it){
+    return '<div class="elegib-item ' + (it.ok ? 'ok' : 'err') + '">' +
+      '<div class="elegib-dot"></div>' + it.txt + '</div>';
+  }).join('');
+
+  if (!elegible) {
+    mostrarAlertEligib('err', '❌ No cumples uno o más requisitos mínimos para radicar la solicitud en este momento. Comunícate con el área de Créditos Vivienda para más información.');
+    return;
+  }
+
+  // guardar y continuar
+  STATE.datos.cedula   = cedula;
+  STATE.datos.empresa  = empresa;
+  STATE.datos.antiguedad = antig;
+
+  // prellenar desde localStorage si existe
+  try {
+    var guardado = JSON.parse(localStorage.getItem('fondoune_asoc_v1') || '{}');
+    if (guardado.nombre1) {
+      document.getElementById('p-nombre1').value    = guardado.nombre1 || '';
+      document.getElementById('p-nombre2').value    = guardado.nombre2 || '';
+      document.getElementById('p-apellido1').value  = guardado.apellido1 || '';
+      document.getElementById('p-apellido2').value  = guardado.apellido2 || '';
+      document.getElementById('p-email').value      = guardado.email || '';
+      document.getElementById('p-telefono').value   = guardado.telefono || '';
+      document.getElementById('p-ciudad').value     = guardado.ciudad || '';
+      document.getElementById('p-salario').value    = guardado.salario || '';
+      document.getElementById('autofill-alert').style.display = 'flex';
+    }
+  } catch(e) {}
+
+  setTimeout(function(){ irPaso(2); }, elegible ? 600 : 0);
+}
+
+function mostrarAlertEligib(tipo, msg) {
+  var el = document.getElementById('elegib-alert');
+  el.innerHTML = '<div class="alert ' + tipo + '" style="margin-top:10px;"><span class="alert-ico">' + (tipo === 'err' ? '❌' : '⚠️') + '</span>' + msg + '</div>';
+}
+
+/* ═══════════════════════════════════════════════════════
+   PASO 3 — CRÉDITO
+═══════════════════════════════════════════════════════ */
+function irPaso3() {
+  var campos = ['p-nombre1','p-apellido1','p-email','p-telefono','p-ciudad','p-salario','p-contrato'];
+  var ok = true;
+  campos.forEach(function(id){
+    var el = document.getElementById(id);
+    if (!el.value.trim()) { el.classList.add('err'); ok = false; }
+    else el.classList.remove('err');
+  });
+  if (!ok) { return; }
+
+  // Mostrar campos específicos del tipo
+  document.getElementById('campos-compra').style.display      = STATE.tipo === 'compra' ? 'block' : 'none';
+  document.getElementById('campos-construccion').style.display = STATE.tipo === 'construccion' ? 'block' : 'none';
+  document.getElementById('campos-gravamen').style.display    = STATE.tipo === 'gravamen' ? 'block' : 'none';
+
+  irPaso(3);
+}
+
+function selPlazo(chip, val) {
+  document.querySelectorAll('.plazo-chip').forEach(function(c){ c.classList.remove('sel'); });
+  chip.classList.add('sel');
+  STATE.plazo = val;
+  document.getElementById('c-plazo').value = val;
+}
+
+function actualizarMonto() {
+  var raw = document.getElementById('c-monto').value.replace(/\D/g,'');
+  if (!raw) { document.getElementById('monto-preview-wrap').style.display = 'none'; return; }
+  var num = parseInt(raw);
+  var fmt = '$ ' + num.toLocaleString('es-CO');
+  document.getElementById('monto-preview-num').textContent = fmt;
+  document.getElementById('monto-preview-wrap').style.display = 'block';
+}
+
+/* ═══════════════════════════════════════════════════════
+   PASO 4 — DOCUMENTOS
+═══════════════════════════════════════════════════════ */
+function irPaso4() {
+  var monto = document.getElementById('c-monto').value.trim();
+  if (!monto || !STATE.plazo) {
+    if (!monto) document.getElementById('c-monto').classList.add('err');
+    if (!STATE.plazo) {
+      var alertEl = document.createElement('div');
+      alertEl.className = 'alert warn'; alertEl.style.marginTop = '12px';
+      alertEl.innerHTML = '<span class="alert-ico">⚠️</span> Selecciona el plazo deseado.';
+    }
+    return;
+  }
+  document.getElementById('c-monto').classList.remove('err');
+
+  // Construir lista de docs
+  var docs = DOCS.comunes.concat(DOCS[STATE.tipo] || []);
+  var lista = document.getElementById('doc-list');
+  lista.innerHTML = '';
+
+  // Separador comunes
+  var sepC = document.createElement('div');
+  sepC.className = 'doc-section-title'; sepC.textContent = 'Documentos comunes';
+  lista.appendChild(sepC);
+
+  DOCS.comunes.forEach(function(doc){ lista.appendChild(crearDocItem(doc)); });
+
+  var sepT = document.createElement('div');
+  sepT.className = 'doc-section-title';
+  var tipoLabel = { compra:'Compra de Vivienda', construccion:'Construcción y Mejoras', gravamen:'Gravamen Hipotecario' };
+  sepT.textContent = tipoLabel[STATE.tipo] || '';
+  lista.appendChild(sepT);
+
+  (DOCS[STATE.tipo] || []).forEach(function(doc){ lista.appendChild(crearDocItem(doc)); });
+
+  STATE.docs = [];
+  actualizarProgreso();
+  irPaso(4);
+}
+
+function crearDocItem(doc) {
+  var div = document.createElement('div');
+  div.className = 'doc-item';
+  div.dataset.docId = doc.id;
+  div.innerHTML =
+    '<div class="doc-check-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>' +
+    '<div><div class="doc-name">' + doc.nombre + '</div>' +
+    (doc.nota ? '<div class="doc-note">' + doc.nota + '</div>' : '') + '</div>';
+  div.addEventListener('click', function(){ toggleDoc(div, doc.id); });
+  return div;
+}
+
+function toggleDoc(el, id) {
+  el.classList.toggle('checked');
+  if (el.classList.contains('checked')) {
+    if (STATE.docs.indexOf(id) < 0) STATE.docs.push(id);
+  } else {
+    STATE.docs = STATE.docs.filter(function(d){ return d !== id; });
+  }
+  actualizarProgreso();
+}
+
+function actualizarProgreso() {
+  var total = document.querySelectorAll('.doc-item').length;
+  var marcados = STATE.docs.length;
+  var pct = total ? Math.round(marcados/total*100) : 0;
+  document.getElementById('doc-progress-bar').style.width = pct + '%';
+  document.getElementById('doc-progress-txt').textContent = marcados + ' de ' + total + ' documentos';
+}
+
+/* ═══════════════════════════════════════════════════════
+   PASO 5 — RESUMEN
+═══════════════════════════════════════════════════════ */
+function irPaso5() {
+  // Recopilar datos completos
+  var d = STATE.datos;
+  d.nombre     = [document.getElementById('p-nombre1').value, document.getElementById('p-nombre2').value].filter(Boolean).join(' ');
+  d.apellidos  = [document.getElementById('p-apellido1').value, document.getElementById('p-apellido2').value].filter(Boolean).join(' ');
+  d.email      = document.getElementById('p-email').value;
+  d.telefono   = document.getElementById('p-telefono').value;
+  d.ciudad     = document.getElementById('p-ciudad').value;
+  d.direccion  = document.getElementById('p-direccion').value;
+  d.salario    = document.getElementById('p-salario').value;
+  d.contrato   = document.getElementById('p-contrato').value;
+  d.cargo      = document.getElementById('p-cargo').value;
+  d.monto      = document.getElementById('c-monto').value;
+  d.plazoMeses = STATE.plazo;
+  d.municipio  = document.getElementById('i-municipio').value;
+  d.valorComercial = document.getElementById('i-valorComercial').value;
+  d.observaciones  = document.getElementById('c-observaciones').value;
+
+  var tipoLabel = { compra:'🏠 Compra de Vivienda', construccion:'🔨 Construcción y Mejoras', gravamen:'📄 Gravamen Hipotecario' };
+  var tipoBadge = { compra:'badge-compra', construccion:'badge-construc', gravamen:'badge-gravamen' };
+  var plazoLabel = { '60':'5 años', '120':'10 años', '180':'15 años', '240':'20 años' };
+  var totalDocs = DOCS.comunes.length + (DOCS[STATE.tipo]||[]).length;
+
+  var html = '<div class="resumen-grid">' +
+    resItem('Tipo de Crédito', '<span class="resumen-tipo-badge ' + tipoBadge[STATE.tipo] + '">' + tipoLabel[STATE.tipo] + '</span>') +
+    resItem('Asociado', (d.nombre + ' ' + d.apellidos).trim()) +
+    resItem('Cédula', d.cedula) +
+    resItem('Empresa', d.empresa) +
+    resItem('Correo', d.email) +
+    resItem('Teléfono', d.telefono) +
+    resItem('Ciudad', d.ciudad) +
+    resItem('Salario Básico', d.salario ? '$ ' + parseInt(d.salario.replace(/\D/g,'')).toLocaleString('es-CO') : '—') +
+    resItem('Monto Solicitado', d.monto ? '<span class="resumen-val big">$ ' + parseInt(d.monto.replace(/\D/g,'')).toLocaleString('es-CO') + '</span>' : '—', true) +
+    resItem('Plazo', plazoLabel[d.plazoMeses] || d.plazoMeses + ' meses') +
+    resItem('Municipio Inmueble', d.municipio) +
+    resItem('Valor Comercial', d.valorComercial ? '$ ' + parseInt(d.valorComercial.replace(/\D/g,'')).toLocaleString('es-CO') : '—') +
+    resItem('Documentos listos', STATE.docs.length + ' de ' + totalDocs) +
+  '</div>';
+
+  if (d.observaciones) {
+    html += '<div class="resumen-item" style="grid-column:1/-1; margin-top:4px;"><div class="resumen-lbl">Observaciones</div><div class="resumen-val" style="font-size:13px; font-weight:500;">' + d.observaciones + '</div></div>';
+  }
+
+  html += '<div class="alert warn" style="margin-top:16px;"><span class="alert-ico">⚠️</span><span>Al radicar, deberás presentar los documentos físicamente en las oficinas del FondoUne para continuar el proceso.</span></div>';
+
+  document.getElementById('resumen-body').innerHTML = html;
+  document.getElementById('envio-alert').innerHTML = '';
+  irPaso(5);
+}
+
+function resItem(lbl, val, isRaw) {
+  return '<div class="resumen-item"><div class="resumen-lbl">' + lbl + '</div><div class="resumen-val">' + (isRaw ? val : (val||'—')) + '</div></div>';
+}
+
+/* ═══════════════════════════════════════════════════════
+   ENVÍO FINAL
+═══════════════════════════════════════════════════════ */
+function enviarSolicitud() {
+  var btn = document.getElementById('btn-enviar');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  // Generar radicado único
+  var ts = Date.now();
+  var rand = Math.floor(Math.random() * 9000) + 1000;
+  STATE.radicado = 'CV-' + new Date().getFullYear() + '-' + rand;
+
+  var payload = Object.assign({}, STATE.datos, {
+    tipo:      STATE.tipo,
+    plazo:     STATE.plazo,
+    docs:      STATE.docs,
+    radicado:  STATE.radicado,
+    fechaRegistro: new Date().toISOString(),
+    estado:    'pendiente'
+  });
+
+  var promesas = [];
+
+  // 1. Firebase
+  if (window._fbDB) {
+    var p1 = window._fbDB.collection('solicitudes_credito').doc(STATE.radicado).set(payload)
+      .then(function(){ console.log('✅ Firebase guardado'); })
+      .catch(function(e){ console.warn('Firebase error:', e.message); });
+    promesas.push(p1);
+  }
+
+  // 2. EmailJS (si está configurado)
+  if (EMAILJS_CONFIG.publicKey !== 'TU_PUBLIC_KEY_EMAILJS') {
+    emailjs.init(EMAILJS_CONFIG.publicKey);
+    var tipoLabel = { compra:'Compra de Vivienda', construccion:'Construcción y Mejoras', gravamen:'Gravamen Hipotecario' };
+    var plazoLabel = { '60':'5 años','120':'10 años','180':'15 años','240':'20 años' };
+    var templateParams = {
+      radicado:    STATE.radicado,
+      tipo_credito: tipoLabel[STATE.tipo] || STATE.tipo,
+      nombre:      (STATE.datos.nombre + ' ' + STATE.datos.apellidos).trim(),
+      cedula:      STATE.datos.cedula,
+      empresa:     STATE.datos.empresa,
+      email:       STATE.datos.email,
+      telefono:    STATE.datos.telefono,
+      monto:       STATE.datos.monto,
+      plazo:       plazoLabel[STATE.plazo] || STATE.plazo + ' meses',
+      municipio:   STATE.datos.municipio,
+      observaciones: STATE.datos.observaciones || '—',
+      docs_listos:  STATE.docs.length,
+      fecha:       new Date().toLocaleDateString('es-CO'),
+      to_email:    EMAILJS_CONFIG.destinatario
+    };
+    var p2 = emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, templateParams)
+      .then(function(){ console.log('✅ Email enviado'); })
+      .catch(function(e){ console.warn('EmailJS error:', e.text || e); });
+    promesas.push(p2);
+  } else {
+    console.warn('⚠️ EmailJS no configurado — configura EMAILJS_CONFIG para activar notificaciones por correo.');
+  }
+
+  // localStorage fallback
+  try {
+    var existentes = JSON.parse(localStorage.getItem('fu_solicitudes') || '[]');
+    existentes.unshift(payload);
+    localStorage.setItem('fu_solicitudes', JSON.stringify(existentes));
+  } catch(e) {}
+
+  Promise.allSettled(promesas.length ? promesas : [Promise.resolve()]).then(function() {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    mostrarExito();
+  });
+}
+
+function mostrarExito() {
+  // Ocultar todo
+  document.getElementById('step5-panel').classList.remove('active');
+  actualizarStepper(6); // todos done
+  document.querySelectorAll('.step-item').forEach(function(el){ el.classList.add('done'); el.classList.remove('active'); });
+  var successWrap = document.getElementById('success-panel');
+  successWrap.classList.add('show');
+  document.getElementById('radicado-num').textContent = STATE.radicado;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ═══════════════════════════════════════════════════════
+   GENERAR WORD (CHECKLIST)
+═══════════════════════════════════════════════════════ */
+function descargarChecklist() {
+  if (!window.docx) { alert('La librería de generación de documentos no está disponible.'); return; }
+  var D = window.docx;
+  var tipoLabel = { compra:'Compra de Vivienda', construccion:'Construcción y Mejoras', gravamen:'Gravamen Hipotecario' };
+
+  var todosLosDocs = DOCS.comunes.concat(DOCS[STATE.tipo]||[]);
+
+  function fila(doc) {
+    var marcado = STATE.docs.indexOf(doc.id) >= 0;
+    return new D.TableRow({
+      children: [
+        new D.TableCell({
+          width: { size: 900, type: D.WidthType.DXA },
+          margins: { top:80, bottom:80, left:120, right:120 },
+          borders: { top:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'}, bottom:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'}, left:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'}, right:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'} },
+          children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: marcado ? '☑' : '☐', size: 24, font:'Arial' })] })]
+        }),
+        new D.TableCell({
+          width: { size: 5400, type: D.WidthType.DXA },
+          margins: { top:80, bottom:80, left:120, right:120 },
+          borders: { top:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'}, bottom:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'}, left:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'}, right:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'} },
+          children: [new D.Paragraph({ children: [new D.TextRun({ text: doc.nombre, size: 22, font:'Arial' })] })]
+        }),
+        new D.TableCell({
+          width: { size: 3060, type: D.WidthType.DXA },
+          margins: { top:80, bottom:80, left:120, right:120 },
+          borders: { top:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'}, bottom:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'}, left:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'}, right:{style:D.BorderStyle.SINGLE,size:1,color:'F0D8CC'} },
+          shading: { fill: marcado ? 'E8F8F0' : 'FFFFFF', type: D.ShadingType.CLEAR },
+          children: [new D.Paragraph({ children: [new D.TextRun({ text: marcado ? 'Disponible' : 'Pendiente', size: 20, color: marcado ? '0D7A4E' : 'C0392B', font:'Arial' })] })]
+        })
+      ]
+    });
+  }
+
+  var plazoLabel = {'60':'5 años','120':'10 años','180':'15 años','240':'20 años'};
+  var fechaHoy = new Date().toLocaleDateString('es-CO', {year:'numeric',month:'long',day:'numeric'});
+  var d = STATE.datos;
+
+  var doc = new D.Document({
+    sections: [{
+      properties: {
+        page: {
+          size: { width: 12240, height: 15840 },
+          margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 }
+        }
+      },
+      children: [
+        // Título
+        new D.Paragraph({
+          children: [new D.TextRun({ text: 'FondoUne — Créditos Vivienda', bold:true, size:28, color:'2D1A0E', font:'Arial' })],
+          spacing: { after: 80 }
+        }),
+        new D.Paragraph({
+          children: [new D.TextRun({ text: 'CHECKLIST DE SOLICITUD — ' + (tipoLabel[STATE.tipo]||'').toUpperCase(), bold:true, size:24, color:'E8511A', font:'Arial' })],
+          spacing: { after: 200 },
+          border: { bottom: { style:D.BorderStyle.SINGLE, size:6, color:'E8511A', space:1 } }
+        }),
+        // Info solicitud
+        new D.Paragraph({ children:[new D.TextRun({ text:'Radicado: ' + STATE.radicado, bold:true, size:22, font:'Arial' })], spacing:{after:60} }),
+        new D.Paragraph({ children:[new D.TextRun({ text:'Fecha: ' + fechaHoy, size:20, font:'Arial', color:'7A5540' })], spacing:{after:60} }),
+        new D.Paragraph({ children:[new D.TextRun({ text:'Asociado: ' + (d.nombre||'') + ' ' + (d.apellidos||''), size:22, bold:true, font:'Arial' })], spacing:{after:60} }),
+        new D.Paragraph({ children:[new D.TextRun({ text:'Cédula: ' + (d.cedula||'') + '   |   Empresa: ' + (d.empresa||''), size:20, font:'Arial', color:'7A5540' })], spacing:{after:60} }),
+        new D.Paragraph({ children:[new D.TextRun({ text:'Monto solicitado: $ ' + (d.monto ? parseInt(d.monto.replace(/\D/g,'')).toLocaleString('es-CO') : '—') + '   |   Plazo: ' + (plazoLabel[STATE.plazo]||'—'), size:20, font:'Arial', color:'7A5540' })], spacing:{after:200} }),
+
+        // Tabla documentos
+        new D.Paragraph({ children:[new D.TextRun({ text:'DOCUMENTOS REQUERIDOS', bold:true, size:22, color:'2D1A0E', font:'Arial' })], spacing:{after:120} }),
+        new D.Table({
+          width: { size: 9360, type: D.WidthType.DXA },
+          columnWidths: [900, 5400, 3060],
+          rows: [
+            // Encabezado
+            new D.TableRow({
+              tableHeader: true,
+              children: [
+                new D.TableCell({
+                  width:{size:900,type:D.WidthType.DXA},
+                  margins:{top:80,bottom:80,left:120,right:120},
+                  shading:{fill:'E8511A',type:D.ShadingType.CLEAR},
+                  borders:{top:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'},bottom:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'},left:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'},right:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'}},
+                  children:[new D.Paragraph({alignment:D.AlignmentType.CENTER,children:[new D.TextRun({text:'✓',bold:true,size:22,color:'FFFFFF',font:'Arial'})]})]
+                }),
+                new D.TableCell({
+                  width:{size:5400,type:D.WidthType.DXA},
+                  margins:{top:80,bottom:80,left:120,right:120},
+                  shading:{fill:'E8511A',type:D.ShadingType.CLEAR},
+                  borders:{top:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'},bottom:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'},left:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'},right:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'}},
+                  children:[new D.Paragraph({children:[new D.TextRun({text:'Documento',bold:true,size:22,color:'FFFFFF',font:'Arial'})]})]
+                }),
+                new D.TableCell({
+                  width:{size:3060,type:D.WidthType.DXA},
+                  margins:{top:80,bottom:80,left:120,right:120},
+                  shading:{fill:'E8511A',type:D.ShadingType.CLEAR},
+                  borders:{top:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'},bottom:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'},left:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'},right:{style:D.BorderStyle.SINGLE,size:1,color:'C94010'}},
+                  children:[new D.Paragraph({children:[new D.TextRun({text:'Estado',bold:true,size:22,color:'FFFFFF',font:'Arial'})]})]
+                })
+              ]
+            })
+          ].concat(todosLosDocs.map(fila))
+        }),
+        new D.Paragraph({ children:[new D.TextRun({ text:' ', size:20 })], spacing:{after:200} }),
+        new D.Paragraph({
+          children:[new D.TextRun({ text:'Documentos listos: ' + STATE.docs.length + ' de ' + todosLosDocs.length, bold:true, size:20, font:'Arial', color:'0D7A4E' })],
+          spacing:{after:400}
+        }),
+        // Pie de página
+        new D.Paragraph({
+          children:[new D.TextRun({ text:'Este documento es de carácter informativo y no constituye aprobación del crédito. FondoUne — Área de Créditos Vivienda.', size:16, color:'7A5540', font:'Arial' })],
+          border:{ top:{style:D.BorderStyle.SINGLE,size:4,color:'F0D8CC',space:1} },
+          spacing:{ before:200 }
+        })
+      ]
+    }]
+  });
+
+  D.Packer.toBlob(doc).then(function(blob){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'Checklist_' + STATE.radicado + '.docx';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+/* Init */
+document.addEventListener('DOMContentLoaded', function() {
+  // Nada que inicializar de entrada
+});
+</script>
+</body>
+</html>
