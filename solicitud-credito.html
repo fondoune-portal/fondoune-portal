@@ -23,12 +23,30 @@ var FIREBASE_CONFIG = {
   appId:             "1:901082593837:web:91292ed594e171715fd6a4"
 };
 
-/* ══ EMAILJS CONFIG ══ — Reemplaza con tus IDs reales de EmailJS */
+/* ══ EMAILJS CONFIG ══
+   ─── GUÍA DE CONFIGURACIÓN (5 minutos) ───────────────────────────
+   1. Crea cuenta gratis en https://www.emailjs.com  (200 correos/mes)
+   2. Email Services → Add New Service → conecta el correo del fondo
+   3. Email Templates → Create New Template → usa estas variables:
+        {{radicado}}     → Ej: CV-2025-0042
+        {{nombre}}       → Nombre completo del asociado
+        {{cedula}}       → Número de cédula
+        {{tipo_credito}} → Compra / Construcción / Gravamen
+        {{monto}}        → Monto solicitado formateado
+        {{plazo}}        → Plazo en meses
+        {{empresa}}      → Empresa del asociado
+        {{cargo}}        → Cargo del asociado
+        {{fecha}}        → Fecha y hora del radicado
+        {{to_email}}     → Correo destino (área de créditos)
+      Asunto sugerido: Nueva solicitud {{tipo_credito}} — Radicado {{radicado}}
+   4. Account → General → copia tu Public Key
+   5. Pega los tres IDs aquí abajo y sube el archivo
+   ──────────────────────────────────────────────────────────────── */
 var EMAILJS_CONFIG = {
-  publicKey:   'TU_PUBLIC_KEY_EMAILJS',      // EmailJS → Account → Public Key
-  serviceId:   'TU_SERVICE_ID',              // EmailJS → Email Services → Service ID
-  templateId:  'TU_TEMPLATE_ID',            // EmailJS → Email Templates → Template ID
-  destinatario: 'creditos.vivienda@fondoune.com.co'  // Correo destino del área
+  publicKey:    'hpgESlOCsOskX9uyF',     // EmailJS → Account → General → Public Key
+  serviceId:    'service_3f9mck9',             // EmailJS → Email Services → Service ID
+  templateId:   'template_bdld7eh',           // EmailJS → Email Templates → Template ID
+  destinatario: 'creditos.vivienda@fondoune.com.co'
 };
 
 window._fbDB = null;
@@ -579,7 +597,7 @@ body::after {
     </div>
   </a>
   <div class="hdr-right">
-    <span class="hdr-badge">🏗️ En Pruebas</span>
+    <span class="hdr-badge">🏠 Créditos Vivienda</span>
     <a href="./portal-asociado.html" class="hdr-back">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       Portal
@@ -1388,27 +1406,33 @@ function enviarSolicitud() {
   var rand = Math.floor(Math.random() * 9000) + 1000;
   STATE.radicado = 'CV-' + new Date().getFullYear() + '-' + rand;
 
+  var _tipoLabels = { compra:'Compra de Vivienda', construccion:'Construcción y Mejoras', gravamen:'Gravamen Hipotecario' };
   var payload = Object.assign({}, STATE.datos, {
-    tipo:      STATE.tipo,
-    plazo:     STATE.plazo,
-    docs:      STATE.docs,
-    radicado:  STATE.radicado,
+    tipo:          STATE.tipo,
+    tipoLabel:     _tipoLabels[STATE.tipo] || STATE.tipo,
+    plazo:         STATE.plazo,
+    docs:          STATE.docs,
+    radicado:      STATE.radicado,
+    id:            STATE.radicado,
+    nombreTitular: ((STATE.datos.nombre || '') + ' ' + (STATE.datos.apellidos || '')).trim(),
+    cedula:        (STATE.datos.cedula || '').replace(/\./g,'').replace(/\s/g,'').trim(),
     fechaRegistro: new Date().toISOString(),
-    estado:    'pendiente'
+    estado:        'pendiente',
+    source:        'portal-solicitud-credito'
   });
 
   var promesas = [];
 
   // 1. Firebase
   if (window._fbDB) {
-    var p1 = window._fbDB.collection('solicitudes_credito').doc(STATE.radicado).set(payload)
+    var p1 = window._fbDB.collection('solicitudes').doc(STATE.radicado).set(payload)
       .then(function(){ console.log('✅ Firebase guardado'); })
       .catch(function(e){ console.warn('Firebase error:', e.message); });
     promesas.push(p1);
   }
 
   // 2. EmailJS (si está configurado)
-  if (EMAILJS_CONFIG.publicKey !== 'TU_PUBLIC_KEY_EMAILJS') {
+  if (EMAILJS_CONFIG.publicKey && EMAILJS_CONFIG.publicKey !== 'TU_PUBLIC_KEY_EMAILJS') {
     emailjs.init(EMAILJS_CONFIG.publicKey);
     var tipoLabel = { compra:'Compra de Vivienda', construccion:'Construcción y Mejoras', gravamen:'Gravamen Hipotecario' };
     var plazoLabel = { '60':'5 años','120':'10 años','180':'15 años','240':'20 años' };
