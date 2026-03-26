@@ -1889,6 +1889,11 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
     <div class="nav-item" onclick="showPanel('aprobados')" id="nav-aprobados">
       <span class="ni">✅</span> Aprobados
     </div>
+    <div class="nav-section">Base de Datos</div>
+    <div class="nav-item" onclick="showPanel('asociados')" id="nav-asociados">
+      <span class="ni">🧑‍💼</span> Datos de Asociados
+      <span class="nav-cnt" id="cnt-asociados">0</span>
+    </div>
     <div class="nav-section">Herramientas</div>
     <div class="nav-item" onclick="showPanel('historial')" id="nav-historial">
       <span class="ni">🕐</span> Auditoría
@@ -2150,6 +2155,111 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ════ DATOS DE ASOCIADOS ════ -->
+    <div class="panel" id="panel-asociados">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">🧑‍💼 Base de Datos de Asociados</div>
+          <div class="pg-sub">Registro de asociados ingresados desde el portal. Úsala para validar futuras solicitudes de crédito.</div>
+        </div>
+        <div class="pg-actions">
+          <button class="btn btn-outline btn-sm" onclick="asocExportarExcel()">📥 Exportar Excel</button>
+          <button class="btn btn-gold btn-sm" onclick="asocCargarDatos()">🔄 Actualizar</button>
+        </div>
+      </div>
+
+      <!-- KPIs rápidos -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--orange);"></div>
+          <div class="kpi-ico">🧑‍💼</div>
+          <div class="kpi-val" id="asoc-kpi-total">—</div>
+          <div class="kpi-lbl">Total asociados registrados</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--ok);"></div>
+          <div class="kpi-ico">📋</div>
+          <div class="kpi-val" id="asoc-kpi-con-solicitud">—</div>
+          <div class="kpi-lbl">Con solicitud de desembolso</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:#8B5CF6;"></div>
+          <div class="kpi-ico">📅</div>
+          <div class="kpi-val" id="asoc-kpi-recientes">—</div>
+          <div class="kpi-lbl">Registrados este mes</div>
+        </div>
+      </div>
+
+      <!-- Barra de búsqueda y filtros -->
+      <div class="filters-bar" style="margin-bottom:16px;">
+        <div class="search-wrap" style="max-width:340px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" id="asoc-search" placeholder="Buscar por nombre, cédula o empresa..." oninput="asocFiltrar()">
+        </div>
+        <select class="filter-select" id="asoc-filtro-contrato" onchange="asocFiltrar()">
+          <option value="">Todos los contratos</option>
+          <option value="indefinido">Indefinido</option>
+          <option value="fijo">Término fijo</option>
+          <option value="obra">Obra o labor</option>
+          <option value="prestacion">Prestación de servicios</option>
+        </select>
+        <select class="filter-select" id="asoc-filtro-banco" onchange="asocFiltrar()">
+          <option value="">Todos los bancos</option>
+          <option value="bancolombia">Bancolombia</option>
+          <option value="davivienda">Davivienda</option>
+          <option value="bogota">Banco de Bogotá</option>
+          <option value="bbva">BBVA</option>
+          <option value="nequi">Nequi</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+
+      <!-- Tabla de asociados -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">👤 Directorio de asociados</div>
+          <div style="font-size:12px;color:var(--muted);" id="asoc-count-txt">Cargando...</div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="tbl-wrap">
+            <table id="asoc-tabla">
+              <thead>
+                <tr>
+                  <th>Asociado</th>
+                  <th>Documento</th>
+                  <th>Contacto</th>
+                  <th>Empresa / Cargo</th>
+                  <th>Salario</th>
+                  <th>Banco / Cuenta</th>
+                  <th>Contrato</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="asoc-tabla-body">
+                <tr>
+                  <td colspan="8">
+                    <div class="empty-state">
+                      <div class="ei">⏳</div>
+                      <h3>Cargando asociados...</h3>
+                      <p>Consultando Firestore</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div><!-- /panel-asociados -->
+
+    <!-- Modal detalle de asociado -->
+    <div id="asoc-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(45,26,14,.55);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;" onclick="asocCerrarModal(event)">
+      <div id="asoc-modal" style="background:#fff;border-radius:20px;width:min(680px,96vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(45,26,14,.22);padding:32px;position:relative;">
+        <button onclick="asocCerrarModal()" style="position:absolute;top:16px;right:16px;background:rgba(45,26,14,.07);border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+        <div id="asoc-modal-body"></div>
       </div>
     </div>
 
@@ -4909,6 +5019,420 @@ window.addEventListener('resize', _debounce(function() {
 
 })();
 
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MÓDULO DATOS DE ASOCIADOS — FondoUne Portal Empleados
+       Lee la colección "solicitudes" de Firestore y extrae
+       los campos del formulario Datos del Asociado (asoc*)
+  ═══════════════════════════════════════════════════════════ -->
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Estado del módulo ── */
+    var _todos    = [];   // todos los registros cargados
+    var _visibles = [];   // después de aplicar filtros
+
+    /* ── Etiquetas legibles para campos codificados ── */
+    var CONTRATOS = {
+      indefinido:   'Indefinido',
+      fijo:         'Término fijo',
+      obra:         'Obra o labor',
+      prestacion:   'Prestación de servicios',
+      '':           '—'
+    };
+    var SEXO = { M:'Masculino', F:'Femenino', '':'—' };
+    var ESTADO_CIVIL = {
+      soltero:'Soltero/a', casado:'Casado/a', union:'Unión libre',
+      divorciado:'Divorciado/a', viudo:'Viudo/a', '':'—'
+    };
+    var TIPO_ID = {
+      cc:'Cédula de Ciudadanía', ce:'Cédula de Extranjería',
+      pa:'Pasaporte', ti:'Tarjeta de Identidad', '':'CC'
+    };
+    var TIPO_CUENTA = { ahorros:'Ahorros', corriente:'Corriente', '':'—' };
+    var DEDUCCION   = { libranza:'Libranza', nomina:'Nómina', '':'—' };
+
+    /* ── Helper: valor seguro ── */
+    function v(obj, key) {
+      var val = obj[key];
+      if (val === undefined || val === null || val === '') return '—';
+      return String(val);
+    }
+
+    /* ── Formatear número como moneda COP ── */
+    function cop(num) {
+      var n = parseFloat(String(num).replace(/[^0-9.]/g,''));
+      if (isNaN(n)) return '—';
+      return '$' + n.toLocaleString('es-CO');
+    }
+
+    /* ── Formatear fecha ISO ── */
+    function fecha(str) {
+      if (!str || str === '—') return '—';
+      try {
+        var d = new Date(str + 'T12:00:00');
+        return d.toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+      } catch(e) { return str; }
+    }
+
+    /* ═══════════════════════════════════════════
+       CARGA DESDE FIRESTORE
+    ═══════════════════════════════════════════ */
+    window.asocCargarDatos = function() {
+      var tbody = document.getElementById('asoc-tabla-body');
+      var txt   = document.getElementById('asoc-count-txt');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="ei">⏳</div><h3>Cargando asociados...</h3><p>Consultando Firestore</p></div></td></tr>';
+      if (txt)   txt.textContent = 'Cargando...';
+
+      if (!window._fbDB) {
+        mostrarError('Firebase no está conectado. Verifica la configuración.');
+        return;
+      }
+
+      /* Leer colección "solicitudes" — cada doc puede tener campos asoc* */
+      window._fbDB.collection('solicitudes')
+        .orderBy('fechaRegistro', 'desc')
+        .get()
+        .then(function(snap) {
+          var docs = [];
+          snap.forEach(function(doc) {
+            var d = doc.data();
+            /* Solo incluir documentos que tengan al menos nombre del asociado */
+            if (d.asocNom1 || d.asocApe1) {
+              docs.push(Object.assign({ _id: doc.id }, d));
+            }
+          });
+          _todos = docs;
+          asocActualizarKPIs(docs, snap.size);
+          asocFiltrar();
+        })
+        .catch(function(err) {
+          mostrarError('Error al leer Firestore: ' + err.message);
+        });
+    };
+
+    function mostrarError(msg) {
+      var tbody = document.getElementById('asoc-tabla-body');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="ei">⚠️</div><h3>Error al cargar</h3><p>' + msg + '</p></div></td></tr>';
+      var txt = document.getElementById('asoc-count-txt');
+      if (txt) txt.textContent = 'Error';
+    }
+
+    /* ═══════════════════════════════════════════
+       KPIs
+    ═══════════════════════════════════════════ */
+    function asocActualizarKPIs(docs, totalSolicitudes) {
+      /* Total asociados */
+      var elTotal = document.getElementById('asoc-kpi-total');
+      if (elTotal) elTotal.textContent = docs.length;
+
+      /* Con solicitud de desembolso (tienen monto) */
+      var conSol = docs.filter(function(d) { return d.monto && parseFloat(d.monto) > 0; }).length;
+      var elSol  = document.getElementById('asoc-kpi-con-solicitud');
+      if (elSol) elSol.textContent = conSol;
+
+      /* Registrados este mes */
+      var ahora    = new Date();
+      var mesActual = ahora.getFullYear() + '-' + String(ahora.getMonth()+1).padStart(2,'0');
+      var recientes = docs.filter(function(d) {
+        if (!d.fechaRegistro) return false;
+        return String(d.fechaRegistro).startsWith(mesActual);
+      }).length;
+      var elRec = document.getElementById('asoc-kpi-recientes');
+      if (elRec) elRec.textContent = recientes;
+
+      /* Contador del sidebar */
+      var cnt = document.getElementById('cnt-asociados');
+      if (cnt) cnt.textContent = docs.length;
+    }
+
+    /* ═══════════════════════════════════════════
+       FILTROS
+    ═══════════════════════════════════════════ */
+    window.asocFiltrar = function() {
+      var q         = (document.getElementById('asoc-search')          || {}).value || '';
+      var contrato  = (document.getElementById('asoc-filtro-contrato') || {}).value || '';
+      var banco     = (document.getElementById('asoc-filtro-banco')    || {}).value || '';
+      q = q.toLowerCase().trim();
+
+      _visibles = _todos.filter(function(d) {
+        /* Texto libre */
+        if (q) {
+          var nombre   = ((d.asocNom1||'') + ' ' + (d.asocNom2||'') + ' ' + (d.asocApe1||'') + ' ' + (d.asocApe2||'')).toLowerCase();
+          var cedula   = String(d.asocCedula || '').toLowerCase();
+          var empresa  = String(d.asocEmpresa || '').toLowerCase();
+          var email    = String(d.asocEmail || '').toLowerCase();
+          if (!nombre.includes(q) && !cedula.includes(q) && !empresa.includes(q) && !email.includes(q)) return false;
+        }
+        /* Tipo de contrato */
+        if (contrato && (d.asocTipoContrato || '') !== contrato) return false;
+        /* Banco */
+        if (banco) {
+          var bancoDoc = String(d.asocBanco || '').toLowerCase();
+          if (!bancoDoc.includes(banco)) return false;
+        }
+        return true;
+      });
+
+      renderTabla(_visibles);
+    };
+
+    /* ═══════════════════════════════════════════
+       RENDER TABLA
+    ═══════════════════════════════════════════ */
+    function renderTabla(docs) {
+      var tbody = document.getElementById('asoc-tabla-body');
+      var txt   = document.getElementById('asoc-count-txt');
+      if (!tbody) return;
+
+      if (txt) txt.textContent = docs.length + ' asociado' + (docs.length !== 1 ? 's' : '');
+
+      if (!docs.length) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="ei">🔍</div><h3>Sin resultados</h3><p>Ajusta los filtros de búsqueda.</p></div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = docs.map(function(d, i) {
+        var nombreCompleto = [d.asocNom1, d.asocNom2, d.asocApe1, d.asocApe2].filter(Boolean).join(' ') || '—';
+        var tipoId  = TIPO_ID[d.asocTipoId] || 'CC';
+        var cedula  = v(d, 'asocCedula');
+        var celular = v(d, 'asocCelular');
+        var email   = v(d, 'asocEmail');
+        var empresa = v(d, 'asocEmpresa');
+        var cargo   = v(d, 'asocCargo');
+        var salario = cop(d.asocSalario);
+        var banco   = v(d, 'asocBanco');
+        var tipoCta = TIPO_CUENTA[d.asocTipoCuenta] || '—';
+        var contrato = CONTRATOS[d.asocTipoContrato] || v(d, 'asocTipoContrato');
+        var fechaReg = fecha(d.fechaRegistro);
+
+        /* Badge color contrato */
+        var badgeColor = {
+          indefinido: 'background:#E8F8F0;color:#0D7A4E;',
+          fijo:       'background:#EFF6FF;color:#1D4ED8;',
+          obra:       'background:#FEF3C7;color:#92400E;',
+          prestacion: 'background:#F5F3FF;color:#6D28D9;'
+        }[d.asocTipoContrato] || 'background:var(--bg);color:var(--muted);';
+
+        return '<tr>' +
+          '<td>' +
+            '<div class="tr-name">' + nombreCompleto + '</div>' +
+            '<div class="tr-sub">📅 ' + fechaReg + '</div>' +
+          '</td>' +
+          '<td>' +
+            '<div class="tr-id">' + tipoId + '</div>' +
+            '<div style="font-size:12px;margin-top:3px;">' + cedula + '</div>' +
+          '</td>' +
+          '<td>' +
+            '<div style="font-size:12.5px;">' + celular + '</div>' +
+            '<div class="tr-sub">' + email + '</div>' +
+          '</td>' +
+          '<td>' +
+            '<div style="font-size:12.5px;font-weight:600;">' + empresa + '</div>' +
+            '<div class="tr-sub">' + cargo + '</div>' +
+          '</td>' +
+          '<td style="font-weight:700;color:var(--ok);font-size:13px;">' + salario + '</td>' +
+          '<td>' +
+            '<div style="font-size:12.5px;font-weight:600;">' + banco + '</div>' +
+            '<div class="tr-sub">' + tipoCta + '</div>' +
+          '</td>' +
+          '<td><span class="badge" style="' + badgeColor + 'font-size:10px;">' + contrato + '</span></td>' +
+          '<td>' +
+            '<div class="row-actions">' +
+              '<button class="act-btn" title="Ver detalle completo" onclick="asocVerDetalle(' + i + ')">👁</button>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    /* ═══════════════════════════════════════════
+       MODAL DETALLE COMPLETO
+    ═══════════════════════════════════════════ */
+    window.asocVerDetalle = function(idx) {
+      var d = _visibles[idx];
+      if (!d) return;
+
+      var nombreCompleto = [d.asocNom1, d.asocNom2, d.asocApe1, d.asocApe2].filter(Boolean).join(' ') || '—';
+
+      function fila(label, val) {
+        if (!val || val === '—') return '';
+        return '<div style="display:flex;flex-direction:column;gap:2px;">' +
+          '<span style="font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);">' + label + '</span>' +
+          '<span style="font-size:13.5px;color:var(--text);font-weight:500;">' + val + '</span>' +
+        '</div>';
+      }
+
+      function seccion(titulo, campos) {
+        var filas = campos.map(function(f) { return fila(f[0], f[1]); }).filter(Boolean).join('');
+        if (!filas) return '';
+        return '<div style="margin-bottom:24px;">' +
+          '<div style="font-family:Outfit,sans-serif;font-weight:700;font-size:13px;color:var(--orange);border-bottom:2px solid var(--border);padding-bottom:6px;margin-bottom:14px;">' + titulo + '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;">' + filas + '</div>' +
+        '</div>';
+      }
+
+      var html =
+        '<div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">' +
+          '<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange-d));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🧑‍💼</div>' +
+          '<div>' +
+            '<div style="font-family:Outfit,sans-serif;font-weight:800;font-size:20px;color:var(--text);">' + nombreCompleto + '</div>' +
+            '<div style="font-size:12.5px;color:var(--muted);margin-top:2px;">' + (TIPO_ID[d.asocTipoId]||'CC') + ': ' + v(d,'asocCedula') + '</div>' +
+          '</div>' +
+        '</div>' +
+
+        seccion('📋 Identificación', [
+          ['Tipo de documento', TIPO_ID[d.asocTipoId] || v(d,'asocTipoId')],
+          ['Número de documento', v(d,'asocCedula')],
+          ['Fecha de expedición', fecha(d.asocFechaExp)],
+          ['Lugar de expedición', v(d,'asocLugarExp')],
+          ['Relación con el fondo', v(d,'asocRelacion')],
+        ]) +
+
+        seccion('👤 Datos Personales', [
+          ['Fecha de nacimiento', fecha(d.asocFechaNac)],
+          ['Sexo', SEXO[d.asocSexo] || v(d,'asocSexo')],
+          ['Estado civil', ESTADO_CIVIL[d.asocEstadoCivil] || v(d,'asocEstadoCivil')],
+          ['Nivel de estudios', v(d,'asocEstudios')],
+        ]) +
+
+        seccion('📞 Contacto', [
+          ['Celular', v(d,'asocCelular')],
+          ['Teléfono 1', v(d,'asocTel1')],
+          ['Teléfono 2', v(d,'asocTel2')],
+          ['Correo electrónico', v(d,'asocEmail')],
+          ['Dirección', v(d,'asocDireccion')],
+          ['Barrio', v(d,'asocBarrio')],
+          ['Ciudad', v(d,'asocCiudad')],
+          ['Departamento', v(d,'asocDepto')],
+          ['Estrato', v(d,'asocEstrato')],
+        ]) +
+
+        seccion('🏢 Información Laboral', [
+          ['Empresa', v(d,'asocEmpresa')],
+          ['Dependencia / Área', v(d,'asocDependencia')],
+          ['Cargo', v(d,'asocCargo')],
+          ['Tipo de contrato', CONTRATOS[d.asocTipoContrato] || v(d,'asocTipoContrato')],
+          ['Fecha de ingreso', fecha(d.asocFechaIngreso)],
+          ['Período de pago', v(d,'asocPeriodo')],
+        ]) +
+
+        seccion('💰 Información Financiera', [
+          ['Salario', cop(d.asocSalario)],
+          ['Tipo de deducción', DEDUCCION[d.asocDeduccion] || v(d,'asocDeduccion')],
+          ['RUT / NIT', v(d,'asocRut')],
+        ]) +
+
+        seccion('🏦 Cuenta Bancaria', [
+          ['Banco', v(d,'asocBanco')],
+          ['Tipo de cuenta', TIPO_CUENTA[d.asocTipoCuenta] || v(d,'asocTipoCuenta')],
+          ['Número de cuenta', v(d,'asocNroCuenta')],
+        ]) +
+
+        (d.monto ? seccion('📑 Solicitud de Desembolso Asociada', [
+          ['Tipo de crédito', v(d,'tipoCredito')],
+          ['Monto solicitado', cop(d.monto)],
+          ['Estado IA', v(d,'estadoIA')],
+          ['Nivel de riesgo', v(d,'nivelRiesgo')],
+          ['Comentario IA', v(d,'comentarioIA')],
+          ['Fecha de solicitud', fecha(d.fechaRegistro)],
+        ]) : '') +
+
+        '<div style="text-align:right;margin-top:8px;">' +
+          '<button onclick="asocCerrarModal()" class="btn btn-outline btn-sm">Cerrar</button>' +
+        '</div>';
+
+      var modalBody = document.getElementById('asoc-modal-body');
+      var overlay   = document.getElementById('asoc-modal-overlay');
+      if (modalBody) modalBody.innerHTML = html;
+      if (overlay)   { overlay.style.display = 'flex'; }
+      if (window.FU_Sound) window.FU_Sound.play('click');
+    };
+
+    window.asocCerrarModal = function(e) {
+      if (e && e.target !== document.getElementById('asoc-modal-overlay')) return;
+      var overlay = document.getElementById('asoc-modal-overlay');
+      if (overlay) overlay.style.display = 'none';
+    };
+
+    /* Cerrar con ESC */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var overlay = document.getElementById('asoc-modal-overlay');
+        if (overlay && overlay.style.display === 'flex') overlay.style.display = 'none';
+      }
+    });
+
+    /* ═══════════════════════════════════════════
+       EXPORTAR EXCEL
+    ═══════════════════════════════════════════ */
+    window.asocExportarExcel = function() {
+      if (!_visibles.length) { alert('No hay asociados para exportar.'); return; }
+      if (window.FU_Sound) window.FU_Sound.play('download');
+
+      var cabeceras = [
+        'Primer Nombre','Segundo Nombre','Primer Apellido','Segundo Apellido',
+        'Tipo Documento','Número Documento','Fecha Exp. Doc','Lugar Exp. Doc',
+        'Relación con Fondo','Fecha Nacimiento','Sexo','Estado Civil','Estudios',
+        'Celular','Teléfono 1','Teléfono 2','Correo','Dirección','Barrio',
+        'Ciudad','Departamento','Estrato',
+        'Empresa','Dependencia','Cargo','Tipo Contrato','Fecha Ingreso','Período Pago',
+        'Salario','Tipo Deducción','RUT',
+        'Banco','Tipo Cuenta','Número Cuenta',
+        'Monto Solicitado','Tipo Crédito','Estado IA','Nivel Riesgo','Fecha Solicitud'
+      ];
+
+      var filas = _visibles.map(function(d) {
+        return [
+          d.asocNom1||'', d.asocNom2||'', d.asocApe1||'', d.asocApe2||'',
+          TIPO_ID[d.asocTipoId]||d.asocTipoId||'', d.asocCedula||'',
+          d.asocFechaExp||'', d.asocLugarExp||'', d.asocRelacion||'',
+          d.asocFechaNac||'', SEXO[d.asocSexo]||d.asocSexo||'',
+          ESTADO_CIVIL[d.asocEstadoCivil]||d.asocEstadoCivil||'', d.asocEstudios||'',
+          d.asocCelular||'', d.asocTel1||'', d.asocTel2||'', d.asocEmail||'',
+          d.asocDireccion||'', d.asocBarrio||'', d.asocCiudad||'', d.asocDepto||'', d.asocEstrato||'',
+          d.asocEmpresa||'', d.asocDependencia||'', d.asocCargo||'',
+          CONTRATOS[d.asocTipoContrato]||d.asocTipoContrato||'',
+          d.asocFechaIngreso||'', d.asocPeriodo||'',
+          d.asocSalario||'', DEDUCCION[d.asocDeduccion]||d.asocDeduccion||'', d.asocRut||'',
+          d.asocBanco||'', TIPO_CUENTA[d.asocTipoCuenta]||d.asocTipoCuenta||'', d.asocNroCuenta||'',
+          d.monto||'', d.tipoCredito||'', d.estadoIA||'', d.nivelRiesgo||'', d.fechaRegistro||''
+        ].map(function(c) {
+          var s = String(c).replace(/"/g,'""');
+          return '"' + s + '"';
+        });
+      });
+
+      var csv = [cabeceras.map(function(c){ return '"'+c+'"'; }).join(',')]
+        .concat(filas.map(function(f){ return f.join(','); }))
+        .join('\r\n');
+
+      /* BOM para que Excel abra bien en español */
+      var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'asociados_fondoune_' + new Date().toISOString().slice(0,10) + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    /* ═══════════════════════════════════════════
+       AUTO-CARGA al mostrar el panel
+    ═══════════════════════════════════════════ */
+    var _showPanelOrigAsoc = window.showPanel;
+    window.showPanel = function(id) {
+      _showPanelOrigAsoc(id);
+      if (id === 'asociados' && _todos.length === 0) {
+        asocCargarDatos();
+      }
+    };
+
+  })();
   </script>
 
   <script>
