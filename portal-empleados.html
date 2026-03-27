@@ -2355,23 +2355,50 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
 /* ════════════════════════════════════════════════════════
    SISTEMA DE AUTENTICACIÓN — FondoUne Portal Empleados
    ════════════════════════════════════════════════════════
-   Para agregar/modificar usuarios: edita el objeto USUARIOS
-   La contraseña se almacena como hash SHA-256
+   Usuarios almacenados en Firebase Firestore
+   Colección: empleados_usuarios  |  doc ID = login
+   Fallback a tabla local si Firebase no está disponible
    ════════════════════════════════════════════════════════ */
 
-/* ── Tabla de usuarios autorizados ──
-   Para agregar un usuario nuevo, agrega una entrada:
-   'nombreusuario': { hash: sha256('contraseña'), nombre: 'Nombre Completo', rol: 'Asesor' }
-   
-   Las contraseñas NO deben documentarse aquí. Guárdalas en un gestor de contraseñas.
-   Para generar un nuevo hash: abre F12 → Consola y ejecuta:
-   sha256('nueva_contraseña').then(h => console.log(h))
-*/
+/* ── Tabla base LOCAL (fallback si Firebase no responde) ── */
 var USUARIOS = {
   'admin':   { hash: 'e5dc2f73f21351f6eea4d250725e701fd5ba6f9442f964f3eb6f7db510186d0c', nombre: 'Administrador', rol: 'Administrador' },
   'asesor1': { hash: 'c07e647705fd1afdba00420755aeeb10e347e387ba17f3f463eaa3a5ddc32504', nombre: 'Asesor Créditos 1', rol: 'Asesor' },
   'asesor2': { hash: '52fb1bd7895fe2b4e69b2f93b28c9f77122d6c8c5ad1da6ce88bd4fec08910f2', nombre: 'Asesor Créditos 2', rol: 'Asesor' }
 };
+
+/* ── Colección Firebase para usuarios ── */
+var FB_USR_COL = 'empleados_usuarios';
+
+/* ── Migrar usuarios base a Firebase (solo si no existen aún) ── */
+function migrarUsuariosBaseAFirebase() {
+  if (!window._fbDB) return;
+  var base = Object.keys(USUARIOS);
+  base.forEach(function(login) {
+    window._fbDB.collection(FB_USR_COL).doc(login).get().then(function(doc) {
+      if (!doc.exists) {
+        window._fbDB.collection(FB_USR_COL).doc(login).set(USUARIOS[login])
+          .then(function() { console.log('✅ Usuario migrado a Firebase:', login); })
+          .catch(function(e) { console.warn('Error migrando ' + login + ':', e.message); });
+      }
+    }).catch(function(e) { console.warn('Error verificando ' + login + ':', e.message); });
+  });
+}
+
+/* ── Cargar TODOS los usuarios desde Firebase a memoria ── */
+function sincronizarUsuariosDesdeFirebase(callback) {
+  if (!window._fbDB) { if (callback) callback(false); return; }
+  window._fbDB.collection(FB_USR_COL).get().then(function(snap) {
+    snap.forEach(function(doc) {
+      USUARIOS[doc.id] = doc.data();
+    });
+    console.log('✅ Usuarios sincronizados desde Firebase:', snap.size);
+    if (callback) callback(true);
+  }).catch(function(e) {
+    console.warn('⚠️ No se pudo sincronizar Firebase, usando tabla local:', e.message);
+    if (callback) callback(false);
+  });
+}
 
 /* ── Configuración de seguridad ── */
 var SEC = {
@@ -2524,20 +2551,43 @@ function intentarLogin() {
 
   // Hash de la contraseña ingresada y validar
   sha256(password).then(function(hashIngresado) {
-    var datosUsuario = USUARIOS[usuario];
-    var accesoCorrecto = datosUsuario && datosUsuario.hash === hashIngresado;
 
-    // Simulamos un pequeño delay para evitar ataques de timing
-    setTimeout(function() {
-      if (accesoCorrecto) {
-        loginExitoso(usuario, datosUsuario);
-      } else {
-        loginFallido(usuario);
-        btn.disabled = false;
-        spinner.style.display = 'none';
-        btnTxt.textContent = '🔐 Ingresar al Portal';
-      }
-    }, 700);
+    function validarConHash(datosUsuario) {
+      var accesoCorrecto = datosUsuario && datosUsuario.hash === hashIngresado;
+      setTimeout(function() {
+        if (accesoCorrecto) {
+          loginExitoso(usuario, datosUsuario);
+        } else {
+          loginFallido(usuario);
+          btn.disabled = false;
+          spinner.style.display = 'none';
+          btnTxt.textContent = '🔐 Ingresar al Portal';
+        }
+      }, 700);
+    }
+
+    // 1️⃣ Intentar Firebase primero
+    if (window._fbDB) {
+      window._fbDB.collection(FB_USR_COL).doc(usuario).get().then(function(doc) {
+        if (doc.exists) {
+          // Usuario encontrado en Firebase
+          var datos = doc.data();
+          USUARIOS[usuario] = datos; // actualizar memoria local
+          validarConHash(datos);
+        } else {
+          // No existe en Firebase → fallback local
+          console.warn('Usuario no encontrado en Firebase, usando tabla local');
+          validarConHash(USUARIOS[usuario]);
+        }
+      }).catch(function(e) {
+        // Firebase falló → fallback local
+        console.warn('Firebase no disponible, usando tabla local:', e.message);
+        validarConHash(USUARIOS[usuario]);
+      });
+    } else {
+      // 2️⃣ Sin Firebase → tabla local directamente
+      validarConHash(USUARIOS[usuario]);
+    }
   });
 }
 
@@ -3704,63 +3754,54 @@ function recargar(){
    GESTIÓN DE USUARIOS — Sistema completo
    ═══════════════════════════════════════════════════════ */
 
-var USR_KEY     = 'fu_usuarios';           // localStorage key para usuarios custom
-var USR_DEL_KEY = 'fu_usuarios_eliminados'; // localStorage key para IDs eliminados
+var USR_KEY     = 'fu_usuarios';            // localStorage key (caché local)
+var USR_DEL_KEY = 'fu_usuarios_eliminados'; // ya no se usa, se mantiene por compatibilidad
 
-/* Cargar usuarios (combina base + guardados en localStorage, respetando eliminaciones) */
+/* Cargar usuarios — Firebase + memoria (para panel admin) */
 function cargarUsuarios() {
-  var base = {
-    'admin':   { hash: 'e5dc2f73f21351f6eea4d250725e701fd5ba6f9442f964f3eb6f7db510186d0c', nombre: 'Administrador', rol: 'Administrador' },
-    'asesor1': { hash: 'c07e647705fd1afdba00420755aeeb10e347e387ba17f3f463eaa3a5ddc32504', nombre: 'Asesor Créditos 1', rol: 'Asesor' },
-    'asesor2': { hash: '52fb1bd7895fe2b4e69b2f93b28c9f77122d6c8c5ad1da6ce88bd4fec08910f2', nombre: 'Asesor Créditos 2', rol: 'Asesor' }
-  };
-  try {
-    var custom     = JSON.parse(localStorage.getItem(USR_KEY)     || '{}');
-    var eliminados = JSON.parse(localStorage.getItem(USR_DEL_KEY) || '[]');
-    // Merge: custom sobreescribe base; luego se excluyen los marcados como eliminados
-    var resultado = Object.assign({}, base, custom);
-    eliminados.forEach(function(login) { delete resultado[login]; });
-    return resultado;
-  } catch(e) { return base; }
+  // Retorna lo que hay en memoria (ya sincronizado desde Firebase al cargar)
+  return Object.assign({}, USUARIOS);
 }
 
-/* Guardar cambio de un usuario en localStorage */
+/* Guardar usuario en Firebase Y en memoria */
 function persistirUsuario(login, datos) {
+  // 1. Actualizar memoria inmediatamente
+  USUARIOS[login] = datos;
+  // 2. Guardar en Firebase
+  if (window._fbDB) {
+    window._fbDB.collection(FB_USR_COL).doc(login).set(datos)
+      .then(function() { console.log('✅ Usuario guardado en Firebase:', login); })
+      .catch(function(e) { console.warn('Error guardando en Firebase:', e.message); });
+  }
+  // 3. Caché local como respaldo
   try {
     var custom = JSON.parse(localStorage.getItem(USR_KEY) || '{}');
     custom[login] = datos;
     localStorage.setItem(USR_KEY, JSON.stringify(custom));
-    // Si este login estaba marcado como eliminado, quitarlo de esa lista
-    var eliminados = JSON.parse(localStorage.getItem(USR_DEL_KEY) || '[]');
-    var idx = eliminados.indexOf(login);
-    if (idx > -1) { eliminados.splice(idx, 1); localStorage.setItem(USR_DEL_KEY, JSON.stringify(eliminados)); }
-    // También actualizar USUARIOS en memoria
-    USUARIOS[login] = datos;
   } catch(e) {}
 }
 
-/* Eliminar usuario de localStorage */
+/* Eliminar usuario de Firebase Y de memoria */
 function eliminarUsuarioPersistido(login) {
+  // 1. Eliminar de memoria
+  delete USUARIOS[login];
+  // 2. Eliminar de Firebase
+  if (window._fbDB) {
+    window._fbDB.collection(FB_USR_COL).doc(login).delete()
+      .then(function() { console.log('✅ Usuario eliminado de Firebase:', login); })
+      .catch(function(e) { console.warn('Error eliminando de Firebase:', e.message); });
+  }
+  // 3. Limpiar caché local
   try {
-    // 1. Borrar del objeto de usuarios custom (si fue creado/editado)
     var custom = JSON.parse(localStorage.getItem(USR_KEY) || '{}');
     delete custom[login];
     localStorage.setItem(USR_KEY, JSON.stringify(custom));
-
-    // 2. Registrar en lista de eliminados para excluirlo del merge con base
-    var eliminados = JSON.parse(localStorage.getItem(USR_DEL_KEY) || '[]');
-    if (eliminados.indexOf(login) === -1) eliminados.push(login);
-    localStorage.setItem(USR_DEL_KEY, JSON.stringify(eliminados));
-
-    // 3. Eliminar de memoria
-    delete USUARIOS[login];
   } catch(e) {}
 }
 
-/* Refrescar USUARIOS en memoria desde localStorage al cargar */
+/* Sincronizar usuarios en memoria — ahora usa Firebase */
 function sincronizarUsuariosEnMemoria() {
-  var todos = cargarUsuarios();
-  Object.keys(todos).forEach(function(k) { USUARIOS[k] = todos[k]; });
+  sincronizarUsuariosDesdeFirebase(null);
 }
 
 /* Verificar si la sesión activa es admin */
@@ -4339,7 +4380,10 @@ window.addEventListener('resize', _debounce(function() {
 
   /* ── INIT SEGURIDAD — aquí todas las funciones ya están definidas ── */
   (function initSeguridad() {
-    sincronizarUsuariosEnMemoria();
+    // Migrar usuarios base a Firebase (solo si no existen aún)
+    migrarUsuariosBaseAFirebase();
+    // Sincronizar usuarios desde Firebase a memoria (con fallback local)
+    sincronizarUsuariosDesdeFirebase(null);
 
     // Siempre ocultar recoverOverlay al cargar
     var recOv = document.getElementById('recoverOverlay');
