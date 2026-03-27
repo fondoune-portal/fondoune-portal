@@ -1592,6 +1592,22 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
     }
   }
 
+  /* ── Dropdown personalizado recuperación de contraseña ── */
+  .custom-select-wrap { position: relative; width: 100%; }
+  .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 0 14px; height: 44px; color: #fff; font-size: 14px; cursor: pointer; transition: border-color .2s; user-select: none; }
+  .custom-select-trigger:hover { border-color: rgba(232,81,26,0.6); }
+  .custom-select-trigger.open { border-color: #E8511A; }
+  .custom-select-trigger svg { transition: transform .2s; opacity: 0.7; flex-shrink: 0; }
+  .custom-select-trigger.open svg { transform: rotate(180deg); }
+  .custom-select-dropdown { display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #1e1e2e; border: 1.5px solid rgba(232,81,26,0.4); border-radius: 10px; overflow: hidden; z-index: 999; box-shadow: 0 8px 32px rgba(0,0,0,0.4); max-height: 220px; overflow-y: auto; }
+  .custom-select-dropdown.open { display: block; animation: dropIn .18s ease; }
+  @keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .custom-select-option { padding: 11px 16px; color: #e2e2e2; font-size: 13.5px; cursor: pointer; transition: background .15s; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .custom-select-option:last-child { border-bottom: none; }
+  .custom-select-option:hover { background: rgba(232,81,26,0.2); color: #fff; }
+  .custom-select-option.selected { background: rgba(232,81,26,0.3); color: #fff; font-weight: 600; }
+  .custom-select-option.placeholder { color: rgba(255,255,255,0.35); font-style: italic; }
+
   </style>
 </head>
 <body>
@@ -1761,9 +1777,16 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
     <div id="recoverStep2" style="display:none;">
       <div class="login-field">
         <div class="login-label">👤 Usuario a restablecer</div>
-        <select class="login-input" id="recTargetUser" style="cursor:pointer;padding:0 12px;">
-          <option value="">Seleccionar usuario…</option>
-        </select>
+        <div class="custom-select-wrap" id="recTargetUserWrap">
+          <div class="custom-select-trigger" id="recTargetUserTrigger" onclick="toggleCustomSelect()">
+            <span id="recTargetUserText">Seleccionar usuario…</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="custom-select-dropdown" id="recTargetUserDropdown"></div>
+        </div>
+        <select id="recTargetUser" style="display:none"></select>
       </div>
       <div class="login-field">
         <div class="login-label">🔐 Nueva contraseña</div>
@@ -2355,50 +2378,23 @@ tbody tr:nth-child(n+6){ animation-delay: .18s; }
 /* ════════════════════════════════════════════════════════
    SISTEMA DE AUTENTICACIÓN — FondoUne Portal Empleados
    ════════════════════════════════════════════════════════
-   Usuarios almacenados en Firebase Firestore
-   Colección: empleados_usuarios  |  doc ID = login
-   Fallback a tabla local si Firebase no está disponible
+   Para agregar/modificar usuarios: edita el objeto USUARIOS
+   La contraseña se almacena como hash SHA-256
    ════════════════════════════════════════════════════════ */
 
-/* ── Tabla base LOCAL (fallback si Firebase no responde) ── */
+/* ── Tabla de usuarios autorizados ──
+   Para agregar un usuario nuevo, agrega una entrada:
+   'nombreusuario': { hash: sha256('contraseña'), nombre: 'Nombre Completo', rol: 'Asesor' }
+   
+   Las contraseñas NO deben documentarse aquí. Guárdalas en un gestor de contraseñas.
+   Para generar un nuevo hash: abre F12 → Consola y ejecuta:
+   sha256('nueva_contraseña').then(h => console.log(h))
+*/
 var USUARIOS = {
   'admin':   { hash: 'e5dc2f73f21351f6eea4d250725e701fd5ba6f9442f964f3eb6f7db510186d0c', nombre: 'Administrador', rol: 'Administrador' },
   'asesor1': { hash: 'c07e647705fd1afdba00420755aeeb10e347e387ba17f3f463eaa3a5ddc32504', nombre: 'Asesor Créditos 1', rol: 'Asesor' },
   'asesor2': { hash: '52fb1bd7895fe2b4e69b2f93b28c9f77122d6c8c5ad1da6ce88bd4fec08910f2', nombre: 'Asesor Créditos 2', rol: 'Asesor' }
 };
-
-/* ── Colección Firebase para usuarios ── */
-var FB_USR_COL = 'empleados_usuarios';
-
-/* ── Migrar usuarios base a Firebase (solo si no existen aún) ── */
-function migrarUsuariosBaseAFirebase() {
-  if (!window._fbDB) return;
-  var base = Object.keys(USUARIOS);
-  base.forEach(function(login) {
-    window._fbDB.collection(FB_USR_COL).doc(login).get().then(function(doc) {
-      if (!doc.exists) {
-        window._fbDB.collection(FB_USR_COL).doc(login).set(USUARIOS[login])
-          .then(function() { console.log('✅ Usuario migrado a Firebase:', login); })
-          .catch(function(e) { console.warn('Error migrando ' + login + ':', e.message); });
-      }
-    }).catch(function(e) { console.warn('Error verificando ' + login + ':', e.message); });
-  });
-}
-
-/* ── Cargar TODOS los usuarios desde Firebase a memoria ── */
-function sincronizarUsuariosDesdeFirebase(callback) {
-  if (!window._fbDB) { if (callback) callback(false); return; }
-  window._fbDB.collection(FB_USR_COL).get().then(function(snap) {
-    snap.forEach(function(doc) {
-      USUARIOS[doc.id] = doc.data();
-    });
-    console.log('✅ Usuarios sincronizados desde Firebase:', snap.size);
-    if (callback) callback(true);
-  }).catch(function(e) {
-    console.warn('⚠️ No se pudo sincronizar Firebase, usando tabla local:', e.message);
-    if (callback) callback(false);
-  });
-}
 
 /* ── Configuración de seguridad ── */
 var SEC = {
@@ -2551,43 +2547,20 @@ function intentarLogin() {
 
   // Hash de la contraseña ingresada y validar
   sha256(password).then(function(hashIngresado) {
+    var datosUsuario = USUARIOS[usuario];
+    var accesoCorrecto = datosUsuario && datosUsuario.hash === hashIngresado;
 
-    function validarConHash(datosUsuario) {
-      var accesoCorrecto = datosUsuario && datosUsuario.hash === hashIngresado;
-      setTimeout(function() {
-        if (accesoCorrecto) {
-          loginExitoso(usuario, datosUsuario);
-        } else {
-          loginFallido(usuario);
-          btn.disabled = false;
-          spinner.style.display = 'none';
-          btnTxt.textContent = '🔐 Ingresar al Portal';
-        }
-      }, 700);
-    }
-
-    // 1️⃣ Intentar Firebase primero
-    if (window._fbDB) {
-      window._fbDB.collection(FB_USR_COL).doc(usuario).get().then(function(doc) {
-        if (doc.exists) {
-          // Usuario encontrado en Firebase
-          var datos = doc.data();
-          USUARIOS[usuario] = datos; // actualizar memoria local
-          validarConHash(datos);
-        } else {
-          // No existe en Firebase → fallback local
-          console.warn('Usuario no encontrado en Firebase, usando tabla local');
-          validarConHash(USUARIOS[usuario]);
-        }
-      }).catch(function(e) {
-        // Firebase falló → fallback local
-        console.warn('Firebase no disponible, usando tabla local:', e.message);
-        validarConHash(USUARIOS[usuario]);
-      });
-    } else {
-      // 2️⃣ Sin Firebase → tabla local directamente
-      validarConHash(USUARIOS[usuario]);
-    }
+    // Simulamos un pequeño delay para evitar ataques de timing
+    setTimeout(function() {
+      if (accesoCorrecto) {
+        loginExitoso(usuario, datosUsuario);
+      } else {
+        loginFallido(usuario);
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        btnTxt.textContent = '🔐 Ingresar al Portal';
+      }
+    }, 700);
   });
 }
 
@@ -3754,54 +3727,63 @@ function recargar(){
    GESTIÓN DE USUARIOS — Sistema completo
    ═══════════════════════════════════════════════════════ */
 
-var USR_KEY     = 'fu_usuarios';            // localStorage key (caché local)
-var USR_DEL_KEY = 'fu_usuarios_eliminados'; // ya no se usa, se mantiene por compatibilidad
+var USR_KEY     = 'fu_usuarios';           // localStorage key para usuarios custom
+var USR_DEL_KEY = 'fu_usuarios_eliminados'; // localStorage key para IDs eliminados
 
-/* Cargar usuarios — Firebase + memoria (para panel admin) */
+/* Cargar usuarios (combina base + guardados en localStorage, respetando eliminaciones) */
 function cargarUsuarios() {
-  // Retorna lo que hay en memoria (ya sincronizado desde Firebase al cargar)
-  return Object.assign({}, USUARIOS);
+  var base = {
+    'admin':   { hash: 'e5dc2f73f21351f6eea4d250725e701fd5ba6f9442f964f3eb6f7db510186d0c', nombre: 'Administrador', rol: 'Administrador' },
+    'asesor1': { hash: 'c07e647705fd1afdba00420755aeeb10e347e387ba17f3f463eaa3a5ddc32504', nombre: 'Asesor Créditos 1', rol: 'Asesor' },
+    'asesor2': { hash: '52fb1bd7895fe2b4e69b2f93b28c9f77122d6c8c5ad1da6ce88bd4fec08910f2', nombre: 'Asesor Créditos 2', rol: 'Asesor' }
+  };
+  try {
+    var custom     = JSON.parse(localStorage.getItem(USR_KEY)     || '{}');
+    var eliminados = JSON.parse(localStorage.getItem(USR_DEL_KEY) || '[]');
+    // Merge: custom sobreescribe base; luego se excluyen los marcados como eliminados
+    var resultado = Object.assign({}, base, custom);
+    eliminados.forEach(function(login) { delete resultado[login]; });
+    return resultado;
+  } catch(e) { return base; }
 }
 
-/* Guardar usuario en Firebase Y en memoria */
+/* Guardar cambio de un usuario en localStorage */
 function persistirUsuario(login, datos) {
-  // 1. Actualizar memoria inmediatamente
-  USUARIOS[login] = datos;
-  // 2. Guardar en Firebase
-  if (window._fbDB) {
-    window._fbDB.collection(FB_USR_COL).doc(login).set(datos)
-      .then(function() { console.log('✅ Usuario guardado en Firebase:', login); })
-      .catch(function(e) { console.warn('Error guardando en Firebase:', e.message); });
-  }
-  // 3. Caché local como respaldo
   try {
     var custom = JSON.parse(localStorage.getItem(USR_KEY) || '{}');
     custom[login] = datos;
     localStorage.setItem(USR_KEY, JSON.stringify(custom));
+    // Si este login estaba marcado como eliminado, quitarlo de esa lista
+    var eliminados = JSON.parse(localStorage.getItem(USR_DEL_KEY) || '[]');
+    var idx = eliminados.indexOf(login);
+    if (idx > -1) { eliminados.splice(idx, 1); localStorage.setItem(USR_DEL_KEY, JSON.stringify(eliminados)); }
+    // También actualizar USUARIOS en memoria
+    USUARIOS[login] = datos;
   } catch(e) {}
 }
 
-/* Eliminar usuario de Firebase Y de memoria */
+/* Eliminar usuario de localStorage */
 function eliminarUsuarioPersistido(login) {
-  // 1. Eliminar de memoria
-  delete USUARIOS[login];
-  // 2. Eliminar de Firebase
-  if (window._fbDB) {
-    window._fbDB.collection(FB_USR_COL).doc(login).delete()
-      .then(function() { console.log('✅ Usuario eliminado de Firebase:', login); })
-      .catch(function(e) { console.warn('Error eliminando de Firebase:', e.message); });
-  }
-  // 3. Limpiar caché local
   try {
+    // 1. Borrar del objeto de usuarios custom (si fue creado/editado)
     var custom = JSON.parse(localStorage.getItem(USR_KEY) || '{}');
     delete custom[login];
     localStorage.setItem(USR_KEY, JSON.stringify(custom));
+
+    // 2. Registrar en lista de eliminados para excluirlo del merge con base
+    var eliminados = JSON.parse(localStorage.getItem(USR_DEL_KEY) || '[]');
+    if (eliminados.indexOf(login) === -1) eliminados.push(login);
+    localStorage.setItem(USR_DEL_KEY, JSON.stringify(eliminados));
+
+    // 3. Eliminar de memoria
+    delete USUARIOS[login];
   } catch(e) {}
 }
 
-/* Sincronizar usuarios en memoria — ahora usa Firebase */
+/* Refrescar USUARIOS en memoria desde localStorage al cargar */
 function sincronizarUsuariosEnMemoria() {
-  sincronizarUsuariosDesdeFirebase(null);
+  var todos = cargarUsuarios();
+  Object.keys(todos).forEach(function(k) { USUARIOS[k] = todos[k]; });
 }
 
 /* Verificar si la sesión activa es admin */
@@ -4064,41 +4046,15 @@ function verificarAdminRecuperar() {
       document.getElementById('recAdminPass').value = '';
       return;
     }
-       // Admin verificado — mostrar paso 2
+    // Admin verificado — mostrar paso 2
     err1.classList.remove('show');
     document.getElementById('recoverStep1').style.display = 'none';
     document.getElementById('recoverStep2').style.display = 'block';
-
-    // Poblar select: leer usuarios frescos desde Firebase
-    function poblarSelectUsuarios(usrs) {
-      var sel = document.getElementById('recTargetUser');
-      sel.innerHTML = '<option value="">Seleccionar usuario…</option>';
-      Object.keys(usrs).forEach(function(k) {
-        if (k !== usuario) {
-          var opt = document.createElement('option');
-          opt.value = k;
-          opt.textContent = usrs[k].nombre + ' (' + k + ')';
-          sel.appendChild(opt);
-        }
-      });
-    }
-
+    // Poblar select de usuarios
+    poblarCustomSelect(todos, usuario);
     document.getElementById('recoverOk').style.display = 'none';
     var err2 = document.getElementById('recoverError2');
     err2.classList.remove('show');
-
-    if (window.fbDB) {
-      window.fbDB.collection(FBUSRCOL).get().then(function(snap) {
-        var usrsFirebase = Object.assign({}, USUARIOS);
-        snap.forEach(function(doc) { usrsFirebase[doc.id] = doc.data(); });
-        poblarSelectUsuarios(usrsFirebase);
-      }).catch(function() {
-        poblarSelectUsuarios(cargarUsuarios());
-      });
-    } else {
-      poblarSelectUsuarios(cargarUsuarios());
-    }
-
   });
 }
 
@@ -4123,6 +4079,7 @@ function ejecutarRestablecimiento() {
     okBox.style.display = 'block';
     document.getElementById('recNewPass').value = '';
     document.getElementById('recConfPass').value = '';
+    // Cerrar overlay y volver al login tras 2.5s
     setTimeout(ocultarRecuperar, 2500);
   });
 }
@@ -4396,10 +4353,7 @@ window.addEventListener('resize', _debounce(function() {
 
   /* ── INIT SEGURIDAD — aquí todas las funciones ya están definidas ── */
   (function initSeguridad() {
-    // Migrar usuarios base a Firebase (solo si no existen aún)
-    migrarUsuariosBaseAFirebase();
-    // Sincronizar usuarios desde Firebase a memoria (con fallback local)
-    sincronizarUsuariosDesdeFirebase(null);
+    sincronizarUsuariosEnMemoria();
 
     // Siempre ocultar recoverOverlay al cargar
     var recOv = document.getElementById('recoverOverlay');
@@ -5493,6 +5447,64 @@ window.addEventListener('resize', _debounce(function() {
     };
 
   })();
+  </script>
+
+  <script>
+  function toggleCustomSelect() {
+    var trigger  = document.getElementById('recTargetUserTrigger');
+    var dropdown = document.getElementById('recTargetUserDropdown');
+    var isOpen   = dropdown.classList.contains('open');
+    trigger.classList.toggle('open', !isOpen);
+    dropdown.classList.toggle('open', !isOpen);
+  }
+  function setCustomSelectValue(value, label) {
+    document.getElementById('recTargetUserText').textContent = label;
+    document.getElementById('recTargetUser').value = value;
+    var trigger  = document.getElementById('recTargetUserTrigger');
+    var dropdown = document.getElementById('recTargetUserDropdown');
+    trigger.classList.remove('open');
+    dropdown.classList.remove('open');
+    dropdown.querySelectorAll('.custom-select-option').forEach(function(opt) {
+      opt.classList.toggle('selected', opt.dataset.value === value);
+    });
+  }
+  function poblarCustomSelect(usrs, usuarioAdmin) {
+    var dropdown = document.getElementById('recTargetUserDropdown');
+    var sel      = document.getElementById('recTargetUser');
+    dropdown.innerHTML = '';
+    sel.innerHTML = '<option value="">Seleccionar usuario…</option>';
+    var ph = document.createElement('div');
+    ph.className = 'custom-select-option placeholder';
+    ph.textContent = 'Seleccionar usuario…';
+    ph.dataset.value = '';
+    ph.onclick = function() { setCustomSelectValue('', 'Seleccionar usuario…'); };
+    dropdown.appendChild(ph);
+    Object.keys(usrs).forEach(function(k) {
+      if (k === usuarioAdmin) return;
+      var u   = usrs[k];
+      var lbl = u.nombre + ' (' + k + ')';
+      var opt = document.createElement('div');
+      opt.className = 'custom-select-option';
+      opt.textContent = lbl;
+      opt.dataset.value = k;
+      opt.onclick = (function(val, text) {
+        return function() { setCustomSelectValue(val, text); };
+      })(k, lbl);
+      dropdown.appendChild(opt);
+      var selOpt = document.createElement('option');
+      selOpt.value = k;
+      selOpt.textContent = lbl;
+      sel.appendChild(selOpt);
+    });
+    document.getElementById('recTargetUserText').textContent = 'Seleccionar usuario…';
+  }
+  document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('recTargetUserWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('recTargetUserTrigger').classList.remove('open');
+      document.getElementById('recTargetUserDropdown').classList.remove('open');
+    }
+  });
   </script>
 
   <script>
