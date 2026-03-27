@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#2D1A0E">
-<title>FondoUne — Portal Asociados · Créditos Vivienda</title>
+<title>FondoUne — Portal Asociados · Desembolso de Crédito</title>
 <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <!-- Firebase SDK -->
@@ -2803,8 +2803,8 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     <div class="fu-w-divider" aria-hidden="true"></div>
 
     <!-- Textos de bienvenida -->
-    <h1 class="fu-w-title">¡Bienvenido a tu<br><span class="accent">portal de crédito</span>!</h1>
-    <p class="fu-w-subtitle">Gestiona tu solicitud de crédito vivienda de forma rápida y segura. Ingresa tu nombre para personalizar tu experiencia.</p>
+    <h1 class="fu-w-title">¡Bienvenido a tu<br><span class="accent">portal de desembolso</span>!</h1>
+    <p class="fu-w-subtitle">Genera tu lista de chequeo para el desembolso de crédito vivienda de forma rápida y segura. Ingresa tu nombre para personalizar tu experiencia.</p>
 
     <!-- Campo nombre -->
     <div class="fu-w-field">
@@ -2959,7 +2959,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
         if (eyebrow && !eyebrow.dataset.personalizado) {
           eyebrow.dataset.personalizado = '1';
           /* Actualizar el eyebrow chip con el nombre */
-          eyebrow.innerHTML = '🏡 <span>Hola, <strong>' + primerNombre + '</strong> — Tu portal de crédito vivienda</span>';
+          eyebrow.innerHTML = '📄 <span>Hola, <strong>' + primerNombre + '</strong> — Tu portal de desembolso de crédito</span>';
         }
         /* Personalizar el h1 si tiene la clase .hi */
         var hiSpan = heroH1.querySelector('.hi');
@@ -2969,7 +2969,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
           var originalText = heroH1.innerHTML;
           if (!originalText.includes(primerNombre)) {
             heroH1.innerHTML = '¡Hola, <span class="hi">' + primerNombre + '</span>!<br>' +
-              '<span style="font-size:0.72em;font-weight:600;opacity:0.85">Tu solicitud de crédito vivienda</span>';
+              '<span style="font-size:0.72em;font-weight:600;opacity:0.85">Tu checklist de desembolso</span>';
           }
         }
       }
@@ -3012,7 +3012,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     </div>
     <div class="hdr-div"></div>
     <div class="hdr-app">
-      <div class="hdr-app-title">Créditos Vivienda</div>
+      <div class="hdr-app-title">Desembolso de Crédito</div>
       <div class="hdr-app-sub">Portal del Asociado</div>
     </div>
   </div>
@@ -3048,9 +3048,9 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     <div class="hero-overlay"></div>
     <div class="hero-body">
       <div class="hero-text">
-        <div class="hero-eyebrow">🏠 Portal de Solicitudes · FondoUne</div>
-        <h1 id="heroTitle" class="hero-text-fade">Radica tu solicitud<br><span class="hi">de crédito vivienda</span></h1>
-        <p class="hero-desc hero-text-fade" id="heroDesc">Completa el formulario y genera tu lista de chequeo. Tu solicitud quedará registrada automáticamente para el equipo de FondoUne.</p>
+        <div class="hero-eyebrow">📄 Desembolso de Crédito · FondoUne</div>
+        <h1 id="heroTitle" class="hero-text-fade">Genera tu lista de chequeo<br><span class="hi">para el desembolso</span></h1>
+        <p class="hero-desc hero-text-fade" id="heroDesc">¿Ya tienes un radicado asignado? Completa el formulario y genera al instante tu lista de documentos en formato Word, lista para entregar.</p>
       </div>
       <div class="hero-stats">
         <div class="hero-stat-item">
@@ -3062,14 +3062,14 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
           <div class="hero-stat-lbl">Digital y sin papel</div>
         </div>
         <div class="hero-stat-item">
-          <div class="hero-stat-num">15 min</div>
-          <div class="hero-stat-lbl">Para radicar tu solicitud</div>
+          <div class="hero-stat-num">2 min</div>
+          <div class="hero-stat-lbl">Para generar tu checklist</div>
         </div>
       </div>
       <div class="hero-cta-wrap">
-        <a href="solicitud-credito.html" class="hero-cta-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Radicar solicitud de crédito vivienda
+        <a href="#formDesembolso" class="hero-cta-btn" onclick="event.preventDefault();document.getElementById('formDesembolso').scrollIntoView({behavior:'smooth',block:'start'});">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Generar lista de chequeo Word
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       </div>
@@ -3088,23 +3088,23 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
     </div>
     <div class="guide-cards">
 
-      <!-- Tarjeta 1: Credito -->
+      <!-- Tarjeta 1: Desembolso / Checklist -->
       <div class="guide-card guide-card--credito">
         <div class="guide-card-bar"></div>
         <span class="guide-card-badge">Opcion 1</span>
-        <span class="guide-card-ico">&#x1F4CB;</span>
-        <div class="guide-card-name">Radicar Solicitud de Crédito</div>
-        <div class="guide-card-tag">⚡ Proceso completo — Recomendado</div>
-        <div class="guide-card-desc">Wizard guiado en 5 pasos: verifica elegibilidad, completa datos, elige tipo de crédito, genera checklist y radica. Queda registrado en el sistema.</div>
+        <span class="guide-card-ico">📄</span>
+        <div class="guide-card-name">Formulario de Desembolso</div>
+        <div class="guide-card-tag">⚡ Lista de chequeo Word — Recomendado</div>
+        <div class="guide-card-desc">Ingresa tu número de radicado, selecciona el tipo de crédito y genera al instante la lista de documentos requeridos para el desembolso, lista en formato Word.</div>
         <div class="guide-card-steps">
-          <div class="guide-step"><span class="guide-step-n">1</span><span>Verifica tu elegibilidad</span></div>
-          <div class="guide-step"><span class="guide-step-n">2</span><span>Confirma tus datos personales</span></div>
-          <div class="guide-step"><span class="guide-step-n">3</span><span>Completa los detalles del crédito y radica</span></div>
+          <div class="guide-step"><span class="guide-step-n">1</span><span>Selecciona el tipo: Compra, Construcción o Gravamen</span></div>
+          <div class="guide-step"><span class="guide-step-n">2</span><span>Completa los datos del solicitante</span></div>
+          <div class="guide-step"><span class="guide-step-n">3</span><span>Descarga tu checklist en Word y entrégalo</span></div>
         </div>
-        <a href="solicitud-credito.html" class="guide-card-btn">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          Iniciar solicitud →
-        </a>
+        <button class="guide-card-btn" onclick="document.getElementById('formDesembolso').scrollIntoView({behavior:'smooth',block:'start'});">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Ir al formulario →
+        </button>
       </div>
 
       <!-- Tarjeta 2: Datos del Asociado -->
@@ -3148,7 +3148,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   <!-- FIN BANNER GUIA -->
 
   <!-- ══ SEPARADOR: HERRAMIENTA DE CHECKLIST ══ -->
-  <div class="section-divider">
+  <div id="formDesembolso" class="section-divider">
     <div class="section-divider-inner">
       <div class="section-divider-icon">📄</div>
       <div class="section-divider-text">
@@ -3711,7 +3711,7 @@ select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns
   </div>
 
   <div class="page-foot">
-    <b>FondoUne</b> · Fondo de Empleados UNE · Créditos Vivienda · Portal del Asociado
+    <b>FondoUne</b> · Fondo de Empleados UNE · Desembolso de Crédito · Portal del Asociado
   </div>
 </div>
 
