@@ -4064,24 +4064,41 @@ function verificarAdminRecuperar() {
       document.getElementById('recAdminPass').value = '';
       return;
     }
-    // Admin verificado — mostrar paso 2
+       // Admin verificado — mostrar paso 2
     err1.classList.remove('show');
     document.getElementById('recoverStep1').style.display = 'none';
     document.getElementById('recoverStep2').style.display = 'block';
-    // Poblar select de usuarios
-    var sel = document.getElementById('recTargetUser');
-    sel.innerHTML = '<option value="">Seleccionar usuario…</option>';
-    Object.keys(todos).forEach(function(k) {
-      if (k !== usuario) { // no puede cambiar su propia aquí
-        var opt = document.createElement('option');
-        opt.value = k;
-        opt.textContent = todos[k].nombre + ' (' + k + ')';
-        sel.appendChild(opt);
-      }
-    });
+
+    // Poblar select: leer usuarios frescos desde Firebase
+    function poblarSelectUsuarios(usrs) {
+      var sel = document.getElementById('recTargetUser');
+      sel.innerHTML = '<option value="">Seleccionar usuario…</option>';
+      Object.keys(usrs).forEach(function(k) {
+        if (k !== usuario) {
+          var opt = document.createElement('option');
+          opt.value = k;
+          opt.textContent = usrs[k].nombre + ' (' + k + ')';
+          sel.appendChild(opt);
+        }
+      });
+    }
+
     document.getElementById('recoverOk').style.display = 'none';
     var err2 = document.getElementById('recoverError2');
     err2.classList.remove('show');
+
+    if (window.fbDB) {
+      window.fbDB.collection(FBUSRCOL).get().then(function(snap) {
+        var usrsFirebase = Object.assign({}, USUARIOS);
+        snap.forEach(function(doc) { usrsFirebase[doc.id] = doc.data(); });
+        poblarSelectUsuarios(usrsFirebase);
+      }).catch(function() {
+        poblarSelectUsuarios(cargarUsuarios());
+      });
+    } else {
+      poblarSelectUsuarios(cargarUsuarios());
+    }
+
   });
 }
 
@@ -4106,7 +4123,6 @@ function ejecutarRestablecimiento() {
     okBox.style.display = 'block';
     document.getElementById('recNewPass').value = '';
     document.getElementById('recConfPass').value = '';
-    // Cerrar overlay y volver al login tras 2.5s
     setTimeout(ocultarRecuperar, 2500);
   });
 }
