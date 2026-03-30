@@ -64,7 +64,8 @@ window._fbDB = null; window._fbIniciado = false;
   --err-lt:     #FFF1F0;
   --info:       #1D4ED8;
   --info-lt:    #EFF6FF;
-  --tab-h:      68px;
+  --tab-h:      0px;
+  --rail-w:     72px;
   --top-h:      56px;
   --safe-top:   env(safe-area-inset-top, 0px);
   --safe-bot:   env(safe-area-inset-bottom, 0px);
@@ -146,7 +147,8 @@ body::after {
 /* ══ MAIN ══ */
 .main {
   padding-top: calc(var(--top-h) + var(--safe-top) + 4px);
-  padding-bottom: calc(var(--tab-h) + var(--safe-bot) + 24px);
+  padding-bottom: 24px;
+  padding-left: var(--rail-w);
   min-height: 0; position: relative; z-index: 1;
   -webkit-overflow-scrolling: touch; overflow-x: hidden;
   /* FIX iOS: scroll contenido en el main, no en el body */
@@ -335,8 +337,8 @@ body::after {
 /* ══ FELIX ══ */
 .felix-view {
   display: none; flex-direction: column;
-  height: calc(100vh - var(--top-h) - var(--safe-top) - var(--tab-h) - var(--safe-bot));
-  max-height: calc(100vh - var(--top-h) - var(--safe-top) - var(--tab-h) - var(--safe-bot));
+  height: calc(100vh - var(--top-h) - var(--safe-top));
+  max-height: calc(100vh - var(--top-h) - var(--safe-top));
   overflow: hidden; padding: 0 !important;
   /* FIX: asegurar que felix no se desborde sobre el tabbar */
   position: relative; z-index: 1;
@@ -408,7 +410,7 @@ body::after {
 
 /* ══ TOAST ══ */
 .toast {
-  position:fixed; bottom:calc(var(--tab-h) + var(--safe-bot) + 14px); left:16px; right:16px;
+  position:fixed; bottom:24px; left:calc(var(--rail-w) + 8px); right:16px;
   background:rgba(26,12,4,.95); color:#fff; padding:13px 17px; border-radius:14px;
   font-size:13px; font-weight:500; display:flex; align-items:center; gap:10px;
   box-shadow:0 8px 32px rgba(0,0,0,.22); z-index:999; opacity:0; transform:translateY(10px);
@@ -417,23 +419,24 @@ body::after {
 .toast.show { opacity:1; transform:translateY(0); }
 
 /* ══ TAB BAR — blanco con pill naranja ══ */
+/* ══ LATERAL RAIL ══ */
 .tabbar {
-  position:fixed; bottom:0; left:0; right:0; z-index:500;
-  height:calc(var(--tab-h) + var(--safe-bot)); padding-bottom:var(--safe-bot);
-  background:rgba(255,255,255,.96);
+  position:fixed; top:calc(var(--top-h) + var(--safe-top)); left:0; bottom:0; z-index:500;
+  width:var(--rail-w);
+  background:rgba(255,255,255,.97);
   -webkit-backdrop-filter:blur(28px) saturate(200%); backdrop-filter:blur(28px) saturate(200%);
-  border-top:1px solid rgba(0,0,0,0.07);
-  box-shadow:0 -4px 24px rgba(0,0,0,0.07);
-  display:flex; align-items:center; padding-left:6px; padding-right:6px; gap:2px;
+  border-right:1px solid rgba(0,0,0,0.07);
+  box-shadow:2px 0 18px rgba(0,0,0,0.06);
+  display:flex; flex-direction:column; align-items:center;
+  padding:10px 0; gap:2px;
   isolation:isolate; -webkit-transform:translateZ(0); transform:translateZ(0);
-  /* FIX: garantizar que el tabbar siempre reciba toques */
-  pointer-events: all; touch-action: manipulation;
+  pointer-events:all; touch-action:manipulation;
 }
 .tab-btn {
-  flex:1; display:flex; flex-direction:column; align-items:center;
-  justify-content:center; gap:4px; cursor:pointer; border:none; background:none;
+  width:58px; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:5px; cursor:pointer; border:none; background:none;
   color:#AAAAAA; transition:color .22s, background .22s;
-  padding:8px 4px; border-radius:14px;
+  padding:10px 4px; border-radius:14px;
   -webkit-tap-highlight-color:transparent; touch-action:manipulation;
   pointer-events:all; user-select:none; -webkit-user-select:none;
 }
@@ -442,10 +445,10 @@ body::after {
   width:24px; height:24px; display:flex; align-items:center; justify-content:center;
   transition:transform .22s cubic-bezier(.22,1,.36,1);
 }
-.tab-btn.active .tab-ico { transform:scale(1.1) translateY(-1px); }
+.tab-btn.active .tab-ico { transform:scale(1.1); }
 .tab-ico svg { width:22px; height:22px; stroke-width:1.8; }
 .tab-btn.active .tab-ico svg { stroke-width:2.4; }
-.tab-lbl { font-family:'Outfit',sans-serif; font-size:9px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; line-height:1; }
+.tab-lbl { font-family:'Outfit',sans-serif; font-size:8.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; line-height:1; text-align:center; }
 
 /* ══ EMPTY ══ */
 .empty { text-align:center; padding:44px 20px; color:var(--muted); }
