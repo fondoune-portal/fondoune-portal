@@ -149,6 +149,9 @@ body::after {
   padding-bottom: calc(var(--tab-h) + var(--safe-bot) + 24px);
   min-height: 0; position: relative; z-index: 1;
   -webkit-overflow-scrolling: touch; overflow-x: hidden;
+  /* FIX iOS: scroll contenido en el main, no en el body */
+  overflow-y: auto;
+  height: calc(100vh - var(--safe-top) - var(--safe-bot));
 }
 .view { display: none; padding: 18px 16px 8px; }
 .view.active { display: block; animation: viewIn .28s cubic-bezier(.22,1,.36,1); }
@@ -333,7 +336,10 @@ body::after {
 .felix-view {
   display: none; flex-direction: column;
   height: calc(100vh - var(--top-h) - var(--safe-top) - var(--tab-h) - var(--safe-bot));
+  max-height: calc(100vh - var(--top-h) - var(--safe-top) - var(--tab-h) - var(--safe-bot));
   overflow: hidden; padding: 0 !important;
+  /* FIX: asegurar que felix no se desborde sobre el tabbar */
+  position: relative; z-index: 1;
 }
 .felix-view.active { display: flex; }
 .felix-header {
@@ -412,7 +418,7 @@ body::after {
 
 /* ══ TAB BAR — blanco con pill naranja ══ */
 .tabbar {
-  position:fixed; bottom:0; left:0; right:0; z-index:200;
+  position:fixed; bottom:0; left:0; right:0; z-index:500;
   height:calc(var(--tab-h) + var(--safe-bot)); padding-bottom:var(--safe-bot);
   background:rgba(255,255,255,.96);
   -webkit-backdrop-filter:blur(28px) saturate(200%); backdrop-filter:blur(28px) saturate(200%);
@@ -420,6 +426,8 @@ body::after {
   box-shadow:0 -4px 24px rgba(0,0,0,0.07);
   display:flex; align-items:center; padding-left:6px; padding-right:6px; gap:2px;
   isolation:isolate; -webkit-transform:translateZ(0); transform:translateZ(0);
+  /* FIX: garantizar que el tabbar siempre reciba toques */
+  pointer-events: all; touch-action: manipulation;
 }
 .tab-btn {
   flex:1; display:flex; flex-direction:column; align-items:center;
