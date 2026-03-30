@@ -450,6 +450,31 @@ body::after {
 .tab-btn.active .tab-ico svg { stroke-width:2.4; }
 .tab-lbl { font-family:'Outfit',sans-serif; font-size:8.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; line-height:1; text-align:center; }
 
+/* ══ RAIL COLLAPSE ══ */
+.tabbar.collapsed { width: 0; overflow: hidden; border-right: none; box-shadow: none; }
+.tabbar.collapsed .tab-btn, .tabbar.collapsed .rail-collapse-btn { opacity: 0; pointer-events: none; }
+.rail-collapse-btn {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.1);
+  background: var(--surface); box-shadow: var(--sh-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--muted); transition: all .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.rail-collapse-btn:active { background: var(--fu-olt); color: var(--fu-orange); }
+.rail-collapse-btn svg { width: 14px; height: 14px; stroke-width: 2.2; }
+.rail-expand-handle {
+  position: fixed; top: 50%; left: 0; transform: translateY(-50%);
+  width: 20px; height: 56px; background: rgba(232,81,26,.12);
+  border-radius: 0 10px 10px 0; border: 1px solid rgba(232,81,26,.2); border-left: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 499; opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+}
+.rail-expand-handle.show { opacity: 1; pointer-events: all; }
+.rail-expand-handle svg { width: 10px; height: 10px; stroke: var(--fu-orange); stroke-width: 2.5; }
+.tabbar { transition: width .28s cubic-bezier(.22,1,.36,1); }
+
 /* ══ EMPTY ══ */
 .empty { text-align:center; padding:44px 20px; color:var(--muted); }
 .empty-ico { font-size:44px; margin-bottom:14px; }
@@ -981,7 +1006,15 @@ body::after {
     <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
     <span class="tab-lbl">Félix</span>
   </button>
+  <button class="rail-collapse-btn" onclick="toggleRail()" title="Ocultar menú">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
 </nav>
+
+<!-- Rail expand handle -->
+<div class="rail-expand-handle" id="railExpandHandle" onclick="toggleRail()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+</div>
 
 <!-- Toast -->
 <div class="toast" id="toast"><span id="toastIco"></span><span id="toastTxt"></span></div>
@@ -1021,6 +1054,16 @@ body::after {
 })();
 
 /* ═══ NAV ═══ */
+/* ═══ RAIL COLLAPSE ═══ */
+window.toggleRail = function() {
+  var rail = document.querySelector('.tabbar');
+  var main = document.getElementById('mainScroll');
+  var handle = document.getElementById('railExpandHandle');
+  var collapsed = rail.classList.toggle('collapsed');
+  if (main) main.style.paddingLeft = collapsed ? '0' : 'var(--rail-w)';
+  if (handle) handle.classList.toggle('show', collapsed);
+};
+
 var currentView = 'solicitud';
 window.goView = function(name) {
   // Todas las vistas (incluido felix) tratadas igual
