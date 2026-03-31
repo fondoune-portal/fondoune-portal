@@ -61,8 +61,7 @@ window._fbDB = null; window._fbIniciado = false;
   --info-lt:    #EFF6FF;
   --desem:      #166534;
   --desem-lt:   #F0FDF4;
-  --tab-h:      0px;
-  --rail-w:     72px;
+  --rail-w:     60px;
   --top-h:      56px;
   --safe-top:   env(safe-area-inset-top, 0px);
   --safe-bot:   env(safe-area-inset-bottom, 0px);
@@ -116,7 +115,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .topbar-logout:active{background:rgba(192,57,43,.15);}
 
 /* ══ MAIN ══ */
-.main{padding-top:calc(var(--top-h) + var(--safe-top));padding-bottom:24px;padding-left:var(--rail-w);min-height:0;position:relative;z-index:1;-webkit-overflow-scrolling:touch;overflow-x:hidden;overflow-y:auto;height:calc(100vh - var(--safe-top) - var(--safe-bot));}
+.main{padding-top:calc(var(--top-h) + var(--safe-top));padding-bottom:calc(var(--safe-bot) + 16px);padding-left:var(--rail-w);min-height:0;position:relative;z-index:1;-webkit-overflow-scrolling:touch;overflow-x:hidden;overflow-y:auto;height:calc(100vh - var(--safe-top));}
 .view{display:none;padding:18px 16px 8px;}
 .view.active{display:block;animation:viewIn .28s cubic-bezier(.22,1,.36,1);}
 .felix-view{display:none;flex-direction:column;height:calc(100vh - var(--top-h) - var(--safe-top));overflow:hidden;padding:0!important;}
@@ -224,18 +223,18 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .felix-send:active{transform:scale(.91);} .felix-send svg{width:18px;height:18px;}
 
 /* ══ TOAST ══ */
-.toast{position:fixed;bottom:24px;left:calc(var(--rail-w) + 8px);right:16px;background:rgba(26,12,4,.95);color:#fff;padding:13px 17px;border-radius:14px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.22);z-index:999;opacity:0;transform:translateY(10px);transition:all .28s cubic-bezier(.22,1,.36,1);pointer-events:none;}
+.toast{position:fixed;bottom:calc(var(--safe-bot) + 14px);left:calc(var(--rail-w) + 12px);right:16px;background:rgba(26,12,4,.95);color:#fff;padding:13px 17px;border-radius:14px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.22);z-index:999;opacity:0;transform:translateY(10px);transition:all .28s cubic-bezier(.22,1,.36,1);pointer-events:none;}
 .toast.show{opacity:1;transform:translateY(0);}
 
-/* ══ TAB BAR blanco ══ */
-.tabbar{position:fixed;top:calc(var(--top-h) + var(--safe-top));left:0;bottom:0;z-index:500;width:var(--rail-w);background:rgba(255,255,255,.97);-webkit-backdrop-filter:blur(28px) saturate(200%);backdrop-filter:blur(28px) saturate(200%);border-right:1px solid rgba(0,0,0,0.07);box-shadow:2px 0 18px rgba(0,0,0,0.06);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;isolation:isolate;-webkit-transform:translateZ(0);transform:translateZ(0);pointer-events:all;touch-action:manipulation;}
-.tab-btn{width:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;border:none;background:none;color:#AAAAAA;transition:color .22s,background .22s;padding:10px 4px;border-radius:14px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;pointer-events:all;user-select:none;-webkit-user-select:none;}
-.tab-btn.active{color:var(--fu-orange);background:rgba(232,81,26,.09);}
-.tab-ico{width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:transform .22s cubic-bezier(.22,1,.36,1);}
-.tab-btn.active .tab-ico{transform:scale(1.1) translateY(-1px);}
+/* ══ RAIL LATERAL ══ */
+.tabbar{position:fixed;top:calc(var(--top-h) + var(--safe-top));left:0;bottom:0;z-index:300;width:var(--rail-w);padding-bottom:var(--safe-bot);background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(28px) saturate(200%);backdrop-filter:blur(28px) saturate(200%);border-right:1px solid rgba(0,0,0,0.07);box-shadow:2px 0 16px rgba(0,0,0,0.05);display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:4px;isolation:isolate;-webkit-transform:translateZ(0);transform:translateZ(0);pointer-events:all;touch-action:manipulation;}
+.tab-btn{width:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:none;background:none;color:#AAAAAA;transition:color .22s,background .22s;padding:9px 4px;border-radius:14px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;pointer-events:all;user-select:none;-webkit-user-select:none;}
+.tab-btn.active{color:var(--fu-orange);background:rgba(232,81,26,.10);}
+.tab-ico{width:26px;height:26px;display:flex;align-items:center;justify-content:center;transition:transform .22s cubic-bezier(.22,1,.36,1);}
+.tab-btn.active .tab-ico{transform:scale(1.12) translateY(-1px);}
 .tab-ico svg{width:22px;height:22px;stroke-width:1.8;}
 .tab-btn.active .tab-ico svg{stroke-width:2.4;}
-.tab-lbl{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;line-height:1;}
+.tab-lbl{font-family:'Outfit',sans-serif;font-size:8px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;line-height:1;text-align:center;}.toast.show{opacity:1;transform:translateY(0);}
 
 /* ══ EMPTY ══ */
 .empty{text-align:center;padding:44px 20px;color:var(--muted);}
@@ -243,34 +242,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .empty-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:16.5px;color:var(--text);margin-bottom:7px;}
 .empty-sub{font-size:13px;line-height:1.55;}
 
-/* ══ RAIL COLLAPSE ══ */
-.tabbar.collapsed { width: 0; overflow: hidden; border-right: none; box-shadow: none; }
-.tabbar.collapsed .tab-btn, .tabbar.collapsed .rail-collapse-btn { opacity: 0; pointer-events: none; }
-.rail-collapse-btn {
-  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
-  width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.1);
-  background: var(--surface); box-shadow: var(--sh-sm);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--muted); transition: all .2s;
-  -webkit-tap-highlight-color: transparent;
-}
-.rail-collapse-btn:active { background: var(--fu-olt); color: var(--fu-orange); }
-.rail-collapse-btn svg { width: 14px; height: 14px; stroke-width: 2.2; transition: transform .3s; }
-.tabbar.collapsed .rail-collapse-btn svg { transform: rotate(180deg); }
-
-/* ══ RAIL EXPAND HANDLE (visible cuando colapsado) ══ */
-.rail-expand-handle {
-  position: fixed; top: 50%; left: 0; transform: translateY(-50%);
-  width: 20px; height: 56px; background: rgba(232,81,26,.12);
-  border-radius: 0 10px 10px 0; border: 1px solid rgba(232,81,26,.2); border-left: none;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: 499; opacity: 0; pointer-events: none;
-  transition: opacity .25s;
-}
-.rail-expand-handle.show { opacity: 1; pointer-events: all; }
-.rail-expand-handle svg { width: 10px; height: 10px; stroke: var(--fu-orange); stroke-width: 2.5; }
-
-.tabbar { transition: width .28s cubic-bezier(.22,1,.36,1); }
+/* ══ MODAL OVERLAY — FIX: faltaba CSS, bloqueaba toques del tabbar ══ */
 .modal-overlay{
   position:fixed; inset:0; z-index:800;
   background:rgba(0,0,0,.45);
@@ -440,7 +412,21 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 
 </main>
 
-<!-- ═══ TABBAR ═══ -->\n<nav class=\"tabbar\" id=\"mainTabbar\" style=\"display:none\">\n  <button class=\"tab-btn active\" id=\"tab-dash\" onclick=\"goView('dash')\">\n    <span class=\"tab-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg></span>\n    <span class=\"tab-lbl\">Dashboard</span>\n  </button>\n  <button class=\"tab-btn\" id=\"tab-solicitudes\" onclick=\"goView('solicitudes')\">\n    <span class=\"tab-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"8\" y1=\"6\" x2=\"21\" y2=\"6\"/><line x1=\"8\" y1=\"12\" x2=\"21\" y2=\"12\"/><line x1=\"8\" y1=\"18\" x2=\"21\" y2=\"18\"/><line x1=\"3\" y1=\"6\" x2=\"3.01\" y2=\"6\"/><line x1=\"3\" y1=\"12\" x2=\"3.01\" y2=\"12\"/><line x1=\"3\" y1=\"18\" x2=\"3.01\" y2=\"18\"/></svg></span>\n    <span class=\"tab-lbl\">Solicitudes</span>\n  </button>\n  <button class=\"tab-btn\" id=\"tab-felix\" onclick=\"goView('felix')\">\n    <span class=\"tab-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"13 2 3 14 12 14 11 22 21 10 12 10 13 2\"/></svg></span>\n    <span class=\"tab-lbl\">Félix</span>\n  </button>\n  <button class=\"rail-collapse-btn\" onclick=\"toggleRail()\" title=\"Ocultar menú\">\n    <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"15 18 9 12 15 6\"/></svg>\n  </button>\n</nav>\n\n<!-- Rail expand handle (visible when collapsed) -->\n<div class=\"rail-expand-handle\" id=\"railExpandHandle\" onclick=\"toggleRail()\">\n  <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"9 18 15 12 9 6\"/></svg>\n</div>
+<!-- ═══ TABBAR ═══ -->
+<nav class="tabbar" id="mainTabbar" style="display:none">
+  <button class="tab-btn active" id="tab-dash" onclick="goView('dash')">
+    <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span>
+    <span class="tab-lbl">Dashboard</span>
+  </button>
+  <button class="tab-btn" id="tab-solicitudes" onclick="goView('solicitudes')">
+    <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
+    <span class="tab-lbl">Solicitudes</span>
+  </button>
+  <button class="tab-btn" id="tab-felix" onclick="goView('felix')">
+    <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+    <span class="tab-lbl">Félix</span>
+  </button>
+</nav>
 
 <!-- ═══ MODAL DETALLE ═══ -->
 <div class="modal-overlay" id="modalOverlay" onclick="cerrarModal(event)">
@@ -547,22 +533,12 @@ window.addEventListener('DOMContentLoaded', function(){
 function iniciarPortal(datos){
   $id('mainTopbar').style.display = 'flex';
   $id('mainScroll').style.display = 'block';
-  $id('mainTabbar').style.display = '';
+  $id('mainTabbar').style.display = 'flex';
   $id('topbarUser').textContent = datos.nombre;
   $id('dashFecha').textContent = 'Actualizado: ' + new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
   cargarDesdeFirebase();
   actualizarKPIs();
 }
-
-/* ═══ RAIL COLLAPSE ═══ */
-window.toggleRail = function() {
-  var rail = $id('mainTabbar');
-  var main = $id('mainScroll');
-  var handle = $id('railExpandHandle');
-  var collapsed = rail.classList.toggle('collapsed');
-  if (main) main.style.paddingLeft = collapsed ? '0' : 'var(--rail-w)';
-  if (handle) handle.classList.toggle('show', collapsed);
-};
 
 /* ═══ NAV ═══ */
 var currentView = 'dash';

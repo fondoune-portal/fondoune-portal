@@ -64,8 +64,7 @@ window._fbDB = null; window._fbIniciado = false;
   --err-lt:     #FFF1F0;
   --info:       #1D4ED8;
   --info-lt:    #EFF6FF;
-  --tab-h:      0px;
-  --rail-w:     72px;
+  --rail-w:     60px;
   --top-h:      56px;
   --safe-top:   env(safe-area-inset-top, 0px);
   --safe-bot:   env(safe-area-inset-bottom, 0px);
@@ -147,13 +146,12 @@ body::after {
 /* ══ MAIN ══ */
 .main {
   padding-top: calc(var(--top-h) + var(--safe-top) + 4px);
-  padding-bottom: 24px;
+  padding-bottom: calc(var(--safe-bot) + 16px);
   padding-left: var(--rail-w);
   min-height: 0; position: relative; z-index: 1;
   -webkit-overflow-scrolling: touch; overflow-x: hidden;
-  /* FIX iOS: scroll contenido en el main, no en el body */
   overflow-y: auto;
-  height: calc(100vh - var(--safe-top) - var(--safe-bot));
+  height: calc(100vh - var(--safe-top));
 }
 .view { display: none; padding: 18px 16px 8px; }
 .view.active { display: block; animation: viewIn .28s cubic-bezier(.22,1,.36,1); }
@@ -340,7 +338,6 @@ body::after {
   height: calc(100vh - var(--top-h) - var(--safe-top));
   max-height: calc(100vh - var(--top-h) - var(--safe-top));
   overflow: hidden; padding: 0 !important;
-  /* FIX: asegurar que felix no se desborde sobre el tabbar */
   position: relative; z-index: 1;
 }
 .felix-view.active { display: flex; }
@@ -410,7 +407,7 @@ body::after {
 
 /* ══ TOAST ══ */
 .toast {
-  position:fixed; bottom:24px; left:calc(var(--rail-w) + 8px); right:16px;
+  position:fixed; bottom:calc(var(--safe-bot) + 14px); left:calc(var(--rail-w) + 12px); right:16px;
   background:rgba(26,12,4,.95); color:#fff; padding:13px 17px; border-radius:14px;
   font-size:13px; font-weight:500; display:flex; align-items:center; gap:10px;
   box-shadow:0 8px 32px rgba(0,0,0,.22); z-index:999; opacity:0; transform:translateY(10px);
@@ -418,62 +415,37 @@ body::after {
 }
 .toast.show { opacity:1; transform:translateY(0); }
 
-/* ══ TAB BAR — blanco con pill naranja ══ */
-/* ══ LATERAL RAIL ══ */
+/* ══ RAIL LATERAL ══ */
 .tabbar {
-  position:fixed; top:calc(var(--top-h) + var(--safe-top)); left:0; bottom:0; z-index:500;
+  position:fixed; top:calc(var(--top-h) + var(--safe-top)); left:0; bottom:0; z-index:300;
   width:var(--rail-w);
-  background:rgba(255,255,255,.97);
+  padding-bottom:var(--safe-bot);
+  background:rgba(255,255,255,.96);
   -webkit-backdrop-filter:blur(28px) saturate(200%); backdrop-filter:blur(28px) saturate(200%);
   border-right:1px solid rgba(0,0,0,0.07);
-  box-shadow:2px 0 18px rgba(0,0,0,0.06);
+  box-shadow:2px 0 16px rgba(0,0,0,0.05);
   display:flex; flex-direction:column; align-items:center;
-  padding:10px 0; gap:2px;
+  padding-top:10px; gap:4px;
   isolation:isolate; -webkit-transform:translateZ(0); transform:translateZ(0);
   pointer-events:all; touch-action:manipulation;
 }
 .tab-btn {
-  width:58px; display:flex; flex-direction:column; align-items:center;
-  justify-content:center; gap:5px; cursor:pointer; border:none; background:none;
+  width:48px; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:3px; cursor:pointer; border:none; background:none;
   color:#AAAAAA; transition:color .22s, background .22s;
-  padding:10px 4px; border-radius:14px;
+  padding:9px 4px; border-radius:14px;
   -webkit-tap-highlight-color:transparent; touch-action:manipulation;
   pointer-events:all; user-select:none; -webkit-user-select:none;
 }
-.tab-btn.active { color:var(--fu-orange); background:rgba(232,81,26,.09); }
+.tab-btn.active { color:var(--fu-orange); background:rgba(232,81,26,.10); }
 .tab-ico {
-  width:24px; height:24px; display:flex; align-items:center; justify-content:center;
+  width:26px; height:26px; display:flex; align-items:center; justify-content:center;
   transition:transform .22s cubic-bezier(.22,1,.36,1);
 }
-.tab-btn.active .tab-ico { transform:scale(1.1); }
+.tab-btn.active .tab-ico { transform:scale(1.12) translateY(-1px); }
 .tab-ico svg { width:22px; height:22px; stroke-width:1.8; }
 .tab-btn.active .tab-ico svg { stroke-width:2.4; }
-.tab-lbl { font-family:'Outfit',sans-serif; font-size:8.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; line-height:1; text-align:center; }
-
-/* ══ RAIL COLLAPSE ══ */
-.tabbar.collapsed { width: 0; overflow: hidden; border-right: none; box-shadow: none; }
-.tabbar.collapsed .tab-btn, .tabbar.collapsed .rail-collapse-btn { opacity: 0; pointer-events: none; }
-.rail-collapse-btn {
-  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
-  width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.1);
-  background: var(--surface); box-shadow: var(--sh-sm);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--muted); transition: all .2s;
-  -webkit-tap-highlight-color: transparent;
-}
-.rail-collapse-btn:active { background: var(--fu-olt); color: var(--fu-orange); }
-.rail-collapse-btn svg { width: 14px; height: 14px; stroke-width: 2.2; }
-.rail-expand-handle {
-  position: fixed; top: 50%; left: 0; transform: translateY(-50%);
-  width: 20px; height: 56px; background: rgba(232,81,26,.12);
-  border-radius: 0 10px 10px 0; border: 1px solid rgba(232,81,26,.2); border-left: none;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: 499; opacity: 0; pointer-events: none;
-  transition: opacity .25s;
-}
-.rail-expand-handle.show { opacity: 1; pointer-events: all; }
-.rail-expand-handle svg { width: 10px; height: 10px; stroke: var(--fu-orange); stroke-width: 2.5; }
-.tabbar { transition: width .28s cubic-bezier(.22,1,.36,1); }
+.tab-lbl { font-family:'Outfit',sans-serif; font-size:8px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; line-height:1; text-align:center; }
 
 /* ══ EMPTY ══ */
 .empty { text-align:center; padding:44px 20px; color:var(--muted); }
@@ -1006,15 +978,7 @@ body::after {
     <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
     <span class="tab-lbl">Félix</span>
   </button>
-  <button class="rail-collapse-btn" onclick="toggleRail()" title="Ocultar menú">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-  </button>
 </nav>
-
-<!-- Rail expand handle -->
-<div class="rail-expand-handle" id="railExpandHandle" onclick="toggleRail()">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-</div>
 
 <!-- Toast -->
 <div class="toast" id="toast"><span id="toastIco"></span><span id="toastTxt"></span></div>
@@ -1054,16 +1018,6 @@ body::after {
 })();
 
 /* ═══ NAV ═══ */
-/* ═══ RAIL COLLAPSE ═══ */
-window.toggleRail = function() {
-  var rail = document.querySelector('.tabbar');
-  var main = document.getElementById('mainScroll');
-  var handle = document.getElementById('railExpandHandle');
-  var collapsed = rail.classList.toggle('collapsed');
-  if (main) main.style.paddingLeft = collapsed ? '0' : 'var(--rail-w)';
-  if (handle) handle.classList.toggle('show', collapsed);
-};
-
 var currentView = 'solicitud';
 window.goView = function(name) {
   // Todas las vistas (incluido felix) tratadas igual
