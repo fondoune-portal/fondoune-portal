@@ -22,14 +22,30 @@ var FIREBASE_CONFIG = {
   messagingSenderId: "901082593837",
   appId:             "1:901082593837:web:91292ed594e171715fd6a4"
 };
-window._fbDB = null; window._fbIniciado = false;
-(function(){
+window._fbDB = null; 
+window._fbIniciado = false;
+
+// Inicializar Firebase cuando esté disponible
+function initFirebase() {
   try {
-    firebase.initializeApp(FIREBASE_CONFIG);
-    window._fbDB = firebase.firestore();
-    window._fbIniciado = true;
-  } catch(e){ console.warn('Firebase:', e.message); }
-})();
+    if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      window._fbDB = firebase.firestore();
+      window._fbIniciado = true;
+      console.log('[Firebase] Inicializado correctamente');
+    }
+  } catch(e) { 
+    console.warn('[Firebase] Error:', e.message); 
+  }
+}
+
+// Intentar inicializar inmediatamente
+if (typeof firebase !== 'undefined') {
+  initFirebase();
+} else {
+  // Si Firebase no está disponible, esperar a que la página cargue
+  window.addEventListener('load', initFirebase);
+}
 
 /* ═══ REDIRECCIÓN: si es desktop, volver al portal completo ═══ */
 (function(){
@@ -1602,4 +1618,9 @@ window.felixKeydown = function felixKeydown(e){
   setTimeout(function(){ inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,100)+'px'; },0);
 }
 
-/* ═══ BUSCADOR EST
+/* ═══ INICIALIZACIÓN ═══ */
+console.log('[FondoUne] Portal móvil asociados cargado correctamente');
+
+</script>
+</body>
+</html>
