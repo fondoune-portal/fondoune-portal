@@ -4,14 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FondoUne — Portal Empleados · Gestión de Solicitudes</title>
-<link rel="preload" as="image"
-  href="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80"
-  imagesrcset="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=75  600w,
-               https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&q=80  900w,
-               https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80 1200w,
-               https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1800&q=85 1800w"
-  imagesizes="(max-width: 900px) 100vw, 50vw"
-  fetchpriority="high">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23E8511A'/><text y='.9em' font-size='80' x='10'>🏦</text></svg>">
+<!-- Preload eliminado: la imagen de fondo se carga correctamente vía CSS sin preload explícito -->
 <script defer src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <!-- Firebase SDK -->
@@ -62,7 +56,12 @@ window._fbIniciado = false;
     _ctx: null,
 
     /* ── Obtener (o crear) AudioContext ── */
+    /* CORRECCIÓN: el AudioContext solo se crea tras un gesto del usuario
+       para cumplir la política de autoplay de los navegadores modernos.
+       Si aún no hubo interacción, _ctxReady es false y el sonido se omite. */
+    _ctxReady: false,
     ctx: function() {
+      if (!this._ctxReady) return null;   // Esperar gesto del usuario
       if (!this._ctx) {
         try {
           var AC = window.AudioContext || window.webkitAudioContext;
@@ -269,9 +268,12 @@ window._fbIniciado = false;
   window.FU_Sound = SoundSystem;
   SoundSystem.init();
 
-  // Reanudar contexto al primer clic (política de navegadores modernos)
+  // Reanudar/crear contexto al primer clic (política de navegadores modernos)
   document.addEventListener('click', function() {
-    if (SoundSystem._ctx && SoundSystem._ctx.state === 'suspended') SoundSystem._ctx.resume();
+    SoundSystem._ctxReady = true;   // Habilitar creación del AudioContext
+    if (SoundSystem._ctx && SoundSystem._ctx.state === 'suspended') {
+      SoundSystem._ctx.resume();
+    }
   }, { once: true });
 
 })();
@@ -4568,10 +4570,12 @@ window.addEventListener('resize', _debounce(function() {
   /* ── 8. AUDITAR CAMBIOS DE ESTADO DE SOLICITUDES ── */
   document.addEventListener('DOMContentLoaded', function() {
 
-    /* CSP meta */
+    /* CSP meta — NOTA: frame-ancestors se eliminó del meta tag porque los navegadores
+       lo ignoran cuando se entrega vía <meta>. Solo funciona como cabecera HTTP.
+       Las demás directivas CSP sí aplican desde meta. */
     var csp = document.createElement('meta');
     csp.httpEquiv = 'Content-Security-Policy';
-    csp.content = "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' https://fonts.gstatic.com data:; frame-ancestors 'none';";
+    csp.content = "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' https://fonts.gstatic.com data:;";
     if (document.head) document.head.insertBefore(csp, document.head.firstChild);
 
     /* Iniciar timer de inactividad */
@@ -4696,7 +4700,8 @@ window.addEventListener('resize', _debounce(function() {
 <!-- ═══ /FÉLIX IA ═══ -->
 
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>  <script>
+  <!-- Script de Cloudflare eliminado: el proyecto usa Firebase + Google Apps Script, no Cloudflare -->
+  <script>
 /* =========================================================================
    MÓDULO DE SEGURIDAD Y AUDITORÍA FONDOUNE
    ========================================================================= */
