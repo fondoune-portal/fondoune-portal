@@ -1,1 +1,897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FondoUne — Portal Empleados · Gestión de Solicitudes</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23E8511A'/><text y='.9em' font-size='80' x='10'>🏦</text></svg>">
 
+<script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script src="sound-system.js"></script>
+
+</head>
+<body>
+
+<!-- Fondo mesh animado -->
+<div class="mesh-grain"></div>
+<div class="mesh-orb-1"></div>
+<div class="mesh-orb-2"></div>
+
+<!-- ══════════════════════════════════════
+     LOGIN OVERLAY — Split Screen
+     ══════════════════════════════════════ -->
+<div class="login-overlay" id="loginOverlay">
+
+  <!-- Panel izquierdo: formulario -->
+  <div class="login-left">
+    <div class="login-left-inner">
+      <div class="login-card" id="loginCard">
+        <div class="login-logo">
+          <img src="img/login-bg-1.jpeg" alt="FondoUne Logo" style="height:38px;width:auto;max-width:140px;object-fit:contain;mix-blend-mode:screen;filter:brightness(0.92) contrast(1.1) saturate(1.15);background:transparent;border-radius:0;padding:0;" />
+        </div>
+
+        <div class="login-title">Bienvenido</div>
+        <div class="login-sub">Portal de empleados · Ingresa tus credenciales para continuar</div>
+
+        <div class="login-error" id="loginError">
+          <span>⚠</span>
+          <span id="loginErrorMsg">Usuario o contraseña incorrectos.</span>
+        </div>
+        <div class="login-blocked" id="loginBlocked">
+          <div class="lb-title">🔒 Acceso temporalmente bloqueado</div>
+          <div class="lb-timer" id="blockTimer">05:00</div>
+          <div class="lb-sub">Demasiados intentos fallidos. Espera para continuar.</div>
+        </div>
+
+        <div class="login-field">
+          <div class="login-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Usuario
+          </div>
+          <div class="login-input-wrap">
+            <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input class="login-input" id="loginUser" type="text" placeholder="Tu usuario FondoUne" autocomplete="username" onkeydown="loginKeydown(event)">
+          </div>
+        </div>
+
+        <div class="login-field">
+          <div class="login-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Contraseña
+          </div>
+          <div class="login-input-wrap">
+            <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input class="login-input" id="loginPass" type="password" placeholder="••••••••••" autocomplete="current-password" onkeydown="loginKeydown(event)">
+            <button class="login-eye" onclick="togglePassVer()" id="eyeBtn" tabindex="-1">
+              <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="login-btn" id="loginBtn" onclick="intentarLogin()">
+          <div class="login-btn-spinner" id="loginSpinner"></div>
+          <span id="loginBtnTxt">Ingresar al Portal</span>
+        </button>
+
+        <div class="login-attempts" id="intentosDots">
+          <div class="attempt-dot" id="dot1"></div>
+          <div class="attempt-dot" id="dot2"></div>
+          <div class="attempt-dot" id="dot3"></div>
+          <div class="attempt-dot" id="dot4"></div>
+          <div class="attempt-dot" id="dot5"></div>
+        </div>
+
+        <div class="login-forgot">
+          <button class="login-forgot-btn" onclick="mostrarRecuperar()">🔑 ¿Olvidaste tu contraseña?</button>
+        </div>
+
+        <div class="login-footer">
+          🔒 Área restringida · Solo personal autorizado FondoUne
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel derecho: SLIDESHOW -->
+  <div class="login-right" id="loginSlideshow">
+    <!-- Slides de fondo -->
+    <div class="ls-slide ls-active" style="background-image:url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1400&q=85');background-position:center 20%;"></div>
+    <div class="ls-slide" style="background-image:url('https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1400&q=85');background-position:center center;"></div>
+    <div class="ls-slide" style="background-image:url('https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=1400&q=85');background-position:center 30%;"></div>
+    <div class="ls-slide" style="background-image:url('https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1400&q=85');background-position:center center;"></div>
+    <div class="ls-slide" style="background-image:url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1400&q=85');background-position:center 40%;"></div>
+    <!-- Overlay y progreso -->
+    <div class="login-right-overlay"></div>
+    <div class="ls-progress" id="lsProgress"></div>
+    <!-- Contenido dinámico -->
+    <div class="login-right-content">
+      <div class="login-right-tag" id="lsTag">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+        <span id="lsTagTxt">Portal Empleados · Activo</span>
+      </div>
+      <div class="login-right-headline" id="lsHeadline">
+        Unidos por<br><span>nuestros sueños</span>
+      </div>
+      <div class="login-right-sub" id="lsSub">
+        Gestiona las solicitudes de crédito vivienda de los asociados de FondoUne de manera eficiente y segura.
+      </div>
+      <div class="login-right-stats">
+        <div class="login-stat"><div class="login-stat-val">100%</div><div class="login-stat-lbl">Digital</div></div>
+        <div class="login-stat"><div class="login-stat-val">24/7</div><div class="login-stat-lbl">Disponible</div></div>
+        <div class="login-stat"><div class="login-stat-val">🔒</div><div class="login-stat-lbl">Seguro</div></div>
+      </div>
+      <!-- Dots indicadores -->
+      <div class="ls-dots" id="lsDots"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     OVERLAY RECUPERAR CONTRASEÑA
+     ══════════════════════════════════════ -->
+<div class="login-overlay oculto" id="recoverOverlay" style="z-index:10000;">
+  <div class="login-left">
+    <div class="login-bg">
+      <div class="login-bg-grid"></div>
+      <div class="login-bg-circle"></div>
+      <div class="login-bg-circle"></div>
+    </div>
+    <div class="login-left-inner">
+      <div class="login-card" id="recoverPanel" style="max-height:90vh;overflow-y:auto;">
+        <div class="login-logo">
+          <img src="img/login-bg-2.jpeg" alt="FondoUne Logo" style="height:38px;width:auto;max-width:140px;object-fit:contain;mix-blend-mode:screen;filter:brightness(0.92) contrast(1.1) saturate(1.15);background:transparent;border-radius:0;padding:0;" />
+        </div>
+
+    <button class="recover-back" onclick="ocultarRecuperar()">← Volver al inicio</button>
+
+    <div class="recover-title">🔑 Restablecer Contraseña</div>
+    <div class="recover-sub">Solo el administrador puede restablecer contraseñas. Ingresa las credenciales de admin para continuar.</div>
+
+    <!-- Paso 1: verificar admin -->
+    <div id="recoverStep1">
+      <div class="login-field">
+        <div class="login-label">🛡️ Usuario administrador</div>
+        <div class="login-input-wrap">
+          <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input class="login-input" id="recAdminUser" type="text" placeholder="Usuario admin" autocomplete="off">
+        </div>
+      </div>
+      <div class="login-field">
+        <div class="login-label">🔒 Contraseña de admin</div>
+        <div class="login-input-wrap">
+          <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input class="login-input" id="recAdminPass" type="password" placeholder="••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')verificarAdminRecuperar()">
+          <button class="login-eye" onclick="togglePassField('recAdminPass')" tabindex="-1">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="login-error" id="recoverError1" style="margin-bottom:12px;">
+        <span>⚠</span><span id="recoverError1Msg">Credenciales incorrectas.</span>
+      </div>
+      <button class="login-btn" onclick="verificarAdminRecuperar()">Verificar administrador</button>
+    </div>
+
+    <!-- Paso 2: elegir usuario y nueva contraseña -->
+    <div id="recoverStep2" style="display:none;">
+      <div class="login-field">
+        <div class="login-label">👤 Usuario a restablecer</div>
+        <div class="custom-select-wrap" id="recTargetUserWrap">
+          <div class="custom-select-trigger" id="recTargetUserTrigger" onclick="toggleCustomSelect()">
+            <span id="recTargetUserText">Seleccionar usuario…</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="custom-select-dropdown" id="recTargetUserDropdown"></div>
+        </div>
+        <select id="recTargetUser" style="display:none"></select>
+      </div>
+      <div class="login-field">
+        <div class="login-label">🔐 Nueva contraseña</div>
+        <div class="login-input-wrap">
+          <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input class="login-input" id="recNewPass" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+          <button class="login-eye" onclick="togglePassField('recNewPass')" tabindex="-1">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="login-field">
+        <div class="login-label">🔐 Confirmar nueva contraseña</div>
+        <div class="login-input-wrap">
+          <svg class="login-input-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input class="login-input" id="recConfPass" type="password" placeholder="Repite la contraseña" autocomplete="new-password" onkeydown="if(event.key==='Enter')ejecutarRestablecimiento()">
+          <button class="login-eye" onclick="togglePassField('recConfPass')" tabindex="-1">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="login-error" id="recoverError2" style="margin-bottom:12px;">
+        <span>⚠</span><span id="recoverError2Msg"></span>
+      </div>
+      <div style="background:rgba(13,122,78,.2);border:1px solid rgba(13,122,78,.4);border-radius:9px;padding:10px 14px;font-size:12.5px;color:#6EE7B7;margin-bottom:16px;display:none;" id="recoverOk">
+        ✅ Contraseña restablecida correctamente. Volviendo al inicio de sesión…
+      </div>
+      <button class="login-btn" onclick="ejecutarRestablecimiento()">🔑 Restablecer contraseña</button>
+    </div>
+
+    <div class="login-footer" style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07);">
+      Los cambios se guardan localmente en este navegador.
+    </div>
+      </div><!-- /login-card recoverPanel -->
+    </div><!-- /login-left-inner -->
+  </div><!-- /login-left -->
+
+  <!-- Panel derecho: misma imagen animada -->
+  <div class="login-right">
+    <div class="ls-slide ls-active" style="background-image:url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1400&q=85');background-position:center 40%;transform:scale(1.0);"></div>
+    <div class="login-right-overlay"></div>
+    <div class="login-right-content">
+      <div class="login-right-tag">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+        Restablecer Acceso
+      </div>
+      <div class="login-right-headline">
+        Recupera tu<br><span>acceso seguro</span>
+      </div>
+      <div class="login-right-sub">
+        Solo el administrador puede restablecer contraseñas, garantizando la seguridad de todos los usuarios del portal.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /recoverOverlay -->
+
+<!-- OVERLAY para sidebar en móvil -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="cerrarSidebarMovil()"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <!-- Botón menú hamburguesa solo visible en móvil -->
+  <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebarMovil()" style="display:none;" aria-label="Menú">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a href="portal-asociado.html" class="logo topbar-brand">
+    <img src="img/login-bg-3.jpeg" alt="FondoUne Logo" style="height:38px;width:auto;max-width:140px;object-fit:contain;mix-blend-mode:screen;filter:brightness(0.92) contrast(1.1) saturate(1.15);background:transparent;border-radius:0;padding:0;" />
+  </a>
+  <div class="topbar-div"></div>
+  <span class="topbar-title">Portal Empleados · Gestión de Solicitudes</span>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+    <a href="./portal-asociado.html" class="topbar-link">🏠 Portal Asociado</a>
+    <div id="fbStatusBar" style="margin-right:8px;padding:4px 12px;border-radius:7px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);"></div>
+    <div class="session-bar show" id="sessionBar">
+      <div class="session-dot"></div>
+      <span id="sessionUser">Sesión activa</span>
+    </div>
+    <button class="topbar-link cerrar-sesion-btn" onclick="cerrarSesion()" style="cursor:pointer;border:none;background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.25);">🚪 <span class="btn-txt">Cerrar sesión</span></button>
+    <div class="topbar-notif" id="soundToggleBtn" onclick="toggleSounds()" title="Activar/Desactivar sonidos">
+      <svg id="soundIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path id="soundWaves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+      </svg>
+    </div>
+    <div class="topbar-notif" id="notifBtn" onclick="toggleNotif()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div class="notif-dot" id="notifDot"></div>
+    </div>
+    <div class="topbar-badge">🔐 Empleado</div>
+  </div>
+</div>
+
+<!-- NOTIF PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-head">
+    <span>Notificaciones</span>
+    <button onclick="marcarTodasLeidas()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--muted);">Marcar leídas</button>
+  </div>
+  <div class="notif-list" id="notifList"></div>
+</div>
+
+<div class="main-layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showPanel('dashboard')" id="nav-dashboard">
+      <span class="ni">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPanel('solicitudes')" id="nav-solicitudes">
+      <span class="ni">📋</span> Solicitudes
+      <span class="nav-cnt" id="cnt-solicitudes">0</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('pqrs')" id="nav-pqrs">
+      <span class="ni">💬</span> PQRS / Otras
+      <span class="nav-cnt" id="cnt-pqrs">0</span>
+    </div>
+    <div class="nav-section">Gestión</div>
+    <div class="nav-item" onclick="showPanel('pendientes')" id="nav-pendientes">
+      <span class="ni">⏳</span> Pendientes
+      <span class="nav-cnt" id="cnt-pendientes">0</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('aprobados')" id="nav-aprobados">
+      <span class="ni">✅</span> Aprobados
+    </div>
+    <div class="nav-section">Base de Datos</div>
+    <div class="nav-item" onclick="showPanel('asociados')" id="nav-asociados">
+      <span class="ni">🧑‍💼</span> Datos de Asociados
+      <span class="nav-cnt" id="cnt-asociados">0</span>
+    </div>
+    <div class="nav-section">Herramientas</div>
+    <div class="nav-item" onclick="showPanel('historial')" id="nav-historial">
+      <span class="ni">🕐</span> Auditoría
+    </div>
+    <div class="nav-item" onclick="exportarExcel()" id="nav-export">
+      <span class="ni">📥</span> Exportar Excel
+    </div>
+    <div class="nav-item admin-only" onclick="showPanel('usuarios')" id="nav-usuarios">
+      <span class="ni">👥</span> Usuarios
+    </div>
+    <div class="sidebar-footer">
+      <div class="sf-text">FondoUne v2.0<br>Portal Empleados</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ════ DASHBOARD ════ -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">Dashboard</div>
+          <div class="pg-sub" id="dash-fecha">Cargando…</div>
+        </div>
+        <div class="pg-actions">
+          <button class="btn btn-outline btn-sm" onclick="recargar()">🔄 Actualizar</button>
+          <button class="btn btn-gold btn-sm" onclick="exportarExcel()">📥 Exportar Excel</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--blue)"></div>
+          <div class="kpi-ico">📋</div>
+          <div class="kpi-val" id="kpi-total">0</div>
+          <div class="kpi-lbl">Total Solicitudes</div>
+          <div class="kpi-delta up" id="kpi-total-d">— registros</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:#F59E0B"></div>
+          <div class="kpi-ico">⏳</div>
+          <div class="kpi-val" id="kpi-pend">0</div>
+          <div class="kpi-lbl">Pendientes de Revisión</div>
+          <div class="kpi-delta warn" id="kpi-pend-d">— requieren atención</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--ok)"></div>
+          <div class="kpi-ico">✅</div>
+          <div class="kpi-val" id="kpi-apro">0</div>
+          <div class="kpi-lbl">Aprobadas</div>
+          <div class="kpi-delta up" id="kpi-apro-d">— listas para desembolso</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--gold)"></div>
+          <div class="kpi-ico">💰</div>
+          <div class="kpi-val" id="kpi-desem">0</div>
+          <div class="kpi-lbl">Desembolsadas</div>
+          <div class="kpi-delta up" id="kpi-desem-d">— completadas</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="card">
+          <div class="card-head"><div class="card-title">📊 Solicitudes por Tipo</div></div>
+          <div class="card-body">
+            <div class="donut-wrap">
+              <canvas id="chartTipo" width="120" height="120"></canvas>
+              <div class="donut-legend" id="legendTipo"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">📅 Últimas 5 Solicitudes</div></div>
+          <div class="card-body" id="dash-recent"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ SOLICITUDES ════ -->
+    <div class="panel" id="panel-solicitudes">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">Todas las Solicitudes</div>
+          <div class="pg-sub">Visualiza, filtra y gestiona todas las solicitudes registradas</div>
+        </div>
+        <div class="pg-actions">
+          <button class="btn btn-outline btn-sm" onclick="recargar()">🔄 Actualizar</button>
+          <button class="btn btn-gold btn-sm" onclick="exportarExcel()">📥 Exportar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding-bottom:8px;">
+          <div class="filters-bar">
+            <div class="search-wrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="search-input" id="searchInput" placeholder="Buscar por nombre, cédula, radicado…" oninput="filtrar()">
+            </div>
+            <select class="filter-select" id="filtroTipo" onchange="filtrar()">
+              <option value="">Todos los tipos</option>
+              <option value="compra">Compra de Vivienda</option>
+              <option value="construccion">Construcción y Mejoras</option>
+              <option value="gravamen">Gravamen Hipotecario</option>
+            </select>
+            <select class="filter-select" id="filtroEstado" onchange="filtrar()">
+              <option value="">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="revision">En Revisión</option>
+              <option value="aprobado">Aprobado</option>
+              <option value="rechazado">Rechazado</option>
+              <option value="desembolsado">Desembolsado</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID / Radicado</th>
+                <th>Asociado</th>
+                <th>Tipo</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Asesor</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tblBody"></tbody>
+          </table>
+        </div>
+        <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div class="pg-info" id="tblInfo">0 registros</div>
+          <div class="pagination" id="paginacion"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PENDIENTES ════ -->
+    <div class="panel" id="panel-pendientes">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">Solicitudes Pendientes</div>
+          <div class="pg-sub">Solicitudes que requieren revisión y aprobación</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>ID / Radicado</th><th>Asociado</th><th>Tipo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tblPend"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ APROBADOS ════ -->
+    <div class="panel" id="panel-aprobados">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">Solicitudes Aprobadas</div>
+          <div class="pg-sub">Solicitudes aprobadas listas para desembolso</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>ID / Radicado</th><th>Asociado</th><th>Tipo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tblApro"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ HISTORIAL / AUDITORÍA ════ -->
+    <div class="panel" id="panel-historial">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">Auditoría de Cambios</div>
+          <div class="pg-sub">Registro completo de todas las acciones realizadas</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body" id="auditBody"></div>
+      </div>
+    </div>
+
+    <!-- ════ PQRS ════ -->
+    <div class="panel" id="panel-pqrs">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">💬 PQRS y Otras Solicitudes</div>
+          <div class="pg-sub">Solicitudes recibidas del formulario de inquietudes de asociados</div>
+        </div>
+        <div class="pg-actions">
+          <button class="btn btn-outline btn-sm" onclick="renderPQRS()">🔄 Actualizar</button>
+          <button class="btn btn-gold btn-sm" onclick="exportarPQRS()">📥 Exportar CSV</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Asociado</th><th>Tipo de Solicitud</th><th>Inquietud</th><th>Contacto</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tblPQRS"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ GESTIÓN DE USUARIOS (Admin) ════ -->
+    <div class="panel" id="panel-usuarios">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">👥 Gestión de Usuarios</div>
+          <div class="pg-sub">Crea, edita y elimina usuarios del portal. Solo visible para administradores.</div>
+        </div>
+        <div class="pg-actions">
+          <button class="btn btn-gold" onclick="abrirCrearUsuario()">➕ Nuevo Usuario</button>
+        </div>
+      </div>
+
+      <!-- Info de usuarios actuales -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-head">
+          <div class="card-title">👤 Usuarios registrados</div>
+          <div style="font-size:12px;color:var(--muted);" id="usr-count-txt">— usuarios</div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table class="usr-table">
+            <thead>
+              <tr>
+                <th>Nombre / Usuario</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="usrTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Info de seguridad -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">🔒 Información de seguridad</div></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;">
+            <div style="background:var(--bg);border-radius:9px;padding:14px;">
+              <div style="font-weight:700;margin-bottom:4px;color:var(--text);">🛡️ Almacenamiento</div>
+              <div style="color:var(--muted);font-size:12.5px;line-height:1.6;">Los usuarios y contraseñas (hasheadas con SHA-256) se guardan en el navegador local. Para sincronizar entre equipos, comparte el archivo HTML actualizado.</div>
+            </div>
+            <div style="background:var(--bg);border-radius:9px;padding:14px;">
+              <div style="font-weight:700;margin-bottom:4px;color:var(--text);">⚠️ Importante</div>
+              <div style="color:var(--muted);font-size:12.5px;line-height:1.6;">No elimines el usuario <strong>admin</strong>. Siempre debe existir al menos un administrador para poder gestionar los demás usuarios.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ DATOS DE ASOCIADOS ════ -->
+    <div class="panel" id="panel-asociados">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">🧑‍💼 Base de Datos de Asociados</div>
+          <div class="pg-sub">Registro de asociados ingresados desde el portal. Úsala para validar futuras solicitudes de crédito.</div>
+        </div>
+        <div class="pg-actions">
+          <button class="btn btn-outline btn-sm" onclick="asocExportarExcel()">📥 Exportar Excel</button>
+          <button class="btn btn-gold btn-sm" onclick="asocCargarDatos()">🔄 Actualizar</button>
+        </div>
+      </div>
+
+      <!-- KPIs rápidos -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--orange);"></div>
+          <div class="kpi-ico">🧑‍💼</div>
+          <div class="kpi-val" id="asoc-kpi-total">—</div>
+          <div class="kpi-lbl">Total asociados registrados</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:var(--ok);"></div>
+          <div class="kpi-ico">📋</div>
+          <div class="kpi-val" id="asoc-kpi-con-solicitud">—</div>
+          <div class="kpi-lbl">Con solicitud de desembolso</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-accent" style="background:#8B5CF6;"></div>
+          <div class="kpi-ico">📅</div>
+          <div class="kpi-val" id="asoc-kpi-recientes">—</div>
+          <div class="kpi-lbl">Registrados este mes</div>
+        </div>
+      </div>
+
+      <!-- Barra de búsqueda y filtros -->
+      <div class="filters-bar" style="margin-bottom:16px;">
+        <div class="search-wrap" style="max-width:340px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" id="asoc-search" placeholder="Buscar por nombre, cédula o empresa..." oninput="asocFiltrar()">
+        </div>
+        <select class="filter-select" id="asoc-filtro-contrato" onchange="asocFiltrar()">
+          <option value="">Todos los contratos</option>
+          <option value="indefinido">Indefinido</option>
+          <option value="fijo">Término fijo</option>
+          <option value="obra">Obra o labor</option>
+          <option value="prestacion">Prestación de servicios</option>
+        </select>
+        <select class="filter-select" id="asoc-filtro-banco" onchange="asocFiltrar()">
+          <option value="">Todos los bancos</option>
+          <option value="bancolombia">Bancolombia</option>
+          <option value="davivienda">Davivienda</option>
+          <option value="bogota">Banco de Bogotá</option>
+          <option value="bbva">BBVA</option>
+          <option value="nequi">Nequi</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+
+      <!-- Tabla de asociados -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">👤 Directorio de asociados</div>
+          <div style="font-size:12px;color:var(--muted);" id="asoc-count-txt">Cargando...</div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="tbl-wrap">
+            <table id="asoc-tabla">
+              <thead>
+                <tr>
+                  <th>Asociado</th>
+                  <th>Documento</th>
+                  <th>Contacto</th>
+                  <th>Empresa / Cargo</th>
+                  <th>Salario</th>
+                  <th>Banco / Cuenta</th>
+                  <th>Contrato</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="asoc-tabla-body">
+                <tr>
+                  <td colspan="8">
+                    <div class="empty-state">
+                      <div class="ei">⏳</div>
+                      <h3>Cargando asociados...</h3>
+                      <p>Consultando Firestore</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div><!-- /panel-asociados -->
+
+    <!-- Modal detalle de asociado -->
+    <div id="asoc-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(45,26,14,.55);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;" onclick="asocCerrarModal(event)">
+      <div id="asoc-modal" style="background:#fff;border-radius:20px;width:min(680px,96vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(45,26,14,.22);padding:32px;position:relative;">
+        <button onclick="asocCerrarModal()" style="position:absolute;top:16px;right:16px;background:rgba(45,26,14,.07);border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+        <div id="asoc-modal-body"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main-layout -->
+
+<!-- ════════════════════════════════════════
+     PANEL GESTIÓN DE USUARIOS (Admin only)
+     ════════════════════════════════════════ -->
+<div class="adm-overlay" id="usrOverlay" onclick="if(event.target===this)cerrarUsrModal()"></div>
+
+<!-- Modal: Crear / Editar usuario -->
+<div class="adm-modal" id="usrModal" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(.96);z-index:801;opacity:0;pointer-events:none;transition:all .28s cubic-bezier(.34,1.2,.64,1);">
+  <div class="adm-head">
+    <div class="adm-head-title" id="usrModalTitle">👤 Crear Usuario</div>
+    <button class="adm-close" onclick="cerrarUsrModal()">✕</button>
+  </div>
+  <div class="adm-body">
+    <input type="hidden" id="usrEditKey">
+    <div class="adm-field">
+      <div class="adm-label">👤 Nombre completo</div>
+      <input class="adm-input" id="usrNombre" placeholder="Ej: María González" maxlength="60">
+    </div>
+    <div class="adm-field">
+      <div class="adm-label">🔑 Usuario (login)</div>
+      <input class="adm-input" id="usrLogin" placeholder="Ej: mgonzalez" maxlength="30" autocomplete="off">
+      <div class="adm-hint">Solo letras, números y guión bajo. No se puede cambiar después.</div>
+    </div>
+    <div class="adm-field">
+      <div class="adm-label">🎭 Rol</div>
+      <select class="adm-select" id="usrRol">
+        <option value="Asesor">Asesor</option>
+        <option value="Administrador">Administrador</option>
+      </select>
+    </div>
+    <div class="adm-field" id="usrPassField">
+      <div class="adm-label">🔒 Contraseña</div>
+      <div class="adm-pass-wrap">
+        <input class="adm-input" id="usrPass" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+        <button class="adm-pass-eye" onclick="togglePassField('usrPass')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="adm-field" id="usrPassField2">
+      <div class="adm-label">🔒 Confirmar contraseña</div>
+      <div class="adm-pass-wrap">
+        <input class="adm-input" id="usrPass2" type="password" placeholder="Repite la contraseña" autocomplete="new-password">
+        <button class="adm-pass-eye" onclick="togglePassField('usrPass2')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="adm-field" id="usrPassCambioField" style="display:none;">
+      <div class="adm-label">🔄 Nueva contraseña <span style="font-weight:400;text-transform:none;letter-spacing:0;">(dejar vacío para no cambiar)</span></div>
+      <div class="adm-pass-wrap">
+        <input class="adm-input" id="usrPassCambio" type="password" placeholder="Nueva contraseña (opcional)" autocomplete="new-password">
+        <button class="adm-pass-eye" onclick="togglePassField('usrPassCambio')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="adm-msg" id="usrModalMsg"></div>
+  </div>
+  <div class="adm-footer">
+    <button class="btn btn-outline" onclick="cerrarUsrModal()">Cancelar</button>
+    <button class="btn btn-gold" onclick="guardarUsuario()" id="usrGuardarBtn">💾 Guardar</button>
+  </div>
+</div>
+
+<!-- MODAL DETALLE -->
+<div class="modal-overlay" id="modalOverlay" onclick="cerrarModal(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Detalle de Solicitud</div>
+      <button class="modal-close" onclick="cerrarModalBtn()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="cerrarModalBtn()">Cerrar</button>
+      <button class="btn btn-gold btn-sm" id="btnGenDocx" onclick="generarDocxDesdeModal()">📄 Generar Word</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-ico" id="toastIco">✅</span>
+  <span id="toastMsg"></span>
+</div>
+
+<script src="auth.js"></script>
+
+
+
+<script src="app.js"></script>
+<script src="docx-builder.js"></script>
+
+  <script src="security.js"></script>
+
+
+<!-- ═══ FÉLIX IA — Portal Empleados ═══ -->
+<div class="felix-overlay" id="felixOverlay" onclick="cerrarFelix()"></div>
+
+<div class="felix-emp-wrap" id="felixEmpWrap">
+  <!-- Burbuja de bienvenida -->
+  <div class="fab-bubble" id="felixBubble">
+    ¡Hola! ¿Necesitas <strong>ayuda?</strong> 👋
+  </div>
+
+  <!-- Botón FAB — Félix animado -->
+  <button class="felix-emp-fab" id="felixFab" onclick="toggleFelix()" aria-label="Abrir asistente Félix">
+    <img class="fab-felix-video" id="felixFabIcon" src="img/login-bg-4.gif" alt="Félix" />
+  </button>
+</div>
+
+<!-- Panel de chat -->
+<div class="felix-emp-panel" id="felixEmpPanel">
+  <div class="felix-chat-wrap">
+    <!-- Header -->
+    <div class="felix-chat-header">
+      <div class="felix-chat-header-top">
+        <div class="felix-chat-brand">
+          <div class="felix-avatar-sm">🤖</div>
+          <div>
+            <div class="felix-chat-name">Félix · FondoUne IA</div>
+            <div class="felix-chat-status">
+              <span class="felix-status-dot"></span>
+              Asistente activo · Gemini 2.5 Flash
+            </div>
+          </div>
+        </div>
+        <button class="felix-close-btn" onclick="cerrarFelix()" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="felix-chips">
+        <button class="felix-chip" onclick="felixChipClick('¿Cómo cambio el estado de una solicitud?')">📋 Estados</button>
+        <button class="felix-chip" onclick="felixChipClick('¿Cómo descargo los documentos de una solicitud?')">📄 Documentos</button>
+        <button class="felix-chip" onclick="felixChipClick('¿Cómo busco un asociado específico?')">🔍 Buscar</button>
+        <button class="felix-chip" onclick="felixChipClick('¿Qué significan los diferentes estados de crédito?')">ℹ️ Estados crédito</button>
+      </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div class="felix-messages" id="felixMessages"></div>
+
+    <!-- Typing -->
+    <div class="felix-typing" id="felixTyping">
+      <div class="felix-msg-avatar">🤖</div>
+      <div class="felix-typing-bubble">
+        <div class="felix-dot"></div>
+        <div class="felix-dot"></div>
+        <div class="felix-dot"></div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="felix-input-area">
+      <div class="felix-input-row">
+        <textarea
+          id="felixInput"
+          class="felix-input"
+          placeholder="Pregúntale algo a Félix..."
+          rows="1"
+          onkeydown="felixKeydown(event)"
+          aria-label="Mensaje para Félix"
+        ></textarea>
+        <button class="felix-send-btn" onclick="felixSend()" id="felixSendBtn" aria-label="Enviar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="felix-input-hint">
+        Powered by Gemini 2.5 Flash · <a href="/cdn-cgi/l/email-protection#214253444548554e5257485748444f454061474e4f454e544f440f424e4c">¿Más ayuda?</a>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ═══ /FÉLIX IA ═══ -->
+
+
+  <!-- Script de Cloudflare eliminado: el proyecto usa Firebase + Google Apps Script, no Cloudflare -->
+  
+
+<script src="felix-ia.js"></script>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MÓDULO DATOS DE ASOCIADOS — FondoUne Portal Empleados
+       Lee la colección "solicitudes" de Firestore y extrae
+       los campos del formulario Datos del Asociado (asoc*)
+  ═══════════════════════════════════════════════════════════ -->
+  
+
+  
+
+  <script>
+    setTimeout(function(){
+      var b = document.getElementById('felixBubble');
+      if (b) { b.style.display = 'block'; }
+    }, 3000);
+  </script>
+
+</body>
+</html>
