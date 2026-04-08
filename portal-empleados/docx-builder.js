@@ -167,7 +167,13 @@ function eliminarUsuarioPersistido(login) {
 /* Refrescar USUARIOS en memoria desde localStorage al cargar */
 function sincronizarUsuariosEnMemoria() {
   var todos = cargarUsuarios();
-  Object.keys(todos).forEach(function(k) { USUARIOS[k] = todos[k]; });
+  // Si USUARIOS existe como global (definido en otro script), úsalo; si no, ignora
+  if (typeof USUARIOS !== 'undefined') {
+    Object.keys(todos).forEach(function(k) {
+      USUARIOS[k] = todos[k];
+    });
+  }
+  // El resto de la app usa cargarUsuarios() directamente, no USUARIOS
 }
 
 /* Verificar si la sesión activa es admin */
