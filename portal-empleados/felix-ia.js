@@ -8,11 +8,15 @@
   'use strict';
 
   var FELIX_CFG = {
-    // API_KEY eliminada — ahora vive en Secret Manager de Google Cloud
-    PROXY_URL:      'https://script.google.com/macros/s/AKfycbyR6TAnlgsU0ULwZY1xXk8l14Z2pj4DPnqLWo9XPZAL2A3DIAXB3N4M0EQgmQNCnI8v/exec',
-    MAX_TOKENS:     600,
-    TEMP:           0.65,
-    HISTORY_LIMIT:  20
+    // ── Proxy desactivado — Félix llama directo a Gemini
+    PROXY_URL:     '',
+
+    // ── API Key de Gemini (exclusiva Félix · FondoUne)
+    GEMINI_KEY:    'AIzaSyBi0yCjNjMcgURldQMwxc7sZKweyMQNl3c',
+
+    MAX_TOKENS:    600,
+    TEMP:          0.65,
+    HISTORY_LIMIT: 20
   };
 
   /* Contexto específico para empleados — conoce el panel de gestión */
@@ -108,25 +112,81 @@
            datos.output || datos.result || null;
   }
 
-  /* ── 1. LLAMADA AL PROXY SEGURO (Cloud Function) ── */
+  /* ══════════════════════════════════════════════════════════════
+     LLAMADA AL PROXY SEGURO (Google Apps Script → Gemini)
+     ──────────────────────────────────────────────────────────────
+     FIX v2.1:
+     • GAS siempre devuelve HTTP 200 aunque haya error interno,
+       por eso el antiguo "if (!resp.ok)" nunca atrapaba nada.
+     • Cuando GAS falla devuelve HTML, no JSON → resp.json()
+       lanzaba excepción silenciosa → mensaje genérico siempre.
+     • Ahora: leemos el cuerpo como texto primero, intentamos
+       parsear JSON, y logeamos el contenido real del error.
+     ══════════════════════════════════════════════════════════════ */
   async function consultarFelix(historial) {
-    var ultimoMensaje = historial.length ? historial[historial.length - 1].parts[0].text : '';
+    var ultimoMensaje  = historial.length ? historial[historial.length - 1].parts[0].text : '';
     var historialPrevio = historial.slice(0, -1);
 
+    // ── Intento 1: Proxy de Google Apps Script ────────────────────
     try {
       var resp = await fetch(FELIX_CFG.PROXY_URL, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ texto: ultimoMensaje, historial: historialPrevio })
+        body:    JSON.stringify({ texto: ultimoMensaje, historial: historialPrevio })
       });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      var datos = await resp.json();
+
+      // Leemos siempre como texto primero — GAS devuelve HTML en errores
+      var rawText = await resp.text();
+
+      // Detectar respuesta HTML (error de GAS / sesión caducada)
+      if (rawText.trim().startsWith('<')) {
+        throw new Error('GAS devolvio HTML en lugar de JSON — verifica el despliegue del script');
+      }
+
+      var datos = JSON.parse(rawText);
       var texto = _extraerTextoGemini(datos);
       if (texto) return texto;
-      throw new Error('Respuesta vacía del proxy');
-    } catch (e) {
-      console.error('[Felix·Proxy] Error:', e.message);
-      return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo en unos segundos.';
+
+      // GAS respondió JSON pero sin contenido útil — logear para debug
+      console.warn('[Felix·Proxy] JSON sin texto util:', JSON.stringify(datos).substring(0, 200));
+      throw new Error('Respuesta JSON vacia del proxy');
+
+    } catch (proxyErr) {
+      console.error('[Felix·Proxy] Fallo el proxy GAS:', proxyErr.message);
+
+      // ── Intento 2: Gemini directo (si hay API Key configurada) ──
+      if (FELIX_CFG.GEMINI_KEY) {
+        console.log('[Felix] Intentando Gemini directo como fallback...');
+        try {
+          var geminiResp = await fetch(
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + FELIX_CFG.GEMINI_KEY,
+            {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({
+                contents:         historial,
+                generationConfig: { maxOutputTokens: FELIX_CFG.MAX_TOKENS, temperature: FELIX_CFG.TEMP }
+              })
+            }
+          );
+          var gDatos = await geminiResp.json();
+          var gTexto = _extraerTextoGemini(gDatos);
+          if (gTexto) return gTexto;
+          throw new Error('Gemini directo: respuesta vacia');
+        } catch (geminiErr) {
+          console.error('[Felix·Gemini] Error directo:', geminiErr.message);
+        }
+      }
+
+      // ── Sin más opciones: mensaje de error informativo ───────────
+      return '⚠️ No pude conectarme al asistente ahora mismo.
+
+**Posibles causas:**
+- El proxy de Google Apps Script necesita ser re-desplegado
+- La API Key de Gemini en Secret Manager expiró
+- Problema temporal de red
+
+Por favor intenta en unos segundos o contacta al administrador.';
     }
   }
 
