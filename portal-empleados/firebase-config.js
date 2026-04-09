@@ -18,15 +18,42 @@ var FIREBASE_CONFIG = {
   appId:             "1:901082593837:web:91292ed594e171715fd6a4"
 };
 
-window._fbDB = null;
+window._fbDB   = null;
+window._fbAuth = null;
 window._fbIniciado = false;
+
+/* ── Callbacks pendientes hasta que Auth esté lista ── */
+window._fbReadyCallbacks = [];
+window._fbReady = function(fn) {
+  if (window._fbIniciado) { fn(); }
+  else { window._fbReadyCallbacks.push(fn); }
+};
+
 (function() {
   try {
     if (FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== 'REEMPLAZAR_API_KEY') {
       firebase.initializeApp(FIREBASE_CONFIG);
-      window._fbDB = firebase.firestore();
-      window._fbIniciado = true;
-      console.log('✅ Firebase conectado');
+      window._fbDB   = firebase.firestore();
+      window._fbAuth = firebase.auth();
+
+      /* ✅ FIX: autenticar anónimamente para cumplir request.auth != null
+         en las reglas de Firestore. El portal ya tiene su propio sistema
+         de login (security.js); Firebase Auth solo actúa como "token de
+         acceso" a la base de datos en la nube. */
+      window._fbAuth.signInAnonymously()
+        .then(function() {
+          window._fbIniciado = true;
+          console.log('✅ Firebase conectado y autenticado');
+          window._fbReadyCallbacks.forEach(function(fn){ try{ fn(); }catch(e){} });
+          window._fbReadyCallbacks = [];
+        })
+        .catch(function(e) {
+          console.warn('⚠️ Firebase auth anónima falló:', e.message);
+          window._fbIniciado = true;
+          window._fbReadyCallbacks.forEach(function(fn){ try{ fn(); }catch(e){} });
+          window._fbReadyCallbacks = [];
+        });
+
     } else {
       console.warn('⚠️ Firebase no configurado — modo localStorage');
     }
