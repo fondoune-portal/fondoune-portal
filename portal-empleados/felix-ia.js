@@ -11,13 +11,45 @@
     // ── Proxy desactivado — Félix llama directo a Gemini
     PROXY_URL:     '',
 
-    // ── API Key de Gemini (exclusiva Félix · FondoUne)
-    GEMINI_KEY:    'AIzaSyBi0yCjNjMcgURldQMwxc7sZKweyMQNl3c',
+    // ── API Key se carga desde Firestore en tiempo de ejecución
+    // (nunca queda expuesta en el código fuente)
+    // Documento: config/felix  →  campo: geminiKey
+    GEMINI_KEY:    '',
 
     MAX_TOKENS:    600,
     TEMP:          0.65,
     HISTORY_LIMIT: 20
   };
+
+  /* ── Carga la API Key desde Firestore al iniciar ─────────────────
+     Requiere que exista en Firestore:
+       Colección: config
+       Documento: felix
+       Campo:     geminiKey  (string con la API Key de Gemini)
+     Solo usuarios autenticados pueden leerlo (regla de Firestore).
+  ─────────────────────────────────────────────────────────────── */
+  function _cargarKeyDesdeFirestore() {
+    if (!window._fbDB) return;
+    window._fbDB.collection('config').doc('felix').get()
+      .then(function(doc) {
+        if (doc.exists && doc.data().geminiKey) {
+          FELIX_CFG.GEMINI_KEY = doc.data().geminiKey;
+          console.log('[Felix] API Key cargada desde Firestore ✅');
+        } else {
+          console.warn('[Felix] No se encontró geminiKey en config/felix');
+        }
+      })
+      .catch(function(e) {
+        console.warn('[Felix] No se pudo leer config de Firestore:', e.message);
+      });
+  }
+  // Ejecutar cuando Firebase esté listo
+  if (window._fbIniciado) {
+    _cargarKeyDesdeFirestore();
+  } else {
+    window._fbReadyCallbacks = window._fbReadyCallbacks || [];
+    window._fbReadyCallbacks.push(_cargarKeyDesdeFirestore);
+  }
 
   /* Contexto específico para empleados — conoce el panel de gestión */
   var SYSTEM_PROMPT = [
@@ -179,14 +211,7 @@
       }
 
       // ── Sin más opciones: mensaje de error informativo ───────────
-      return '⚠️ No pude conectarme al asistente ahora mismo.
-
-**Posibles causas:**
-- El proxy de Google Apps Script necesita ser re-desplegado
-- La API Key de Gemini en Secret Manager expiró
-- Problema temporal de red
-
-Por favor intenta en unos segundos o contacta al administrador.';
+      return '⚠️ No pude conectarme al asistente ahora mismo.\n\n**Posibles causas:**\n- El script proxy de GAS no está desplegado o expiró\n- Problema temporal de red\n\nIntenta de nuevo en unos segundos.';
     }
   }
 
