@@ -740,13 +740,12 @@ window.addEventListener('resize', _debounce(function() {
        permissions" porque las reglas de Firestore requieren request.auth != null */
   }
 
-  // Si Firebase está activo, sincronizar primero, luego arrancar
-  if (window._fbIniciado) {
-    showToast('Sincronizando con Firebase…','☁️');
-    sincronizarDesdeFirebase(function() { arrancarApp(); });
-  } else {
-    arrancarApp();
-  }
+  /* ✅ FIX: sincronizarDesdeFirebase() y iniciarEscuchaFirebase() ya NO se
+     llaman aquí (antes del login). Se movieron a auth.js → _abrirPortal(),
+     que se ejecuta DESPUÉS de que Firebase Auth confirma la identidad del
+     usuario. Llamarlos aquí causaba "Missing or insufficient permissions"
+     porque las reglas de Firestore requieren request.auth != null */
+  arrancarApp();
 
   /* ── INIT SEGURIDAD — aquí todas las funciones ya están definidas ── */
   (function initSeguridad() {
