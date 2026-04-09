@@ -114,6 +114,11 @@ function recargar(){
 var USR_KEY     = 'fu_usuarios';           // localStorage key para usuarios custom
 var USR_DEL_KEY = 'fu_usuarios_eliminados'; // localStorage key para IDs eliminados
 
+/* ✅ FIX: USUARIOS nunca fue declarado como variable global, causando
+   ReferenceError en sincronizarUsuariosEnMemoria(), persistirUsuario()
+   y eliminarUsuarioPersistido(). Se inicializa aquí como cache en memoria. */
+var USUARIOS = {};
+
 /* Cargar usuarios (combina base + guardados en localStorage, respetando eliminaciones) */
 function cargarUsuarios() {
   var base = {
@@ -729,8 +734,10 @@ window.addEventListener('resize', _debounce(function() {
     window.addEventListener('storage',function(e){
       if(e.key===DB_KEY){ recargar(); }
     });
-    // Iniciar escucha en tiempo real de Firebase
-    iniciarEscuchaFirebase();
+    /* ✅ FIX: iniciarEscuchaFirebase() se movió a auth.js/_abrirPortal()
+       para que solo se llame DESPUÉS de que el usuario esté autenticado.
+       Llamarlo aquí (antes del login) causaba "Missing or insufficient
+       permissions" porque las reglas de Firestore requieren request.auth != null */
   }
 
   // Si Firebase está activo, sincronizar primero, luego arrancar

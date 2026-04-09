@@ -130,6 +130,18 @@ function _abrirPortal(user, datos) {
       });
     }
 
+    /* ✅ FIX: iniciar escucha en tiempo real de Firestore AQUÍ, cuando el
+       usuario ya tiene token de Firebase Auth válido. Antes se llamaba en
+       arrancarApp() (antes del login) → "Missing or insufficient permissions" */
+    if (typeof sincronizarDesdeFirebase === 'function') {
+      sincronizarDesdeFirebase(function() {
+        if (typeof recargar === 'function') recargar();
+      });
+    }
+    if (typeof iniciarEscuchaFirebase === 'function') {
+      iniciarEscuchaFirebase();
+    }
+
   }, 400);
 }
 
