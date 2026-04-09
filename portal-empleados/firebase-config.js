@@ -40,19 +40,14 @@ window._fbReady = function(fn) {
          en las reglas de Firestore. El portal ya tiene su propio sistema
          de login (security.js); Firebase Auth solo actúa como "token de
          acceso" a la base de datos en la nube. */
-      window._fbAuth.signInAnonymously()
-        .then(function() {
-          window._fbIniciado = true;
-          console.log('✅ Firebase conectado y autenticado');
-          window._fbReadyCallbacks.forEach(function(fn){ try{ fn(); }catch(e){} });
-          window._fbReadyCallbacks = [];
-        })
-        .catch(function(e) {
-          console.warn('⚠️ Firebase auth anónima falló:', e.message);
-          window._fbIniciado = true;
-          window._fbReadyCallbacks.forEach(function(fn){ try{ fn(); }catch(e){} });
-          window._fbReadyCallbacks = [];
-        });
+      /* ✅ FIX: signInAnonymously eliminado — el proveedor anónimo está
+         deshabilitado en este proyecto Firebase (auth/admin-restricted-operation).
+         Si se requiere auth en el futuro: Firebase Console → Authentication
+         → Sign-in method → Anonymous → Activar */
+      window._fbIniciado = true;
+      console.log('✅ Firebase Firestore conectado');
+      window._fbReadyCallbacks.forEach(function(fn){ try{ fn(); }catch(e){} });
+      window._fbReadyCallbacks = [];
 
     } else {
       console.warn('⚠️ Firebase no configurado — modo localStorage');

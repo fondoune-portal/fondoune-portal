@@ -243,12 +243,17 @@
    ========================================================================= */
 (function() {
   'use strict';
-  var SEC = {
+  /* ✅ FIX: Expuesto en window para que docx-builder.js y otros módulos
+     puedan acceder a SEC sin ReferenceError */
+  window.SEC = {
     MAX_IDLE_MINUTES: 15,
-    AUDIT_KEY: 'fu_empleados_audit',
-    SESS_KEY:  'fu_empleados_sess',
-    RATE_KEY:  'fu_empleados_rate'
+    AUDIT_KEY:        'fu_empleados_audit',
+    SESS_KEY:         'fu_empleados_sess',
+    RATE_KEY:         'fu_empleados_rate',
+    MAX_INTENTOS:     5,   // Referenciado por initSeguridad en docx-builder.js
+    BLOQUEO_MIN:      10   // y por la primera IIFE de este mismo archivo
   };
+  var SEC = window.SEC; // alias local para no reescribir las referencias internas
   /* ── SANITIZACIÓN XSS ── */
   window.FU_Sanitize = function(str) {
     if (typeof str !== 'string') return '';
