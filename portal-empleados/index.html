@@ -17,6 +17,17 @@
 
 <script src="sound-system.js"></script>
 
+<!-- ✅ FIX: stubs de funciones de login definidos en el <head> para evitar
+     ReferenceError cuando Chrome autorrellena los campos y dispara onkeydown/onclick
+     ANTES de que auth.js (cargado al final del <body>) termine de ejecutarse.
+     auth.js sobreescribirá estas definiciones con las implementaciones reales. -->
+<script>
+function loginKeydown(e)   { if (e && e.key === 'Enter') { e.preventDefault(); } }
+function intentarLogin()   { /* placeholder — auth.js no ha cargado aún */ }
+function togglePassVer()   { /* placeholder — auth.js no ha cargado aún */ }
+function mostrarRecuperar(){ /* placeholder — auth.js no ha cargado aún */ }
+</script>
+
 </head>
 <body>
 
@@ -782,12 +793,14 @@
   <span id="toastMsg"></span>
 </div>
 
-<script src="security.js"></script>
-
 <script src="auth.js"></script>
+
+
 
 <script src="app.js"></script>
 <script src="docx-builder.js"></script>
+
+  <script src="security.js"></script>
 
 
 <!-- ═══ FÉLIX IA — Portal Empleados ═══ -->

@@ -167,19 +167,16 @@ function eliminarUsuarioPersistido(login) {
 /* Refrescar USUARIOS en memoria desde localStorage al cargar */
 function sincronizarUsuariosEnMemoria() {
   var todos = cargarUsuarios();
-  // Si USUARIOS existe como global (definido en otro script), úsalo; si no, ignora
-  if (typeof USUARIOS !== 'undefined') {
-    Object.keys(todos).forEach(function(k) {
-      USUARIOS[k] = todos[k];
-    });
-  }
-  // El resto de la app usa cargarUsuarios() directamente, no USUARIOS
+  Object.keys(todos).forEach(function(k) { USUARIOS[k] = todos[k]; });
 }
 
 /* Verificar si la sesión activa es admin */
 function esAdmin() {
   try {
-    var sess = JSON.parse(localStorage.getItem(SEC.SESS_KEY) || 'null');
+    /* ✅ FIX: en el sistema Firebase, la sesión la mantiene window.sesionActual */
+    if (window.sesionActual) return window.sesionActual.rol === 'Administrador';
+    var _key = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_empleados_sess';
+    var sess = JSON.parse(localStorage.getItem(_key) || 'null');
     return sess && sess.rol === 'Administrador';
   } catch(e) { return false; }
 }
@@ -201,8 +198,11 @@ function renderUsrTable() {
   if (countTxt) countTxt.textContent = keys.length + ' usuario' + (keys.length !== 1 ? 's' : '');
   if (!tbody) return;
 
-  var sess = JSON.parse(localStorage.getItem(SEC.SESS_KEY) || '{}');
-  var usuarioActual = sess.usuario || '';
+  /* ✅ FIX: usar window.sesionActual (Firebase) o fallback a localStorage */
+  var _usuarioActual = (window.sesionActual && window.sesionActual.email) || '';
+  var _key2 = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_empleados_sess';
+  var sess = JSON.parse(localStorage.getItem(_key2) || '{}');
+  var usuarioActual = _usuarioActual || sess.usuario || '';
 
   tbody.innerHTML = keys.map(function(login) {
     var u = todos[login];
@@ -751,12 +751,20 @@ window.addEventListener('resize', _debounce(function() {
 
     // SEGURIDAD: siempre eliminar sesión previa al abrir el portal
     // Nunca auto-login — el usuario SIEMPRE debe ingresar sus credenciales
-    localStorage.removeItem(SEC.SESS_KEY);
+    /* ✅ FIX: guard por si window.SEC aún no tiene SESS_KEY (auth.js/security.js conflict) */
+    var _sessKey = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_empleados_sess';
+    localStorage.removeItem(_sessKey);
 
     // Mostrar pantalla de login
-    document.getElementById('loginUser').focus();
-    var b = estaBlockeado();
-    if (b) iniciarCountdown(b.hasta);
+    var _loginUserEl = document.getElementById('loginUser');
+    if (_loginUserEl) _loginUserEl.focus();
+
+    /* ✅ FIX: en la versión Firebase, la función se llama _estaBlockeado() (con guión bajo).
+       Además ya no retorna un objeto {hasta}, sino boolean — el timestamp está en bloqueoHasta */
+    var _bloqueado = (typeof _estaBlockeado === 'function') && _estaBlockeado();
+    if (_bloqueado && typeof iniciarCountdown === 'function') {
+      iniciarCountdown(typeof bloqueoHasta !== 'undefined' ? bloqueoHasta : 0);
+    }
   })();
 
 }());
