@@ -23,27 +23,30 @@
 
   /* ── Carga la API Key desde Firestore al iniciar ─────────────────
      Requiere que exista en Firestore:
-       Colección: config
-       Documento: felix
-       Campo:     geminiKey  (string con la API Key de Gemini)
-     Solo usuarios autenticados pueden leerlo (regla de Firestore).
+       Colección: config  |  Documento: felix  |  Campo: geminiKey
+     _felixKeyPromise resuelve cuando la key está lista (o falla).
   ─────────────────────────────────────────────────────────────── */
+  var _felixKeyResolve;
+  var _felixKeyPromise = new Promise(function(resolve) { _felixKeyResolve = resolve; });
+
   function _cargarKeyDesdeFirestore() {
-    if (!window._fbDB) return;
+    if (!window._fbDB) { _felixKeyResolve(); return; }
     window._fbDB.collection('config').doc('felix').get()
       .then(function(doc) {
         if (doc.exists && doc.data().geminiKey) {
           FELIX_CFG.GEMINI_KEY = doc.data().geminiKey;
           console.log('[Felix] API Key cargada desde Firestore ✅');
         } else {
-          console.warn('[Felix] No se encontró geminiKey en config/felix');
+          console.warn('[Felix] Falta el documento config/felix con campo geminiKey en Firestore');
         }
+        _felixKeyResolve();
       })
       .catch(function(e) {
         console.warn('[Felix] No se pudo leer config de Firestore:', e.message);
+        _felixKeyResolve();
       });
   }
-  // Ejecutar cuando Firebase esté listo
+  // Ejecutar cuando Firebase Auth esté lista
   if (window._fbIniciado) {
     _cargarKeyDesdeFirestore();
   } else {
@@ -159,34 +162,41 @@
     var ultimoMensaje  = historial.length ? historial[historial.length - 1].parts[0].text : '';
     var historialPrevio = historial.slice(0, -1);
 
-    // ── Intento 1: Proxy de Google Apps Script ────────────────────
-    try {
-      var resp = await fetch(FELIX_CFG.PROXY_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body:    JSON.stringify({ texto: ultimoMensaje, historial: historialPrevio })
-      });
+    // ── Esperar a que la key esté cargada desde Firestore ─────────
+    await _felixKeyPromise;
 
-      // Leemos siempre como texto primero — GAS devuelve HTML en errores
-      var rawText = await resp.text();
+    if (!FELIX_CFG.GEMINI_KEY) {
+      return '⚠️ Félix no está configurado aún.\n\n**Acción requerida (administrador):**\nCrea en Firestore:\n- Colección: `config`\n- Documento: `felix`\n- Campo: `geminiKey` con la API Key de Gemini.';
+    }
 
-      // Detectar respuesta HTML (error de GAS / sesión caducada)
-      if (rawText.trim().startsWith('<')) {
-        throw new Error('GAS devolvio HTML en lugar de JSON — verifica el despliegue del script');
+    // ── Intento 1: Proxy de Google Apps Script (omitir si URL vacía) ────
+    if (FELIX_CFG.PROXY_URL) {
+      try {
+        var resp = await fetch(FELIX_CFG.PROXY_URL, {
+          method:  'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body:    JSON.stringify({ texto: ultimoMensaje, historial: historialPrevio })
+        });
+
+        var rawText = await resp.text();
+        if (rawText.trim().startsWith('<')) {
+          throw new Error('GAS devolvio HTML en lugar de JSON — verifica el despliegue del script');
+        }
+
+        var datos = JSON.parse(rawText);
+        var texto = _extraerTextoGemini(datos);
+        if (texto) return texto;
+
+        console.warn('[Felix·Proxy] JSON sin texto util:', JSON.stringify(datos).substring(0, 200));
+        throw new Error('Respuesta JSON vacia del proxy');
+
+      } catch (proxyErr) {
+        console.error('[Felix·Proxy] Fallo el proxy GAS:', proxyErr.message);
       }
+    }
 
-      var datos = JSON.parse(rawText);
-      var texto = _extraerTextoGemini(datos);
-      if (texto) return texto;
-
-      // GAS respondió JSON pero sin contenido útil — logear para debug
-      console.warn('[Felix·Proxy] JSON sin texto util:', JSON.stringify(datos).substring(0, 200));
-      throw new Error('Respuesta JSON vacia del proxy');
-
-    } catch (proxyErr) {
-      console.error('[Felix·Proxy] Fallo el proxy GAS:', proxyErr.message);
-
-      // ── Intento 2: Gemini directo (si hay API Key configurada) ──
+    // ── Intento 2: Gemini directo ─────────────────────────────────
+    {
       if (FELIX_CFG.GEMINI_KEY) {
         console.log('[Felix] Intentando Gemini directo como fallback...');
         try {
@@ -209,10 +219,10 @@
           console.error('[Felix·Gemini] Error directo:', geminiErr.message);
         }
       }
-
-      // ── Sin más opciones: mensaje de error informativo ───────────
-      return '⚠️ No pude conectarme al asistente ahora mismo.\n\n**Posibles causas:**\n- El script proxy de GAS no está desplegado o expiró\n- Problema temporal de red\n\nIntenta de nuevo en unos segundos.';
     }
+
+    // ── Sin más opciones: mensaje de error informativo ───────────
+    return '⚠️ No pude conectarme al asistente ahora mismo.\n\n**Posibles causas:**\n- Falta la API Key en Firestore (config/felix → geminiKey)\n- Problema temporal de red\n\nIntenta de nuevo en unos segundos.';
   }
 
   /* ── 2. FUNCIÓN PRINCIPAL DE UI DE FELIX ── */
