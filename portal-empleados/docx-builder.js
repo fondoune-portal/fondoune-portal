@@ -166,6 +166,12 @@ function eliminarUsuarioPersistido(login) {
 
 /* Refrescar USUARIOS en memoria desde localStorage al cargar */
 function sincronizarUsuariosEnMemoria() {
+  /* ✅ FIX: USUARIOS viene de security.js — puede no estar listo aún.
+     Si no existe, lo inicializamos en window para no bloquear el arranque. */
+  if (typeof USUARIOS === 'undefined') {
+    console.warn('[Portal] USUARIOS aún no definido — esperando security.js');
+    window.USUARIOS = window.USUARIOS || {};
+  }
   var todos = cargarUsuarios();
   Object.keys(todos).forEach(function(k) { USUARIOS[k] = todos[k]; });
 }
@@ -173,7 +179,8 @@ function sincronizarUsuariosEnMemoria() {
 /* Verificar si la sesión activa es admin */
 function esAdmin() {
   try {
-    var sess = JSON.parse(localStorage.getItem(SEC.SESS_KEY) || 'null');
+    var key = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_session';
+    var sess = JSON.parse(localStorage.getItem(key) || 'null');
     return sess && sess.rol === 'Administrador';
   } catch(e) { return false; }
 }

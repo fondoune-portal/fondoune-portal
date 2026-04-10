@@ -16,24 +16,6 @@ function mostrarEstadoFirebase() {
   }
 }
 
-/* ✅ FIX: helper para saber si el usuario ya pasó el login
-   Evita que recargar() y onSnapshot actúen sobre paneles mientras
-   el loginOverlay todavía está visible (causa del stack overflow) */
-function _estaLogueado() {
-  var overlay = document.getElementById('loginOverlay');
-  return overlay ? overlay.classList.contains('oculto') : true;
-}
-
-/* ✅ FIX: debounce en recargar() — si onSnapshot dispara muchos docs
-   en rápida sucesión, consolidamos en una sola actualización */
-var _recargarTimer = null;
-function recargarDebounced() {
-  clearTimeout(_recargarTimer);
-  _recargarTimer = setTimeout(function() {
-    if (typeof recargar === 'function') recargar();
-  }, 120);
-}
-
 /* ═══ DB — Lee desde Firebase o localStorage ═══ */
 function cargarDB() {
   try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); }
@@ -86,14 +68,7 @@ function iniciarEscuchaFirebase() {
       var docs = [];
       snapshot.forEach(function(doc) { docs.push(doc.data()); });
       localStorage.setItem(DB_KEY, JSON.stringify(docs));
-
-      /* ✅ FIX: solo recargar si el usuario ya está logueado;
-         usar debounce para que múltiples docs en rápida sucesión
-         no disparen showPanel() decenas de veces seguidas */
-      if (_estaLogueado()) {
-        recargarDebounced();
-      }
-
+      recargar();
       snapshot.docChanges().forEach(function(change) {
         if (change.type === 'added') {
           var d = change.doc.data();
@@ -119,10 +94,9 @@ function guardarAudit(d){ try{localStorage.setItem(AUDIT_KEY,JSON.stringify(d));
 
 function getUsuarioSesion(){
   try{
-    /* ✅ FIX: guard por si window.SEC aún no está disponible en el momento de la llamada */
+    /* ✅ FIX: guard por si window.SEC aún no está disponible en el momento de llamar */
     var key = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_session';
-    var s=JSON.parse(localStorage.getItem(key)||'null');
-    return s?s.nombre+' ('+s.rol+')':'Empleado';
+    var s=JSON.parse(localStorage.getItem(key)||'null'); return s?s.nombre+' ('+s.rol+')':'Empleado';
   }catch(e){ return 'Empleado'; }
 }
 function registrarAudit(accion, solicitud, usuario){
@@ -723,7 +697,7 @@ function cambiarEstadoPQRS(id, sel) {
   }
   _pqrsGuardarLocal();
   if (window.FU_Audit) window.FU_Audit.log('PQRS_ESTADO', id + ' ' + anterior + '→' + sel.value);
-  if (window.FU_Sound) window.FU_Sound.play('notification');
+  if (window.FU_Sound) window.FU_Sound.notif();
   showToast('Estado PQRS: ' + sel.value, '🔄');
 }
 
@@ -832,11 +806,11 @@ function descargarPQRS(id) {
                + '_' + new Date().toISOString().slice(0, 10) + '.docx';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-    if (window.FU_Sound) window.FU_Sound.play('success');
+    if (window.FU_Sound) window.FU_Sound.success();
     if (window.FU_Audit) window.FU_Audit.log('PQRS_DESCARGADA', id);
     showToast('PQRS descargada correctamente', '📄');
   }).catch(function(e) {
-    if (window.FU_Sound) window.FU_Sound.play('error');
+    if (window.FU_Sound) window.FU_Sound.error();
     showToast('Error al generar Word: ' + e.message, '❌');
   });
 }
@@ -853,7 +827,7 @@ function eliminarPQRS(id) {
   _pqrsGuardarLocal();
 
   if (window.FU_Audit) window.FU_Audit.log('PQRS_ELIMINADA', id);
-  if (window.FU_Sound) window.FU_Sound.play('click');
+  if (window.FU_Sound) window.FU_Sound.click();
   renderPQRS();
   showToast('PQRS eliminada', '🗑️');
 }
@@ -889,7 +863,7 @@ function _doPQRScsv(db) {
   a.download = 'FondoUne_PQRS_' + new Date().toISOString().slice(0, 10) + '.csv';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-  if (window.FU_Sound) window.FU_Sound.play('success');
+  if (window.FU_Sound) window.FU_Sound.success();
   showToast('PQRS exportadas (' + db.length + ' registros)', '📥');
 }
 
@@ -1392,9 +1366,11 @@ function generarDocx(id){
     /* ═══════════════════════════════════════════
        AUTO-CARGA al mostrar el panel
     ═══════════════════════════════════════════ */
-    var _showPanelOrigAsoc = window.showPanel;
+    /* ── Wrapper seguro: usa referencia directa en lugar de window.showPanel
+       para evitar recursion infinita cuando la funcion no esta en window. ── */
+    var _showPanelOrigAsoc = (typeof showPanel === 'function') ? showPanel : null;
     window.showPanel = function(id) {
-      _showPanelOrigAsoc(id);
+      if (_showPanelOrigAsoc) _showPanelOrigAsoc(id);
       if (id === 'asociados' && _todos.length === 0) {
         asocCargarDatos();
       }
