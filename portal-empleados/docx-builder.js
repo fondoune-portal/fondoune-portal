@@ -114,11 +114,6 @@ function recargar(){
 var USR_KEY     = 'fu_usuarios';           // localStorage key para usuarios custom
 var USR_DEL_KEY = 'fu_usuarios_eliminados'; // localStorage key para IDs eliminados
 
-/* ✅ FIX: USUARIOS nunca fue declarado como variable global, causando
-   ReferenceError en sincronizarUsuariosEnMemoria(), persistirUsuario()
-   y eliminarUsuarioPersistido(). Se inicializa aquí como cache en memoria. */
-var USUARIOS = {};
-
 /* Cargar usuarios (combina base + guardados en localStorage, respetando eliminaciones) */
 function cargarUsuarios() {
   var base = {
@@ -178,10 +173,7 @@ function sincronizarUsuariosEnMemoria() {
 /* Verificar si la sesión activa es admin */
 function esAdmin() {
   try {
-    /* ✅ FIX: en el sistema Firebase, la sesión la mantiene window.sesionActual */
-    if (window.sesionActual) return window.sesionActual.rol === 'Administrador';
-    var _key = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_empleados_sess';
-    var sess = JSON.parse(localStorage.getItem(_key) || 'null');
+    var sess = JSON.parse(localStorage.getItem(SEC.SESS_KEY) || 'null');
     return sess && sess.rol === 'Administrador';
   } catch(e) { return false; }
 }
@@ -203,11 +195,8 @@ function renderUsrTable() {
   if (countTxt) countTxt.textContent = keys.length + ' usuario' + (keys.length !== 1 ? 's' : '');
   if (!tbody) return;
 
-  /* ✅ FIX: usar window.sesionActual (Firebase) o fallback a localStorage */
-  var _usuarioActual = (window.sesionActual && window.sesionActual.email) || '';
-  var _key2 = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_empleados_sess';
-  var sess = JSON.parse(localStorage.getItem(_key2) || '{}');
-  var usuarioActual = _usuarioActual || sess.usuario || '';
+  var sess = JSON.parse(localStorage.getItem(SEC.SESS_KEY) || '{}');
+  var usuarioActual = sess.usuario || '';
 
   tbody.innerHTML = keys.map(function(login) {
     var u = todos[login];
@@ -734,18 +723,25 @@ window.addEventListener('resize', _debounce(function() {
     window.addEventListener('storage',function(e){
       if(e.key===DB_KEY){ recargar(); }
     });
-    /* ✅ FIX: iniciarEscuchaFirebase() se movió a auth.js/_abrirPortal()
-       para que solo se llame DESPUÉS de que el usuario esté autenticado.
-       Llamarlo aquí (antes del login) causaba "Missing or insufficient
-       permissions" porque las reglas de Firestore requieren request.auth != null */
+    // Iniciar escucha en tiempo real solo cuando Firebase Auth esté lista
+    // Evita el error "Missing or insufficient permissions" al cargar la página
+    if (window._fbReady) {
+      window._fbReady(function() { iniciarEscuchaFirebase(); });
+    } else {
+      iniciarEscuchaFirebase();
+    }
   }
 
-  /* ✅ FIX: sincronizarDesdeFirebase() y iniciarEscuchaFirebase() ya NO se
-     llaman aquí (antes del login). Se movieron a auth.js → _abrirPortal(),
-     que se ejecuta DESPUÉS de que Firebase Auth confirma la identidad del
-     usuario. Llamarlos aquí causaba "Missing or insufficient permissions"
-     porque las reglas de Firestore requieren request.auth != null */
-  arrancarApp();
+  // Esperar a que Firebase Auth esté lista antes de sincronizar
+  // _fbReady() garantiza que signInAnonymously() ya completó
+  if (window._fbReady) {
+    showToast('Sincronizando con Firebase…','☁️');
+    window._fbReady(function() {
+      sincronizarDesdeFirebase(function() { arrancarApp(); });
+    });
+  } else {
+    arrancarApp();
+  }
 
   /* ── INIT SEGURIDAD — aquí todas las funciones ya están definidas ── */
   (function initSeguridad() {
@@ -757,20 +753,12 @@ window.addEventListener('resize', _debounce(function() {
 
     // SEGURIDAD: siempre eliminar sesión previa al abrir el portal
     // Nunca auto-login — el usuario SIEMPRE debe ingresar sus credenciales
-    /* ✅ FIX: guard por si window.SEC aún no tiene SESS_KEY (auth.js/security.js conflict) */
-    var _sessKey = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_empleados_sess';
-    localStorage.removeItem(_sessKey);
+    localStorage.removeItem(SEC.SESS_KEY);
 
     // Mostrar pantalla de login
-    var _loginUserEl = document.getElementById('loginUser');
-    if (_loginUserEl) _loginUserEl.focus();
-
-    /* ✅ FIX: en la versión Firebase, la función se llama _estaBlockeado() (con guión bajo).
-       Además ya no retorna un objeto {hasta}, sino boolean — el timestamp está en bloqueoHasta */
-    var _bloqueado = (typeof _estaBlockeado === 'function') && _estaBlockeado();
-    if (_bloqueado && typeof iniciarCountdown === 'function') {
-      iniciarCountdown(typeof bloqueoHasta !== 'undefined' ? bloqueoHasta : 0);
-    }
+    document.getElementById('loginUser').focus();
+    var b = estaBlockeado();
+    if (b) iniciarCountdown(b.hasta);
   })();
 
 }());
