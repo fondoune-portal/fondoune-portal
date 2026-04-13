@@ -166,12 +166,7 @@ function eliminarUsuarioPersistido(login) {
 
 /* Refrescar USUARIOS en memoria desde localStorage al cargar */
 function sincronizarUsuariosEnMemoria() {
-  /* ✅ FIX: USUARIOS viene de security.js — puede no estar listo aún.
-     Si no existe, lo inicializamos en window para no bloquear el arranque. */
-  if (typeof USUARIOS === 'undefined') {
-    console.warn('[Portal] USUARIOS aún no definido — esperando security.js');
-    window.USUARIOS = window.USUARIOS || {};
-  }
+  if (typeof USUARIOS === 'undefined') { window.USUARIOS = window.USUARIOS || {}; }
   var todos = cargarUsuarios();
   Object.keys(todos).forEach(function(k) { USUARIOS[k] = todos[k]; });
 }
@@ -202,7 +197,8 @@ function renderUsrTable() {
   if (countTxt) countTxt.textContent = keys.length + ' usuario' + (keys.length !== 1 ? 's' : '');
   if (!tbody) return;
 
-  var sess = JSON.parse(localStorage.getItem(SEC.SESS_KEY) || '{}');
+  var _rk = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_session';
+  var sess = JSON.parse(localStorage.getItem(_rk) || '{}');
   var usuarioActual = sess.usuario || '';
 
   tbody.innerHTML = keys.map(function(login) {
@@ -730,22 +726,15 @@ window.addEventListener('resize', _debounce(function() {
     window.addEventListener('storage',function(e){
       if(e.key===DB_KEY){ recargar(); }
     });
-    // Iniciar escucha en tiempo real solo cuando Firebase Auth esté lista
-    // Evita el error "Missing or insufficient permissions" al cargar la página
-    if (window._fbReady) {
-      window._fbReady(function() { iniciarEscuchaFirebase(); });
-    } else {
-      iniciarEscuchaFirebase();
-    }
+    // Iniciar escucha solo cuando Firebase Auth esté lista
+    if (window._fbReady) { window._fbReady(function() { iniciarEscuchaFirebase(); }); }
+    else { iniciarEscuchaFirebase(); }
   }
 
   // Esperar a que Firebase Auth esté lista antes de sincronizar
-  // _fbReady() garantiza que signInAnonymously() ya completó
   if (window._fbReady) {
     showToast('Sincronizando con Firebase…','☁️');
-    window._fbReady(function() {
-      sincronizarDesdeFirebase(function() { arrancarApp(); });
-    });
+    window._fbReady(function() { sincronizarDesdeFirebase(function() { arrancarApp(); }); });
   } else {
     arrancarApp();
   }
@@ -760,7 +749,8 @@ window.addEventListener('resize', _debounce(function() {
 
     // SEGURIDAD: siempre eliminar sesión previa al abrir el portal
     // Nunca auto-login — el usuario SIEMPRE debe ingresar sus credenciales
-    localStorage.removeItem(SEC.SESS_KEY);
+    var _ik = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_session';
+    localStorage.removeItem(_ik);
 
     // Mostrar pantalla de login
     document.getElementById('loginUser').focus();
