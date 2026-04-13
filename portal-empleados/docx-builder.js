@@ -748,14 +748,16 @@ window.addEventListener('resize', _debounce(function() {
     if (recOv) recOv.classList.add('oculto');
 
     // SEGURIDAD: siempre eliminar sesión previa al abrir el portal
-    // Nunca auto-login — el usuario SIEMPRE debe ingresar sus credenciales
     var _ik = (window.SEC && window.SEC.SESS_KEY) ? window.SEC.SESS_KEY : 'fu_session';
     localStorage.removeItem(_ik);
 
     // Mostrar pantalla de login
     document.getElementById('loginUser').focus();
-    var b = estaBlockeado();
-    if (b) iniciarCountdown(b.hasta);
-  })();
+
+    if (typeof estaBlockeado === 'function') {
+      var b = estaBlockeado();
+      if (b) iniciarCountdown(b.hasta);
+    }
+  })(  );
 
 }());
