@@ -1,21 +1,21 @@
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Proxy seguro via Cloud Function
-   FondoUne Portal Asociados | v2.0 2026
-   ✅ API Key de Gemini almacenada en Secret Manager (servidor)
+   FÉLIX IA — Proxy seguro via Apps Script
+   FondoUne Portal Asociados | v2.1 2026
+   ✅ API Key de Gemini almacenada en Script Properties (servidor)
       — nunca visible en el código fuente del navegador —
+   🔧 Fix v2.1: manejo de Gemini 2.5 Flash thinking model + errores proxy
 ═══════════════════════════════════════════════════════════════ */
 (function() {
   'use strict';
 
   var FELIX_CFG = {
-    // API_KEY eliminada — ahora vive en Secret Manager de Google Cloud
     PROXY_URL:      'https://script.google.com/macros/s/AKfycbyR6TAnlgsU0ULwZY1xXk8l14Z2pj4DPnqLWo9XPZAL2A3DIAXB3N4M0EQgmQNCnI8v/exec',
-    MAX_TOKENS:     600,
+    MAX_TOKENS:     800,
     TEMP:           0.65,
     HISTORY_LIMIT:  20
   };
 
-  /* Contexto específico para empleados — conoce el panel de gestión */
+  /* Contexto específico para asociados */
   var SYSTEM_PROMPT = [
     'Eres Félix, el asistente virtual oficial de FondoUne (Fondo de Empleados de UNE).',
     'Estás en el PORTAL DE ASOCIADOS — hablas directamente con los asociados de FondoUne.',
@@ -63,28 +63,25 @@
     panelOpen ? cerrarFelix() : abrirFelix();
   };
 
-window.abrirFelix = function() {
+  window.abrirFelix = function() {
     panelOpen = true;
     var panel   = document.getElementById('felixEmpPanel');
     var overlay = document.getElementById('felixOverlay');
     var wrap    = document.getElementById('felixEmpWrap');
-    
-    if (panel) { 
-      panel.style.display = 'flex'; 
-      setTimeout(function(){ panel.classList.add('show'); }, 10); 
+
+    if (panel) {
+      panel.style.display = 'flex';
+      setTimeout(function(){ panel.classList.add('show'); }, 10);
     }
     if (overlay) overlay.classList.add('show');
     if (wrap && window.innerWidth <= 768) wrap.style.display = 'none';
 
-    var bubble  = document.getElementById('felixBubble');
+    var bubble = document.getElementById('felixBubble');
     if (bubble) bubble.style.display = 'none';
 
-    // Disparamos showWelcome directo. La propia función showWelcome 
-    // se encargará de verificar si ya saludó o no, gracias al fix anterior.
     setTimeout(showWelcome, 350);
     setTimeout(focusInput, 400);
   };
-
 
   window.cerrarFelix = function() {
     panelOpen = false;
@@ -93,45 +90,83 @@ window.abrirFelix = function() {
     var wrap    = document.getElementById('felixEmpWrap');
     if (panel)   { panel.classList.remove('show'); setTimeout(function(){ panel.style.display='none'; }, 300); }
     if (overlay) overlay.classList.remove('show');
-    if (wrap) wrap.style.display = 'flex'; // <-- MOSTRAR FAB AL CERRAR
+    if (wrap)    wrap.style.display = 'flex';
   };
 
-  /* ── HELPER: extraer texto de respuesta Gemini (cualquier forma) ── */
+  /* ══════════════════════════════════════════════════════════════
+     EXTRACTOR DE TEXTO — compatible con Gemini 2.5 Flash thinking
+     El modelo de pensamiento añade partes con { thought: true }
+     antes del texto real. Este helper filtra esas partes y
+     devuelve únicamente el texto de la respuesta final.
+  ══════════════════════════════════════════════════════════════ */
   function _extraerTextoGemini(datos) {
     if (!datos) return null;
+
+    /* ── Formato raw de Gemini (cuando el proxy reenvía directamente) ── */
     if (datos.candidates && datos.candidates[0] &&
-        datos.candidates[0].content && datos.candidates[0].content.parts &&
-        datos.candidates[0].content.parts[0])
-      return datos.candidates[0].content.parts[0].text || null;
-    return datos.reply || datos.respuesta || datos.text || datos.message ||
-           datos.output || datos.result || null;
+        datos.candidates[0].content && datos.candidates[0].content.parts) {
+
+      var parts = datos.candidates[0].content.parts;
+
+      /* Filtrar partes de pensamiento interno (thinking model) */
+      var textParts = parts.filter(function(p) { return !p.thought && p.text; });
+
+      /* Tomar la última parte de texto (la respuesta final) */
+      if (textParts.length > 0) {
+        return textParts[textParts.length - 1].text || null;
+      }
+      return null;
+    }
+
+    /* ── Formato del proxy Apps Script: { reply: "..." } ── */
+    return datos.reply  || datos.respuesta || datos.text ||
+           datos.message || datos.output   || datos.result || null;
   }
 
-  /* ── 1. LLAMADA AL BACKEND (APPS SCRIPT) con fallback a Gemini directo ── */
-  /* ── 1. LLAMADA AL PROXY SEGURO (Cloud Function) ── */
+  /* ══════════════════════════════════════════════════════════════
+     LLAMADA AL PROXY SEGURO (Apps Script)
+     Con manejo explícito de errores del servidor proxy
+  ══════════════════════════════════════════════════════════════ */
   async function consultarFelix(historial) {
-    var ultimoMensaje = historial.length ? historial[historial.length - 1].parts[0].text : '';
+    var ultimoMensaje  = historial.length ? historial[historial.length - 1].parts[0].text : '';
     var historialPrevio = historial.slice(0, -1);
 
     try {
       var resp = await fetch(FELIX_CFG.PROXY_URL, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ texto: ultimoMensaje, historial: historialPrevio })
+        body:    JSON.stringify({ texto: ultimoMensaje, historial: historialPrevio })
       });
+
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
       var datos = await resp.json();
+
+      /* ── El proxy devolvió un error explícito ── */
+      if (datos.error) {
+        console.error('[Felix·Proxy] Error del servidor:', datos.error);
+        /* Distinguir errores de cuota/rate-limit para dar mensaje útil */
+        if (datos.error.indexOf('429') !== -1 || datos.error.toLowerCase().indexOf('quota') !== -1) {
+          return '⏳ El asistente está recibiendo muchas consultas en este momento. Por favor, intenta de nuevo en unos segundos.';
+        }
+        throw new Error('Proxy error: ' + datos.error);
+      }
+
       var texto = _extraerTextoGemini(datos);
       if (texto) return texto;
-      throw new Error('Respuesta vacia del proxy');
+
+      /* Respuesta vacía — loguear para diagnóstico */
+      console.warn('[Felix·Proxy] Respuesta sin texto. Datos recibidos:', JSON.stringify(datos));
+      throw new Error('Respuesta sin texto del proxy');
+
     } catch (e) {
       console.error('[Felix·Proxy] Error:', e.message);
       return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo en unos segundos.';
     }
   }
 
-  /* ── 2. FUNCIÓN PRINCIPAL DE UI DE FELIX ── */
-   async function felixSendMessage(userText) {
+  /* ── FUNCIÓN PRINCIPAL DE UI DE FELIX ── */
+  async function felixSendMessage(userText) {
     if (!userText.trim() || isLoading) return;
     isLoading = true;
     appendMessage('user', userText);
@@ -139,25 +174,27 @@ window.abrirFelix = function() {
     showTyping(true);
     scrollToBottom();
 
-    // Inyectar system prompt en el primer turno (igual que la versión original)
+    /* Inyectar system prompt en el primer turno */
     if (chatHistory.length === 0) {
       chatHistory.push({ role: 'user',  parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
       chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del Portal de Asociados FondoUne.' }] });
     }
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
+
+    /* Limitar historial para no superar límites de tokens */
     if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
-      chatHistory = chatHistory.slice(-FELIX_CFG.HISTORY_LIMIT * 2);
+      /* Conservar siempre las 2 primeras entradas (system prompt) */
+      chatHistory = chatHistory.slice(0, 2).concat(chatHistory.slice(-(FELIX_CFG.HISTORY_LIMIT * 2 - 2)));
     }
 
-    // Auditoría
+    /* Auditoría */
     if (window.FU_Audit) FU_Audit.log('FELIX_IA', 'Consulta: ' + userText.substring(0, 60));
 
     var reply = await consultarFelix(chatHistory);
 
     chatHistory.push({ role: 'model', parts: [{ text: reply }] });
     showTyping(false);
-    if(window.FU_Sound) FU_Sound.felixMsg();
-    if(window.FU_Sound) FU_Sound.felixMsg();
+    if (window.FU_Sound) FU_Sound.felixMsg();
     appendMessage('felix', reply);
     isLoading = false;
     scrollToBottom();
@@ -213,7 +250,6 @@ window.abrirFelix = function() {
     if (inp) inp.focus();
   }
 
-   // Creamos una variable para recordar si ya saludamos
   var felixYaSaludo = false;
 
   window.showFelixWelcome = function() { if (window.showWelcome) window.showWelcome(); };
@@ -221,17 +257,11 @@ window.abrirFelix = function() {
   window.showWelcome = function() {
     var list = document.getElementById('felixMessages');
     if (!list) return;
-    
-    // Si ya saludamos en esta sesión, no lo volvemos a hacer
     if (felixYaSaludo) return;
-
-    // Inyectamos el mensaje
     appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
-    
-    // Marcamos que ya saludó para que no lo repita si cierran y abren el panel
     felixYaSaludo = true;
-  }
-  
+  };
+
   window.felixChipClick = function(text) {
     if (!panelOpen) abrirFelix();
     var inp = document.getElementById('felixInput');
@@ -240,7 +270,7 @@ window.abrirFelix = function() {
   };
 
   window.felixSend = function() {
-    if(window.FU_Sound) FU_Sound.send();
+    if (window.FU_Sound) FU_Sound.send();
     var inp = document.getElementById('felixInput');
     if (inp) felixSendMessage(inp.value.trim());
   };
@@ -256,7 +286,8 @@ window.abrirFelix = function() {
       inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
     }, 0);
   };
-  /* --- SALUDO AUTOMÁTICO REPARADO --- */
+
+  /* --- SALUDO AUTOMÁTICO --- */
   document.addEventListener('DOMContentLoaded', function() {
     var fab = document.querySelector('.fab-felix') || document.getElementById('felixFab');
     if (fab) {
@@ -264,7 +295,7 @@ window.abrirFelix = function() {
         setTimeout(function() {
           var list = document.getElementById('felixMessages');
           if (list && list.children.length === 0) {
-            appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. \u00bfEn qu\u00e9 te puedo ayudar hoy?');
+            appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
             felixYaSaludo = true;
           }
         }, 350);
