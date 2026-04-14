@@ -25,15 +25,19 @@
   function _cargarKeyDesdeFirestore() {
     if (!window._fbDB) { _felixKeyResolve(); return; }
     window._fbDB.collection('config').doc('felix').get()
-      .then(function(doc) {
-        if (doc.exists && doc.data().geminiKey) {
-          FELIX_CFG.GEMINI_KEY = doc.data().geminiKey;
-          console.log('[Felix] API Key cargada desde Firestore ✅');
-        } else {
-          console.warn('[Felix] Falta el documento config/felix con campo geminiKey en Firestore');
-        }
-        _felixKeyResolve();
-      })
+    .then(function(doc) {
+      if (doc.exists && doc.data().geminiKey) {
+        FELIX_CFG.GEMINI_KEY = doc.data().geminiKey;
+        console.log('[Felix] API Key cargada desde Firestore ✅');
+      } else {
+        console.warn('[Felix] Falta el documento config/felix con campo geminiKey en Firestore');
+      }
+      if (doc.exists && doc.data().proxyUrl) {       // ← línea nueva
+        FELIX_CFG.PROXY_URL = doc.data().proxyUrl;   // ← línea nueva
+        console.log('[Felix] Proxy URL cargada desde Firestore ✅'); // ← línea nueva
+      }                                               // ← línea nueva
+      _felixKeyResolve(); 
+    }) 
       .catch(function(e) {
         console.warn('[Felix] No se pudo leer config de Firestore:', e.message);
         _felixKeyResolve();
