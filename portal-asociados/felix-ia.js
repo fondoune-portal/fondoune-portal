@@ -1,84 +1,106 @@
 /* ═══════════════════════════════════════════════════════════════
-   FÉLIX IA — Proxy seguro via Apps Script
-   FondoUne Portal Asociados | v2.1 2026
-   ✅ API Key de Gemini almacenada en Script Properties (servidor)
-      — nunca visible en el código fuente del navegador —
-   🔧 Fix v2.1: manejo de Gemini 2.5 Flash thinking model + errores proxy
+   FÉLIX IA — Llamada directa a Gemini API (sin proxy)
+   FondoUne Portal Asociados | v3.0 2026
+   ✅ geminiKey cargada dinámicamente desde Firestore
+      Colección: config | Documento: felix | Campo: geminiKey
 ═══════════════════════════════════════════════════════════════ */
 (function() {
   'use strict';
 
   var FELIX_CFG = {
-    PROXY_URL:      'https://script.google.com/macros/s/AKfycbyR6TAnlgsU0ULwZY1xXk8l14Z2pj4DPnqLWo9XPZAL2A3DIAXB3N4M0EQgmQNCnI8v/exec',
+    GEMINI_MODEL:  'gemini-2.5-flash',
     MAX_TOKENS:     800,
     TEMP:           0.65,
     HISTORY_LIMIT:  20
   };
 
-  /* Contexto específico para asociados */
+  /* ── Carga la API Key desde Firestore al iniciar ── */
+  var _felixKeyResolve;
+  var _felixKeyPromise = new Promise(function(resolve) { _felixKeyResolve = resolve; });
+
+  function _cargarKeyDesdeFirestore() {
+    if (!window._fbDB) { _felixKeyResolve(); return; }
+    window._fbDB.collection('config').doc('felix').get()
+      .then(function(doc) {
+        if (doc.exists && doc.data().geminiKey) {
+          FELIX_CFG.GEMINI_KEY = doc.data().geminiKey;
+          console.log('[Felix·Asociados] API Key cargada desde Firestore ✅');
+        } else {
+          console.warn('[Felix·Asociados] Falta config/felix → geminiKey en Firestore');
+        }
+        _felixKeyResolve();
+      })
+      .catch(function(e) {
+        console.warn('[Felix·Asociados] No se pudo leer config de Firestore:', e.message);
+        _felixKeyResolve();
+      });
+  }
+
+  if (window._fbIniciado) {
+    _cargarKeyDesdeFirestore();
+  } else {
+    window._fbReadyCallbacks = window._fbReadyCallbacks || [];
+    window._fbReadyCallbacks.push(_cargarKeyDesdeFirestore);
+  }
+
+  /* ── System Prompt específico para ASOCIADOS ── */
   var SYSTEM_PROMPT = [
     'Eres Félix, el asistente virtual oficial de FondoUne (Fondo de Empleados de UNE).',
     'Estás en el PORTAL DE ASOCIADOS — hablas directamente con los asociados de FondoUne.',
     'Eres amable, preciso, profesional y hablas en español colombiano.',
     'Tu misión es ayudar a los asociados con sus solicitudes de crédito de vivienda.',
     '',
-    'FUNCIONES DEL PORTAL DE EMPLEADOS:',
-    '1. Ver y gestionar todas las solicitudes de crédito de los asociados.',
-    '2. Cambiar el estado de las solicitudes: Pendiente → En Revisión → Aprobado/Rechazado → Desembolsado.',
-    '3. Descargar documentos adjuntos de cada solicitud.',
-    '4. Ver historial de acciones por solicitud.',
-    '5. Gestionar usuarios empleados (crear, editar, cambiar contraseña).',
-    '6. Ver estadísticas y KPIs del panel principal.',
-    '7. Exportar reportes en Word (.docx).',
+    'FUNCIONES QUE PUEDE HACER EL ASOCIADO EN ESTE PORTAL:',
+    '1. Radicar una nueva solicitud de crédito de vivienda.',
+    '2. Consultar el estado de sus solicitudes existentes con su cédula o radicado.',
+    '3. Ver los documentos requeridos según el tipo de crédito.',
+    '4. Descargar el formulario de solicitud.',
+    '5. Enviar PQRS (Peticiones, Quejas, Reclamos y Sugerencias).',
+    '6. Actualizar sus datos de contacto.',
     '',
     'ESTADOS DE SOLICITUD:',
-    '- Pendiente: Recién radicada, pendiente de revisión inicial.',
-    '- En Revisión: El equipo está analizando la solicitud y documentos.',
-    '- Aprobado: Solicitud aprobada, pendiente de desembolso.',
-    '- Rechazado: Solicitud no aprobada (se debe indicar motivo al asociado).',
-    '- Desembolsado: Crédito entregado al asociado.',
+    '- Pendiente: Recién radicada, el equipo la revisará pronto.',
+    '- En Revisión: El equipo de FondoUne está analizando tu solicitud y documentos.',
+    '- Aprobado: ¡Felicitaciones! Tu solicitud fue aprobada, pronto recibirás instrucciones.',
+    '- Rechazado: La solicitud no fue aprobada. Puedes contactar a FondoUne para conocer el motivo.',
+    '- Desembolsado: El crédito ya fue entregado.',
     '',
-    'TIPOS DE CRÉDITO:',
+    'TIPOS DE CRÉDITO DISPONIBLES:',
     '1. Compra de Vivienda  2. Construcción en Lote Propio  3. Garantía Hipotecaria',
     '4. Libre Destino con Garantía  5. Compra de Lote  6. Liberación de Gravamen',
     '',
-    'DOCUMENTOS QUE PUEDE RECIBIR EL EQUIPO:',
-    '- Cédula, certificado laboral, colillas de pago, extractos bancarios,',
-    '  declaración de renta, certificado de tradición, promesa de compraventa,',
-    '  escritura, avalúo comercial.',
+    'DOCUMENTOS GENERALMENTE REQUERIDOS:',
+    '- Cédula de ciudadanía, certificado laboral, últimas colillas de pago,',
+    '  extractos bancarios recientes, declaración de renta (si aplica),',
+    '  certificado de tradición, promesa de compraventa, escritura, avalúo comercial.',
     '',
     'REGLAS:',
-    '- Si el empleado pregunta por una solicitud específica, indícale cómo buscarla en el panel.',
+    '- Habla siempre de forma amigable y en primera persona con el asociado.',
+    '- Nunca menciones funciones de empleados (cambiar estados, gestionar usuarios, exportar reportes).',
     '- Sé conciso: máximo 3-4 párrafos cortos por respuesta.',
     '- Usa emojis ocasionalmente pero sin exagerar.',
-    '- Si no sabes algo operativo específico, sugiere revisar el manual interno.',
+    '- Si el asociado tiene dudas sobre su solicitud específica, indícale que use la sección "Consultar Estado" con su número de cédula o radicado.',
+    '- Para temas muy específicos o urgentes, sugiere contactar directamente a FondoUne.',
   ].join('\n');
 
-  var chatHistory = [];
-  var isLoading   = false;
-  var panelOpen   = false;
+  var chatHistory   = [];
+  var isLoading     = false;
+  var panelOpen     = false;
+  var felixYaSaludo = false;
 
   /* ── TOGGLE PANEL ── */
-  window.toggleFelix = function() {
-    panelOpen ? cerrarFelix() : abrirFelix();
-  };
+  window.toggleFelix = function() { panelOpen ? cerrarFelix() : abrirFelix(); };
 
   window.abrirFelix = function() {
     panelOpen = true;
     var panel   = document.getElementById('felixEmpPanel');
     var overlay = document.getElementById('felixOverlay');
     var wrap    = document.getElementById('felixEmpWrap');
-
-    if (panel) {
-      panel.style.display = 'flex';
-      setTimeout(function(){ panel.classList.add('show'); }, 10);
-    }
+    if (panel)   { panel.style.display = 'flex'; setTimeout(function(){ panel.classList.add('show'); }, 10); }
     if (overlay) overlay.classList.add('show');
     if (wrap && window.innerWidth <= 768) wrap.style.display = 'none';
-
     var bubble = document.getElementById('felixBubble');
     if (bubble) bubble.style.display = 'none';
-
     setTimeout(showWelcome, 350);
     setTimeout(focusInput, 400);
   };
@@ -93,79 +115,62 @@
     if (wrap)    wrap.style.display = 'flex';
   };
 
-  /* ══════════════════════════════════════════════════════════════
-     EXTRACTOR DE TEXTO — compatible con Gemini 2.5 Flash thinking
-     El modelo de pensamiento añade partes con { thought: true }
-     antes del texto real. Este helper filtra esas partes y
-     devuelve únicamente el texto de la respuesta final.
-  ══════════════════════════════════════════════════════════════ */
+  /* ── Extractor de texto compatible con Gemini thinking model ── */
   function _extraerTextoGemini(datos) {
     if (!datos) return null;
-
-    /* ── Formato raw de Gemini (cuando el proxy reenvía directamente) ── */
     if (datos.candidates && datos.candidates[0] &&
         datos.candidates[0].content && datos.candidates[0].content.parts) {
-
-      var parts = datos.candidates[0].content.parts;
-
-      /* Filtrar partes de pensamiento interno (thinking model) */
+      var parts     = datos.candidates[0].content.parts;
       var textParts = parts.filter(function(p) { return !p.thought && p.text; });
-
-      /* Tomar la última parte de texto (la respuesta final) */
-      if (textParts.length > 0) {
-        return textParts[textParts.length - 1].text || null;
-      }
+      if (textParts.length > 0) return textParts[textParts.length - 1].text || null;
       return null;
     }
-
-    /* ── Formato del proxy Apps Script: { reply: "..." } ── */
-    return datos.reply  || datos.respuesta || datos.text ||
-           datos.message || datos.output   || datos.result || null;
+    return datos.reply || datos.respuesta || datos.text ||
+           datos.message || datos.output  || datos.result || null;
   }
 
-  /* ══════════════════════════════════════════════════════════════
-     LLAMADA AL PROXY SEGURO (Apps Script)
-     Con manejo explícito de errores del servidor proxy
-  ══════════════════════════════════════════════════════════════ */
+  /* ── Llamada directa a Gemini API ── */
   async function consultarFelix(historial) {
-    var ultimoMensaje  = historial.length ? historial[historial.length - 1].parts[0].text : '';
-    var historialPrevio = historial.slice(0, -1);
+    await _felixKeyPromise;
+
+    if (!FELIX_CFG.GEMINI_KEY) {
+      return '⚠️ Félix no está configurado aún.\n\n**Acción requerida (administrador):**\nCrea en Firestore:\n- Colección: `config`\n- Documento: `felix`\n- Campo: `geminiKey` con la API Key de Gemini.';
+    }
 
     try {
-      var resp = await fetch(FELIX_CFG.PROXY_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body:    JSON.stringify({ texto: ultimoMensaje, historial: historialPrevio })
-      });
-
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-      var datos = await resp.json();
-
-      /* ── El proxy devolvió un error explícito ── */
-      if (datos.error) {
-        console.error('[Felix·Proxy] Error del servidor:', datos.error);
-        /* Distinguir errores de cuota/rate-limit para dar mensaje útil */
-        if (datos.error.indexOf('429') !== -1 || datos.error.toLowerCase().indexOf('quota') !== -1) {
-          return '⏳ El asistente está recibiendo muchas consultas en este momento. Por favor, intenta de nuevo en unos segundos.';
+      var geminiResp = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/' + FELIX_CFG.GEMINI_MODEL + ':generateContent?key=' + FELIX_CFG.GEMINI_KEY,
+        {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            contents:         historial,
+            generationConfig: { maxOutputTokens: FELIX_CFG.MAX_TOKENS, temperature: FELIX_CFG.TEMP }
+          })
         }
-        throw new Error('Proxy error: ' + datos.error);
+      );
+
+      if (!geminiResp.ok) {
+        var errData = await geminiResp.json().catch(function(){ return {}; });
+        var errMsg  = (errData.error && errData.error.message) || ('HTTP ' + geminiResp.status);
+        console.error('[Felix·Asociados] Error de Gemini:', errMsg);
+        if (geminiResp.status === 429) return '⏳ El asistente está recibiendo muchas consultas en este momento. Intenta de nuevo en unos segundos.';
+        if (geminiResp.status === 400) return '⚠️ No entendí tu solicitud. ¿Puedes reformularla?';
+        throw new Error(errMsg);
       }
 
+      var datos = await geminiResp.json();
       var texto = _extraerTextoGemini(datos);
       if (texto) return texto;
+      throw new Error('Respuesta vacía de Gemini');
 
-      /* Respuesta vacía — loguear para diagnóstico */
-      console.warn('[Felix·Proxy] Respuesta sin texto. Datos recibidos:', JSON.stringify(datos));
-      throw new Error('Respuesta sin texto del proxy');
-
-    } catch (e) {
-      console.error('[Felix·Proxy] Error:', e.message);
+    } catch (err) {
+      console.error('[Felix·Asociados] Error:', err.message);
       return '⚠️ Lo siento, tuve un problema de conexión. Por favor, intenta de nuevo en unos segundos.';
     }
   }
 
-  /* ── FUNCIÓN PRINCIPAL DE UI DE FELIX ── */
+  /* ── Función principal de UI ── */
   async function felixSendMessage(userText) {
     if (!userText.trim() || isLoading) return;
     isLoading = true;
@@ -174,24 +179,20 @@
     showTyping(true);
     scrollToBottom();
 
-    /* Inyectar system prompt en el primer turno */
     if (chatHistory.length === 0) {
       chatHistory.push({ role: 'user',  parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
       chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del Portal de Asociados FondoUne.' }] });
     }
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
 
-    /* Limitar historial para no superar límites de tokens */
+    /* Limitar historial conservando el system prompt inicial */
     if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
-      /* Conservar siempre las 2 primeras entradas (system prompt) */
       chatHistory = chatHistory.slice(0, 2).concat(chatHistory.slice(-(FELIX_CFG.HISTORY_LIMIT * 2 - 2)));
     }
 
-    /* Auditoría */
     if (window.FU_Audit) FU_Audit.log('FELIX_IA', 'Consulta: ' + userText.substring(0, 60));
 
     var reply = await consultarFelix(chatHistory);
-
     chatHistory.push({ role: 'model', parts: [{ text: reply }] });
     showTyping(false);
     if (window.FU_Sound) FU_Sound.felixMsg();
@@ -202,7 +203,7 @@
     if (inp) inp.focus();
   }
 
-  /* ── UI HELPERS ── */
+  /* ── UI Helpers ── */
   function appendMessage(sender, text) {
     var list = document.getElementById('felixMessages');
     if (!list) return;
@@ -210,10 +211,9 @@
     var now = new Date().toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' });
     var div = document.createElement('div');
     div.className = 'felix-msg' + (isFelix ? '' : ' user');
-    var html = formatText(text);
     div.innerHTML =
       '<div class="felix-msg-avatar">' + (isFelix ? '🤖' : '👤') + '</div>' +
-      '<div><div class="felix-msg-bubble">' + html + '</div>' +
+      '<div><div class="felix-msg-bubble">' + formatText(text) + '</div>' +
       '<div class="felix-msg-time">' + now + '</div></div>';
     list.appendChild(div);
     scrollToBottom();
@@ -250,17 +250,15 @@
     if (inp) inp.focus();
   }
 
-  var felixYaSaludo = false;
-
-  window.showFelixWelcome = function() { if (window.showWelcome) window.showWelcome(); };
-
-  window.showWelcome = function() {
+  function showWelcome() {
     var list = document.getElementById('felixMessages');
-    if (!list) return;
-    if (felixYaSaludo) return;
-    appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
+    if (!list || felixYaSaludo) return;
+    appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para tu solicitud, consultar el estado de tu crédito, resolver dudas sobre los tipos de crédito y mucho más. ¿En qué te puedo ayudar hoy?');
     felixYaSaludo = true;
-  };
+  }
+
+  window.showFelixWelcome = function() { showWelcome(); };
+  window.showWelcome      = showWelcome;
 
   window.felixChipClick = function(text) {
     if (!panelOpen) abrirFelix();
@@ -276,10 +274,7 @@
   };
 
   window.felixKeydown = function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      window.felixSend();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window.felixSend(); }
     var inp = e.target;
     setTimeout(function(){
       inp.style.height = '40px';
@@ -287,17 +282,14 @@
     }, 0);
   };
 
-  /* --- SALUDO AUTOMÁTICO --- */
+  /* ── Saludo automático al abrir el FAB ── */
   document.addEventListener('DOMContentLoaded', function() {
     var fab = document.querySelector('.fab-felix') || document.getElementById('felixFab');
     if (fab) {
       fab.addEventListener('click', function() {
         setTimeout(function() {
           var list = document.getElementById('felixMessages');
-          if (list && list.children.length === 0) {
-            appendMessage('felix', '¡Hola! 👋 Soy **Félix**, tu asistente del Portal de Asociados FondoUne.\n\nPuedo ayudarte con documentos para desembolso, datos del asociado, PQRS y otras solicitudes. ¿En qué te puedo ayudar hoy?');
-            felixYaSaludo = true;
-          }
+          if (list && list.children.length === 0) showWelcome();
         }, 350);
       });
     }
@@ -305,6 +297,11 @@
 
 })();
 
+
+/* ══════════════════════════════════════════════════
+   SEG — Módulo de consulta de estado de solicitudes
+   (sin cambios — se mantiene igual)
+══════════════════════════════════════════════════ */
 var SEG = (function() {
   'use strict';
   var ETIQUETAS = { pendiente:'Pendiente', revision:'En Revisión', aprobado:'Aprobado', rechazado:'Rechazado', desembolsado:'Desembolsado' };
