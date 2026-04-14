@@ -8,15 +8,8 @@
   'use strict';
 
   var FELIX_CFG = {
-    // ── Proxy desactivado — Félix llama directo a Gemini
-    PROXY_URL:     '',
-
-    // ── API Key se carga desde Firestore en tiempo de ejecución
-    // (nunca queda expuesta en el código fuente)
-    // Documento: config/felix  →  campo: geminiKey
-    GEMINI_KEY:    '',
-
-    MAX_TOKENS:    600,
+    PROXY_URL: 'https://script.google.com/macros/s/AKfycbwgDStwEkcC4i-OgTXMN5XCfHoM_M6_Lfr_03o_qs12lNLFYr5fmWYmnv2EHFrMSMne/exec',
+    MAX_TOKENS:    800,
     TEMP:          0.65,
     HISTORY_LIMIT: 20
   };
