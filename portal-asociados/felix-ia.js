@@ -8,7 +8,7 @@
   'use strict';
 
   var FELIX_CFG = {
-    GEMINI_MODEL:  'gemini-2.5-flash',
+    GEMINI_MODEL:  'gemini-2.0-flash',
     MAX_TOKENS:     800,
     TEMP:           0.65,
     HISTORY_LIMIT:  20
@@ -185,7 +185,6 @@
     }
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
 
-    /* Limitar historial conservando el system prompt inicial */
     if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
       chatHistory = chatHistory.slice(0, 2).concat(chatHistory.slice(-(FELIX_CFG.HISTORY_LIMIT * 2 - 2)));
     }
@@ -296,77 +295,3 @@
   });
 
 })();
-
-
-/* ══════════════════════════════════════════════════
-   SEG — Módulo de consulta de estado de solicitudes
-   (sin cambios — se mantiene igual)
-══════════════════════════════════════════════════ */
-var SEG = (function() {
-  'use strict';
-  var ETIQUETAS = { pendiente:'Pendiente', revision:'En Revisión', aprobado:'Aprobado', rechazado:'Rechazado', desembolsado:'Desembolsado' };
-  var ICONOS    = { compra:'🏠', construccion:'🏗️', gravamen:'📄' };
-  function msg(tipo, txt) { var el = document.getElementById('segMsg'); el.className = 'seg-msg '+tipo; el.textContent = txt; el.style.display = 'block'; }
-  function ocultarMsg() { document.getElementById('segMsg').style.display = 'none'; }
-  function renderLista(lista) {
-    var cont = document.getElementById('segResults');
-    if (!lista || lista.length === 0) {
-      cont.innerHTML = '<div class="seg-empty"><span class="seg-empty-ico">📭</span>No encontramos solicitudes con ese dato.<br><small>Verifica que la cédula o radicado sean correctos.</small></div>';
-      cont.style.display = 'block'; return;
-    }
-    var html = '';
-    lista.forEach(function(s) {
-      var estado = (s.estado||'pendiente').toLowerCase().replace(/\s/g,'').replace('enrevisión','revision').replace('enrevision','revision');
-      var tipo = (s.tipo||'compra').toLowerCase();
-      var fecha = s.fechaRegistro ? new Date(s.fechaRegistro).toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'}) : (s.fecha||'—');
-      html += '<div class="seg-card"><div class="seg-card-ico '+tipo+'">'+(ICONOS[tipo]||'📋')+'</div><div class="seg-card-body"><div class="seg-card-id">'+(s.radicado||s.id||'—')+'</div><div class="seg-card-nombre">'+(s.nombreTitular||s.nombre||'—')+'</div><div class="seg-card-meta"><span>📅 '+fecha+'</span><span>👤 '+(s.asesor||'—')+'</span><span>📂 '+(s.tipoLabel||tipo)+'</span></div></div><div class="seg-estado '+estado+'">'+(ETIQUETAS[estado]||s.estado||'Pendiente')+'</div></div>';
-    });
-    cont.innerHTML = html; cont.style.display = 'block';
-  }
-  function buscarLocal(raw) {
-    try {
-      var norm = raw.replace(/\./g,'').replace(/,/g,'').trim().toUpperCase();
-      var todas = JSON.parse(localStorage.getItem('fondounesolicitudes')||'[]');
-      var res = todas.filter(function(s) {
-        var c = (s.cedula||'').replace(/\./g,'').replace(/,/g,'').trim().toUpperCase();
-        var r = (s.radicado||'').toUpperCase();
-        return c===norm || r===norm || r.includes(norm);
-      });
-      res.sort(function(a,b){ return new Date(b.fechaRegistro||0)-new Date(a.fechaRegistro||0); });
-      ocultarMsg();
-      if (res.length) msg('info','📦 Resultados locales (sin conexión a la nube).');
-      renderLista(res);
-    } catch(e) { msg('err','❌ Error al buscar. Intenta nuevamente.'); }
-  }
-  function consultar() {
-    var raw = (document.getElementById('segInput').value||'').trim();
-    if (!raw || raw.replace(/\./g,'').replace(/\s/g,'').length < 4) { msg('err','⚠️ Ingresa al menos 4 caracteres de tu cédula o radicado.'); return; }
-    document.getElementById('segResults').style.display = 'none';
-    msg('info','🔍 Buscando tus solicitudes...');
-    if (window._fbDB && window._fbDB !== null) {
-      var cedNorm = raw.replace(/\./g,'').replace(/,/g,'').trim();
-      var rawUp   = raw.toUpperCase().trim();
-      Promise.all([
-        window._fbDB.collection('solicitudes').where('cedula','==',cedNorm).get(),
-        window._fbDB.collection('solicitudes').where('cedula','==',raw).get(),
-        window._fbDB.collection('solicitudes').where('radicado','==',raw).get(),
-        window._fbDB.collection('solicitudes').where('id','==',raw).get(),
-        window._fbDB.collection('solicitudes').where('id','==',rawUp).get(),
-        window._fbDB.collection('solicitudes').doc(raw).get()
-          .then(function(d){ return { forEach: function(fn){ if(d.exists) fn(d); } }; })
-          .catch(function(){ return { forEach: function(){} }; })
-      ]).then(function(snaps) {
-        var docs = {};
-        snaps.forEach(function(snap){
-          if (snap && typeof snap.forEach === 'function') {
-            snap.forEach(function(d){ if(d.exists !== false) docs[d.id] = d.data(); });
-          }
-        });
-        var lista = Object.values(docs);
-        lista.sort(function(a,b){ return new Date(b.fechaRegistro||0)-new Date(a.fechaRegistro||0); });
-        ocultarMsg(); renderLista(lista);
-      }).catch(function(e){ console.warn('SEG error:',e.message); buscarLocal(raw); });
-    } else { buscarLocal(raw); }
-  }
-  return { consultar: consultar };
-}());
