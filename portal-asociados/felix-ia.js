@@ -29,7 +29,11 @@
         .then(function(doc) {
           if (doc.exists && doc.data().geminiKey) {
             FELIX_CFG.GEMINI_KEY = doc.data().geminiKey;
-            FELIX_CFG.PROXY_URL  = doc.data().proxyurl || null;
+            FELIX_CFG.PROXY_URL = doc.data().proxyUrl || doc.data().proxyurl || null;
+            FELIX_CFG.MODEL      = doc.data().model || 'gemini-2.5-flash';
+            FELIX_CFG.MAX_TOKENS = doc.data().maxTokens || 800;
+            FELIX_CFG.TEMP       = doc.data().temp || 0.65;
+            FELIX_CFG.HISTORY_LIMIT = doc.data().historyLimit || 20;
             console.log('[Felix·Asociados] Config cargada desde Firestore ✅');
           } else {
             console.warn('[Felix·Asociados] Falta config/felix → geminiKey en Firestore');
