@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
    FÉLIX IA — Proxy GAS → Gemini API
-   FondoUne Portal Asociados | v3.2 2026
+   FondoUne Portal Asociados | v3.3 2026
    ✅ Usa proxy GAS para evitar exposición de API Key
-   ✅ geminiKey y proxyurl cargados desde Firestore
+   ✅ geminiKey y proxyUrl cargados desde Firestore
       Colección: config | Documento: felix
    ✅ Fix v3.2: llamada via proxy en lugar de directo a Gemini
    ✅ Fix v3.1: isLoading protegido con try/finally
@@ -29,7 +29,7 @@
         .then(function(doc) {
           if (doc.exists && doc.data().geminiKey) {
             FELIX_CFG.GEMINI_KEY = doc.data().geminiKey;
-            FELIX_CFG.PROXY_URL  = doc.data().proxyurl || null;
+            FELIX_CFG.PROXY_URL  = doc.data().proxyUrl || null;
             console.log('[Felix·Asociados] Config cargada desde Firestore ✅');
           } else {
             console.warn('[Felix·Asociados] Falta config/felix → geminiKey en Firestore');
@@ -140,7 +140,7 @@
       await _felixKeyPromise;
   
       if (!FELIX_CFG.PROXY_URL) {
-        return '⚠️ Félix no está configurado aún.\n\n**Acción requerida (administrador):**\nCrea en Firestore:\n- Colección: `config`\n- Documento: `felix`\n- Campo: `proxyurl` con la URL del proxy GAS.';
+        return '⚠️ Félix no está configurado aún.\n\n**Acción requerida (administrador):**\nCrea en Firestore:\n- Colección: `config`\n- Documento: `felix`\n- Campo: `proxyUrl` con la URL del proxy GAS.';
       }
   
       try {
