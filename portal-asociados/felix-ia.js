@@ -1,8 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════
    FÉLIX IA — Llamada directa a Gemini API (sin proxy)
-   FondoUne Portal Asociados | v3.0 2026
+   FondoUne Portal Asociados | v3.1 2026
    ✅ geminiKey cargada dinámicamente desde Firestore
       Colección: config | Documento: felix | Campo: geminiKey
+   ✅ Fix v3.1: isLoading protegido con try/finally para evitar
+      bloqueo de botones tras errores en cualquier flujo
 ═══════════════════════════════════════════════════════════════ */
 (function() {
   'use strict';
@@ -170,7 +172,8 @@
     }
   }
 
-  /* ── Función principal de UI ── */
+  /* ── Función principal de UI — FIX v3.1: try/finally garantiza
+        que isLoading siempre se libere sin importar qué ocurra ── */
   async function felixSendMessage(userText) {
     if (!userText.trim() || isLoading) return;
     isLoading = true;
@@ -179,27 +182,34 @@
     showTyping(true);
     scrollToBottom();
 
-    if (chatHistory.length === 0) {
-      chatHistory.push({ role: 'user',  parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
-      chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del Portal de Asociados FondoUne.' }] });
+    try {
+      if (chatHistory.length === 0) {
+        chatHistory.push({ role: 'user',  parts: [{ text: 'INSTRUCCIONES DEL SISTEMA: ' + SYSTEM_PROMPT }] });
+        chatHistory.push({ role: 'model', parts: [{ text: 'Entendido, soy Félix del Portal de Asociados FondoUne.' }] });
+      }
+      chatHistory.push({ role: 'user', parts: [{ text: userText }] });
+
+      if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
+        chatHistory = chatHistory.slice(0, 2).concat(chatHistory.slice(-(FELIX_CFG.HISTORY_LIMIT * 2 - 2)));
+      }
+
+      if (window.FU_Audit) FU_Audit.log('FELIX_IA', 'Consulta: ' + userText.substring(0, 60));
+
+      var reply = await consultarFelix(chatHistory);
+      chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+      if (window.FU_Sound) FU_Sound.felixMsg();
+      appendMessage('felix', reply);
+
+    } catch (err) {
+      console.error('[Felix·Asociados] Error inesperado en felixSendMessage:', err);
+      appendMessage('felix', '⚠️ Ocurrió un error inesperado. Por favor, intenta de nuevo.');
+    } finally {
+      isLoading = false;
+      showTyping(false);
+      scrollToBottom();
+      var inp = document.getElementById('felixInput');
+      if (inp) inp.focus();
     }
-    chatHistory.push({ role: 'user', parts: [{ text: userText }] });
-
-    if (chatHistory.length > FELIX_CFG.HISTORY_LIMIT * 2) {
-      chatHistory = chatHistory.slice(0, 2).concat(chatHistory.slice(-(FELIX_CFG.HISTORY_LIMIT * 2 - 2)));
-    }
-
-    if (window.FU_Audit) FU_Audit.log('FELIX_IA', 'Consulta: ' + userText.substring(0, 60));
-
-    var reply = await consultarFelix(chatHistory);
-    chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-    showTyping(false);
-    if (window.FU_Sound) FU_Sound.felixMsg();
-    appendMessage('felix', reply);
-    isLoading = false;
-    scrollToBottom();
-    var inp = document.getElementById('felixInput');
-    if (inp) inp.focus();
   }
 
   /* ── UI Helpers ── */
