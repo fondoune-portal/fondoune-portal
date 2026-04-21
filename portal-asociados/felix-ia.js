@@ -11,8 +11,8 @@
     'use strict';
   
     var FELIX_CFG = {
-      GEMINI_MODEL:  'gemini-2.0-flash',
-      MAX_TOKENS:     800,
+        GEMINI_MODEL: 'gemini-2.5-flash-preview-04-17',
+      MAX_TOKENS:     600,
       TEMP:           0.65,
       HISTORY_LIMIT:  20,
       GEMINI_KEY:     null,
