@@ -27,6 +27,11 @@ window._fbDB = null;
       firebase.initializeApp(FIREBASE_CONFIG);
       window._fbDB = firebase.firestore();
       console.log('✅ Firebase conectado correctamente');
+window._fbIniciado = true;
+if (Array.isArray(window._fbReadyCallbacks)) {
+  window._fbReadyCallbacks.forEach(function(cb) { try { cb(); } catch(e) {} });
+  window._fbReadyCallbacks = [];
+}
     } else {
       console.warn('⚠️ Firebase no configurado — usando localStorage');
     }
