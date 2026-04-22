@@ -238,6 +238,7 @@ function showPanel(id){
   if(id==='historial') renderAuditoria();
   if(id==='dashboard') renderDashboard();
   if(id==='pqrs') renderPQRS();
+  if(id==='usuarios') renderUsrTable();
 }
 
 /* ═══ NOTIFICACIONES ═══ */
@@ -1433,3 +1434,346 @@ function toggleCustomSelect() {
       document.getElementById('recTargetUserDropdown').classList.remove('open');
     }
   });
+
+/* ════════════════════════════════════════════════════════════
+   FUNCIONES FALTANTES — Implementadas post-migración Firebase
+   ════════════════════════════════════════════════════════════ */
+
+/* ── recargar: actualiza contadores y re-renderiza el panel visible ── */
+function recargar() {
+  actualizarContadores();
+  mostrarEstadoFirebase();
+  var activo = document.querySelector('.panel.active');
+  if (!activo) return;
+  var id = activo.id.replace('panel-', '');
+  if      (id === 'solicitudes') renderTabla();
+  else if (id === 'pendientes')  renderPendientes();
+  else if (id === 'aprobados')   renderAprobados();
+  else if (id === 'historial')   renderAuditoria();
+  else if (id === 'dashboard')   renderDashboard();
+  /* PQRS y usuarios no se recargan automáticamente — tienen su propia carga */
+}
+
+/* ── exportarExcel: descarga solicitudes en CSV (compatible con Excel) ── */
+function exportarExcel() {
+  var db = cargarDB();
+  if (!db.length) { showToast('Sin datos para exportar', '⚠️'); return; }
+  var headers = ['ID','Radicado','Tipo','Estado','Nombre Titular','Cédula',
+                 'Teléfono','Correo','Dirección','Asesor','Fecha Registro','Fecha Límite'];
+  var rows = db.map(function(s) {
+    return [s.id, s.radicado, s.tipoLabel||s.tipo, s.estado,
+            s.nombreTitular, s.cedula||s.documento,
+            s.telefono, s.correo, s.direccion, s.asesor,
+            s.fechaRegistro ? new Date(s.fechaRegistro).toLocaleDateString('es-CO') : '',
+            s.fechaLimite||'']
+      .map(function(v) { return '"' + (v||'').replace(/"/g, '""') + '"'; }).join(';');
+  });
+  var csv  = '\uFEFF' + headers.map(function(h){ return '"'+h+'"'; }).join(';') + '\n' + rows.join('\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'FondoUne_Solicitudes_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  if (window.FU_Sound) window.FU_Sound.play('success');
+  showToast('Exportado: ' + db.length + ' registros', '📥');
+}
+
+/* ── Sidebar móvil ── */
+function toggleSidebarMovil() {
+  var sidebar = document.querySelector('.sidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  if (!sidebar) return;
+  var abierto = sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('show', abierto);
+}
+function cerrarSidebarMovil() {
+  var sidebar = document.querySelector('.sidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('show');
+}
+
+/* ════════════════════════════════════════════════════════════
+   GESTIÓN DE USUARIOS — Firebase Auth + Firestore
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Mostrar / ocultar ítem de nav "Usuarios" según rol ── */
+function actualizarNavAdmin() {
+  var esAdmin = window.sesionActual && window.sesionActual.rol === 'Administrador';
+  var navUsr  = document.getElementById('nav-usuarios');
+  if (navUsr) navUsr.style.display = esAdmin ? '' : 'none';
+}
+
+/* ── Renderizar tabla de usuarios desde Firestore ── */
+function renderUsrTable() {
+  /* Solo ejecutar si hay sesión activa de administrador */
+  if (!window.sesionActual || window.sesionActual.rol !== 'Administrador') return;
+  if (!window._fbDB) return;
+
+  var tbody    = document.getElementById('usrTableBody');
+  var countTxt = document.getElementById('usr-count-txt');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">⏳ Cargando usuarios…</td></tr>';
+
+  window._fbDB.collection('usuarios').get()
+    .then(function(snap) {
+      var users = [];
+      snap.forEach(function(doc) {
+        users.push(Object.assign({ _uid: doc.id }, doc.data()));
+      });
+      if (countTxt) countTxt.textContent = users.length + ' usuario' + (users.length !== 1 ? 's' : '');
+
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><div class="ei">👥</div>' +
+          '<h3>Sin usuarios</h3><p>No hay perfiles en Firestore › colección "usuarios".</p></div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      users.forEach(function(u) {
+        var activo         = u.activo !== false;
+        var esSesionActual = window.sesionActual && u._uid === window.sesionActual.uid;
+        var rolColor       = u.rol === 'Administrador'
+          ? 'background:#FEF3C7;color:#92400E;'
+          : 'background:#E8F8F0;color:#0D7A4E;';
+
+        var tr = document.createElement('tr');
+
+        /* Nombre + email */
+        var td1 = document.createElement('td');
+        td1.innerHTML =
+          '<div class="tr-name">' + escHtml(u.nombre || '—') +
+          (esSesionActual ? ' <span style="font-size:10px;color:var(--muted);">(tú)</span>' : '') + '</div>' +
+          '<div class="tr-sub">' + escHtml(u.email || u._uid) + '</div>';
+
+        /* Rol + estado activo */
+        var td2 = document.createElement('td');
+        td2.innerHTML =
+          '<span class="badge" style="' + rolColor + '">' + escHtml(u.rol || '—') + '</span>' +
+          (!activo ? ' <span class="badge" style="background:#FEE2E2;color:#991B1B;font-size:10px;margin-left:4px;">Inactivo</span>' : '');
+
+        /* Acciones */
+        var td3  = document.createElement('td');
+        var wrap = document.createElement('div');
+        wrap.className = 'row-actions';
+
+        var btnEdit = document.createElement('button');
+        btnEdit.className = 'act-btn';
+        btnEdit.title     = 'Editar nombre / rol';
+        btnEdit.textContent = '✏️';
+        (function(uid) {
+          btnEdit.addEventListener('click', function() { _abrirEditarUsuario(uid); });
+        })(u._uid);
+        wrap.appendChild(btnEdit);
+
+        /* Botón activar/desactivar solo para usuarios distintos al actual */
+        if (!esSesionActual) {
+          var btnToggle = document.createElement('button');
+          btnToggle.className   = 'act-btn';
+          btnToggle.title       = activo ? 'Desactivar acceso' : 'Activar acceso';
+          btnToggle.textContent = activo ? '🔴' : '🟢';
+          (function(uid, estadoActivo) {
+            btnToggle.addEventListener('click', function() { _toggleActivoUsuario(uid, estadoActivo); });
+          })(u._uid, activo);
+          wrap.appendChild(btnToggle);
+        }
+
+        td3.appendChild(wrap);
+        tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(function(err) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:16px;color:#EF4444">⚠️ Error al cargar: ' +
+        escHtml(err.message) + '</td></tr>';
+    });
+}
+
+/* ── Helper: abrir / cerrar el modal de usuarios ── */
+function _abrirUsrModal() {
+  var overlay = document.getElementById('usrOverlay');
+  var modal   = document.getElementById('usrModal');
+  if (overlay) overlay.classList.add('show');
+  if (modal) {
+    modal.style.opacity       = '1';
+    modal.style.transform     = 'translate(-50%,-50%) scale(1)';
+    modal.style.pointerEvents = 'auto';
+  }
+}
+function cerrarUsrModal() {
+  var overlay = document.getElementById('usrOverlay');
+  var modal   = document.getElementById('usrModal');
+  if (overlay) overlay.classList.remove('show');
+  if (modal) {
+    modal.style.opacity       = '0';
+    modal.style.transform     = 'translate(-50%,-48%) scale(.96)';
+    modal.style.pointerEvents = 'none';
+  }
+}
+
+/* ── Abrir modal en modo CREAR ── */
+function abrirCrearUsuario() {
+  if (!window.sesionActual || window.sesionActual.rol !== 'Administrador') {
+    showToast('Solo administradores pueden crear usuarios', '⚠️'); return;
+  }
+  document.getElementById('usrModalTitle').textContent  = '👤 Nuevo Usuario';
+  document.getElementById('usrEditKey').value           = '';
+  document.getElementById('usrNombre').value            = '';
+  document.getElementById('usrLogin').value             = '';
+  document.getElementById('usrLogin').disabled          = false;
+  document.getElementById('usrRol').value               = 'Asesor';
+  document.getElementById('usrPass').value              = '';
+  document.getElementById('usrPass2').value             = '';
+  document.getElementById('usrModalMsg').textContent    = '';
+  /* Campos de contraseña visibles solo en creación */
+  document.getElementById('usrPassField').style.display       = '';
+  document.getElementById('usrPassField2').style.display      = '';
+  document.getElementById('usrPassCambioField').style.display = 'none';
+  _abrirUsrModal();
+}
+
+/* ── Abrir modal en modo EDITAR ── */
+function _abrirEditarUsuario(uid) {
+  if (!window._fbDB) return;
+  window._fbDB.collection('usuarios').doc(uid).get()
+    .then(function(doc) {
+      if (!doc.exists) { showToast('Usuario no encontrado', '⚠️'); return; }
+      var u = doc.data();
+      document.getElementById('usrModalTitle').textContent = '✏️ Editar Usuario';
+      document.getElementById('usrEditKey').value  = uid;
+      document.getElementById('usrNombre').value   = u.nombre || '';
+      document.getElementById('usrLogin').value    = u.email  || '';
+      document.getElementById('usrLogin').disabled = true;   /* email no editable */
+      document.getElementById('usrRol').value      = u.rol   || 'Asesor';
+      document.getElementById('usrModalMsg').textContent = '';
+      /* En edición: sin campos de contraseña nueva — ver nota de seguridad */
+      document.getElementById('usrPassField').style.display       = 'none';
+      document.getElementById('usrPassField2').style.display      = 'none';
+      document.getElementById('usrPassCambioField').style.display = 'none';
+      _abrirUsrModal();
+    })
+    .catch(function(err) { showToast('Error: ' + err.message, '❌'); });
+}
+
+/* ── Segunda instancia de Firebase para crear usuarios sin cerrar la sesión del admin ──
+   createUserWithEmailAndPassword hace signIn del nuevo usuario automáticamente.
+   Usando una segunda app ese signIn ocurre en un contexto separado y la sesión del
+   admin queda intacta en la app principal.                                             ── */
+var _secondaryApp = null;
+function _getSecondaryApp() {
+  if (_secondaryApp) return _secondaryApp;
+  try   { _secondaryApp = firebase.app('fu_secundaria'); }
+  catch (e) { _secondaryApp = firebase.initializeApp(firebase.app().options, 'fu_secundaria'); }
+  return _secondaryApp;
+}
+
+/* ── Guardar usuario (crear o editar) — llamado por el botón "💾 Guardar" ── */
+function guardarUsuario() {
+  var uid    = (document.getElementById('usrEditKey').value || '').trim();
+  var nombre = (document.getElementById('usrNombre').value  || '').trim();
+  var email  = (document.getElementById('usrLogin').value   || '').trim().toLowerCase();
+  var rol    = document.getElementById('usrRol').value;
+  var msgEl  = document.getElementById('usrModalMsg');
+  var btnG   = document.getElementById('usrGuardarBtn');
+
+  msgEl.style.color = '#EF4444';
+  msgEl.textContent = '';
+
+  if (!nombre) { msgEl.textContent = 'El nombre completo es obligatorio.'; return; }
+
+  /* ════ MODO EDICIÓN ════ */
+  if (uid) {
+    msgEl.style.color = 'var(--muted)';
+    msgEl.textContent = '⏳ Guardando cambios…';
+    btnG.disabled = true;
+
+    window._fbDB.collection('usuarios').doc(uid).update({ nombre: nombre, rol: rol })
+      .then(function() {
+        btnG.disabled = false;
+        cerrarUsrModal();
+        renderUsrTable();
+        registrarAudit('Usuario editado: ' + nombre, { id: 'admin', radicado: 'USR_EDIT', nombreTitular: nombre });
+        showToast('Usuario actualizado', '✅');
+        /* Actualizar sesión si el admin editó su propio perfil */
+        if (window.sesionActual && uid === window.sesionActual.uid) {
+          window.sesionActual.nombre = nombre;
+          window.sesionActual.rol    = rol;
+          actualizarNavAdmin();
+          var su = document.getElementById('sessionUser');
+          if (su) su.textContent = '● ' + nombre + ' (' + rol + ')';
+        }
+      })
+      .catch(function(err) {
+        btnG.disabled = false;
+        msgEl.style.color = '#EF4444';
+        msgEl.textContent = 'Error al guardar: ' + (err.message || err.code);
+      });
+    return;
+  }
+
+  /* ════ MODO CREACIÓN ════ */
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msgEl.textContent = 'Ingresa un correo electrónico válido.'; return;
+  }
+  var pass  = document.getElementById('usrPass').value  || '';
+  var pass2 = document.getElementById('usrPass2').value || '';
+  if (pass.length < 8) { msgEl.textContent = 'La contraseña debe tener mínimo 8 caracteres.'; return; }
+  if (pass !== pass2)  { msgEl.textContent = 'Las contraseñas no coinciden.'; return; }
+
+  msgEl.style.color = 'var(--muted)';
+  msgEl.textContent = '⏳ Creando usuario en Firebase…';
+  btnG.disabled = true;
+
+  var secApp  = _getSecondaryApp();
+  var secAuth = secApp.auth();
+
+  secAuth.createUserWithEmailAndPassword(email, pass)
+    .then(function(cred) {
+      var newUid = cred.user.uid;
+      secAuth.signOut(); /* cerrar sesión de la app secundaria de inmediato */
+      return window._fbDB.collection('usuarios').doc(newUid).set({
+        email:     email,
+        nombre:    nombre,
+        rol:       rol,
+        activo:    true,
+        creadoEn:  new Date().toISOString(),
+        creadoPor: window.sesionActual ? window.sesionActual.uid : '—'
+      });
+    })
+    .then(function() {
+      btnG.disabled = false;
+      cerrarUsrModal();
+      renderUsrTable();
+      registrarAudit('Usuario creado: ' + nombre + ' <' + email + '>', { id: 'admin', radicado: 'USR_CREATE', nombreTitular: nombre });
+      showToast('Usuario "' + nombre + '" creado correctamente', '✅');
+    })
+    .catch(function(err) {
+      btnG.disabled = false;
+      msgEl.style.color = '#EF4444';
+      switch (err.code) {
+        case 'auth/email-already-in-use': msgEl.textContent = 'Ya existe una cuenta con ese correo.'; break;
+        case 'auth/invalid-email':        msgEl.textContent = 'El formato del correo no es válido.'; break;
+        case 'auth/weak-password':        msgEl.textContent = 'Contraseña demasiado débil (Firebase requiere mínimo 6 caracteres).'; break;
+        default: msgEl.textContent = 'Error: ' + (err.message || err.code);
+      }
+    });
+}
+
+/* ── Activar / Desactivar acceso de un usuario (campo "activo" en Firestore) ── */
+function _toggleActivoUsuario(uid, estaActivo) {
+  if (!window._fbDB) return;
+  var nuevoEstado = !estaActivo;
+  if (!confirm((nuevoEstado ? '¿Activar' : '¿Desactivar') + ' el acceso de este usuario?')) return;
+
+  window._fbDB.collection('usuarios').doc(uid).update({ activo: nuevoEstado })
+    .then(function() {
+      renderUsrTable();
+      registrarAudit('Usuario ' + (nuevoEstado ? 'activado' : 'desactivado') + ' UID: ' + uid,
+        { id: 'admin', radicado: 'USR_TOGGLE', nombreTitular: uid });
+      showToast('Usuario ' + (nuevoEstado ? 'activado' : 'desactivado'), nuevoEstado ? '🟢' : '🔴');
+    })
+    .catch(function(err) { showToast('Error: ' + err.message, '❌'); });
+}
