@@ -1,281 +1,270 @@
 // ============================================================
-//  FÉLIX IA v4.1 — Vía Proxy GAS (API Key protegida)
-//  Fondo UNE | Portal de Asociados
+//  FÉLIX IA — compatible con el portal original FondoUne
+//  Usa los IDs y funciones globales del portal existente
 // ============================================================
 
-const FELIX_CONFIG = {
-  // URL del Web App de Google Apps Script (termina en /exec)
-  PROXY_URL: "https://script.google.com/macros/s/TU_ID_DE_GAS_AQUI/exec",
-  MAX_TOKENS:  1024,
-  TEMPERATURE: 0.7,
-  MAX_RETRIES: 3,
-  RETRY_DELAY: 1500, // ms base (se multiplica por intento)
-  TIMEOUT_MS:  25000, // 25 seg — GAS puede ser lento en cold start
-};
+var FELIX_PROXY_URL = "https://script.google.com/macros/s/TU_ID_DE_GAS_AQUI/exec";
 
-// Personalidad y contexto de Félix
-const FELIX_SYSTEM_PROMPT = `Eres Félix, el asistente virtual oficial del Fondo de Empleados de UNE (Fondo UNE).
-Tu rol es ayudar a los asociados con información sobre:
-- Servicios y beneficios del fondo (créditos, auxilios, seguros, recreación)
-- Requisitos y procesos para solicitudes
-- Estado general de productos y servicios
-- Educación financiera básica
-- Orientación sobre trámites internos
+var FELIX_SYSTEM_PROMPT = "Eres Félix, el asistente virtual oficial del Fondo de Empleados de UNE (Fondo UNE). " +
+  "Tu rol es ayudar a los asociados con información sobre: servicios y beneficios del fondo (créditos de vivienda, " +
+  "auxilios, seguros, recreación), requisitos y procesos para solicitudes, documentos necesarios para desembolso de crédito, " +
+  "tiempos del proceso, educación financiera básica y orientación sobre trámites internos. " +
+  "Lineamientos: responde siempre en español, con tono cálido, profesional y cercano. " +
+  "Sé conciso pero completo. Si no tienes la información exacta, indícalo honestamente y sugiere contactar al equipo de Fondo UNE. " +
+  "Nunca inventes datos financieros, tasas o montos específicos. " +
+  "Empieza tus respuestas de forma directa, sin saludos repetitivos.";
 
-Lineamientos de comportamiento:
-- Responde siempre en español, con un tono cálido, profesional y cercano
-- Sé conciso pero completo; no excedas 3 párrafos si no es necesario
-- Si no tienes la información exacta, indícalo honestamente y sugiere contactar al equipo de Fondo UNE
-- Nunca inventes datos financieros, tasas o montos específicos que no conozcas con certeza
-- Trata a cada asociado con respeto y empatía
-- Empieza tus respuestas de forma directa, sin saludos repetitivos en cada mensaje
+// Historial de conversación (multi-turno)
+var felixHistory = [];
+var felixProcessing = false;
+var felixWelcomeMostrado = false;
 
-Recuerda: eres la primera línea de atención del Fondo UNE. Tu objetivo es resolver dudas rápido y con precisión.`;
+// ── Mensaje de bienvenida al abrir el panel ──────────────────
+function showFelixWelcome() {
+  if (felixWelcomeMostrado) return;
+  felixWelcomeMostrado = true;
+  felixAppendMsg(
+    "¡Hola! Soy <strong>Félix</strong>, tu asistente de FondoUne. " +
+    "Puedo ayudarte con información sobre <strong>créditos, documentos, tiempos y procesos</strong>. " +
+    "¿En qué puedo ayudarte hoy?",
+    'felix'
+  );
+}
 
-// ============================================================
-//  CLASE PRINCIPAL DE FÉLIX
-// ============================================================
-class FelixIA {
-  constructor() {
-    this.conversationHistory = [];
-    this.isProcessing = false;
-  }
+// ── Envío desde el botón o Enter ────────────────────────────
+function felixSend() {
+  var input = document.getElementById('felixInput');
+  if (!input) return;
+  var texto = input.value.trim();
+  if (!texto || felixProcessing) return;
+  input.value = '';
+  input.style.height = 'auto';
+  felixEnviar(texto);
+}
 
-  async sendMessage(userMessage) {
-    if (this.isProcessing || !userMessage?.trim()) return null;
-
-    this.isProcessing = true;
-
-    this.conversationHistory.push({
-      role: "user",
-      parts: [{ text: userMessage.trim() }],
-    });
-
-    try {
-      const responseText = await this._callWithRetry();
-
-      if (responseText) {
-        this.conversationHistory.push({
-          role: "model",
-          parts: [{ text: responseText }],
-        });
-      }
-
-      return responseText;
-    } catch (error) {
-      this.conversationHistory.pop();
-      throw error;
-    } finally {
-      this.isProcessing = false;
-    }
-  }
-
-  async _callWithRetry() {
-    let lastError;
-
-    for (let attempt = 1; attempt <= FELIX_CONFIG.MAX_RETRIES; attempt++) {
-      try {
-        return await this._callProxy();
-      } catch (error) {
-        lastError = error;
-        if (error.isClientError) throw error;
-
-        if (attempt < FELIX_CONFIG.MAX_RETRIES) {
-          const waitMs = FELIX_CONFIG.RETRY_DELAY * attempt;
-          console.warn(`Félix: intento ${attempt} fallido. Reintentando en ${waitMs}ms…`);
-          await this._sleep(waitMs);
-        }
-      }
-    }
-
-    throw new Error(
-      `Félix no pudo conectarse después de ${FELIX_CONFIG.MAX_RETRIES} intentos. ` +
-      `Verifica tu conexión o intenta más tarde.`
-    );
-  }
-
-  async _callProxy() {
-    const controller = new AbortController();
-    const timeoutId  = setTimeout(() => controller.abort(), FELIX_CONFIG.TIMEOUT_MS);
-
-    try {
-      const response = await fetch(FELIX_CONFIG.PROXY_URL, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: FELIX_SYSTEM_PROMPT }],
-          },
-          contents:        this.conversationHistory,
-          maxOutputTokens: FELIX_CONFIG.MAX_TOKENS,
-          temperature:     FELIX_CONFIG.TEMPERATURE,
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      const data = await response.json();
-
-      if (data?.error) {
-        const err = new Error(data.error);
-        err.isClientError = data.error.includes("inválid") || data.error.includes("obligatori");
-        throw err;
-      }
-
-      return this._extractText(data);
-
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error.name === "AbortError") {
-        throw new Error(
-          "La solicitud tardó demasiado (GAS está iniciando). Intenta de nuevo en unos segundos."
-        );
-      }
-
-      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
-        throw new Error("Sin conexión a internet. Verifica tu red e intenta de nuevo.");
-      }
-
-      throw error;
-    }
-  }
-
-  _extractText(data) {
-    try {
-      const candidate = data?.candidates?.[0];
-      if (!candidate) return null;
-
-      if (candidate.finishReason === "SAFETY") {
-        return "Lo siento, no puedo responder esa consulta. ¿Puedo ayudarte con algo relacionado con los servicios de Fondo UNE?";
-      }
-
-      const text = candidate?.content?.parts?.[0]?.text;
-      return text?.trim() || null;
-    } catch {
-      return null;
-    }
-  }
-
-  clearHistory() {
-    this.conversationHistory = [];
-  }
-
-  _sleep(ms) {
-    return new Promise((r) => setTimeout(r, ms));
+// ── Manejo de teclado en el textarea ────────────────────────
+function felixKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    felixSend();
   }
 }
 
-// ============================================================
-//  INTERFAZ DE CHAT
-// ============================================================
-document.addEventListener("DOMContentLoaded", () => {
-  const felix        = new FelixIA();
-  const chatMessages = document.getElementById("chat-messages");
-  const userInput    = document.getElementById("user-input");
-  const sendBtn      = document.getElementById("send-btn");
-  const clearBtn     = document.getElementById("clear-chat");
+// ── Click en chip (compatibilidad — chips eliminados del HTML) ─
+function felixChipClick(texto) {
+  var input = document.getElementById('felixInput');
+  if (input) input.value = '';
+  felixEnviar(texto);
+}
 
-  if (!chatMessages || !userInput || !sendBtn) {
-    console.error("Félix IA: Elementos del DOM no encontrados.");
-    return;
-  }
+// ── Lógica principal de envío ────────────────────────────────
+function felixEnviar(texto) {
+  if (!texto || felixProcessing) return;
 
-  function appendMessage(text, role) {
-    const wrapper = document.createElement("div");
-    wrapper.className = `message ${role}`;
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.innerHTML = formatText(text);
-    wrapper.appendChild(bubble);
-    chatMessages.appendChild(wrapper);
-    scrollToBottom();
-  }
+  felixProcessing = true;
+  felixSetBtnState(true);
 
-  function showTyping() {
-    const el = document.createElement("div");
-    el.className = "message felix typing-indicator";
-    el.id = "typing-indicator";
-    el.innerHTML = `<div class="bubble"><span></span><span></span><span></span></div>`;
-    chatMessages.appendChild(el);
-    scrollToBottom();
-  }
+  // Muestra el mensaje del usuario
+  felixAppendMsg(texto, 'user');
 
-  function removeTyping() {
-    document.getElementById("typing-indicator")?.remove();
-  }
+  // Agrega al historial
+  felixHistory.push({ role: 'user', parts: [{ text: texto }] });
 
-  function scrollToBottom() {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
+  // Muestra typing
+  felixShowTyping(true);
 
-  function setUIState(loading) {
-    userInput.disabled = loading;
-    sendBtn.disabled   = loading;
-    sendBtn.classList.toggle("loading", loading);
-  }
+  // Llama al proxy con reintentos
+  felixCallProxy(0);
+}
 
-  function formatText(text) {
-    return text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/\n/g, "<br>");
-  }
+// ── Llama al proxy GAS con reintentos ───────────────────────
+function felixCallProxy(intento) {
+  var MAX_REINTENTOS = 3;
+  var DELAY_BASE     = 1500;
 
-  async function handleSend() {
-    const message = userInput.value.trim();
-    if (!message || felix.isProcessing) return;
+  var payload = JSON.stringify({
+    system_instruction: { parts: [{ text: FELIX_SYSTEM_PROMPT }] },
+    contents: felixHistory,
+    maxOutputTokens: 1024,
+    temperature: 0.7
+  });
 
-    userInput.value = "";
-    userInput.style.height = "auto";
-    appendMessage(message, "user");
-    setUIState(true);
-    showTyping();
+  // Timeout manual con XMLHttpRequest (más compatible que fetch+AbortController)
+  var xhr = new XMLHttpRequest();
+  var timedOut = false;
+
+  var timeout = setTimeout(function() {
+    timedOut = true;
+    xhr.abort();
+    if (intento < MAX_REINTENTOS - 1) {
+      setTimeout(function() { felixCallProxy(intento + 1); }, DELAY_BASE * (intento + 1));
+    } else {
+      felixShowTyping(false);
+      felixAppendMsg(
+        '⚠️ La solicitud tardó demasiado. GAS puede estar iniciando — intenta de nuevo en unos segundos.',
+        'felix error'
+      );
+      felixHistory.pop(); // revierte mensaje del usuario
+      felixFinish();
+    }
+  }, 25000);
+
+  xhr.open('POST', FELIX_PROXY_URL, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    clearTimeout(timeout);
+    if (timedOut) return;
+
+    if (xhr.status === 0) {
+      // Error de red
+      if (intento < MAX_REINTENTOS - 1) {
+        setTimeout(function() { felixCallProxy(intento + 1); }, DELAY_BASE * (intento + 1));
+      } else {
+        felixShowTyping(false);
+        felixAppendMsg('⚠️ Sin conexión. Verifica tu red e intenta de nuevo.', 'felix error');
+        felixHistory.pop();
+        felixFinish();
+      }
+      return;
+    }
+
+    felixShowTyping(false);
 
     try {
-      const response = await felix.sendMessage(message);
-      removeTyping();
+      var data = JSON.parse(xhr.responseText);
 
-      if (response) {
-        appendMessage(response, "felix");
-      } else {
-        appendMessage("No pude obtener una respuesta. Por favor intenta de nuevo.", "felix error");
+      // El proxy devuelve { error: "..." } si algo falló
+      if (data.error) {
+        felixAppendMsg('⚠️ ' + data.error, 'felix error');
+        felixHistory.pop();
+        felixFinish();
+        return;
       }
-    } catch (error) {
-      removeTyping();
-      appendMessage(`⚠️ ${error.message}`, "felix error");
-      console.error("Félix error:", error);
-    } finally {
-      setUIState(false);
-      userInput.focus();
+
+      // Extrae el texto de la respuesta de Gemini
+      var candidato = data.candidates && data.candidates[0];
+      if (!candidato) {
+        felixAppendMsg(
+          'No pude obtener una respuesta en este momento. Por favor intenta de nuevo.',
+          'felix error'
+        );
+        felixHistory.pop();
+        felixFinish();
+        return;
+      }
+
+      if (candidato.finishReason === 'SAFETY') {
+        var msg = 'Lo siento, no puedo responder esa consulta. ¿Puedo ayudarte con algo relacionado con los servicios de FondoUne?';
+        felixAppendMsg(msg, 'felix');
+        felixHistory.push({ role: 'model', parts: [{ text: msg }] });
+        felixFinish();
+        return;
+      }
+
+      var respuesta = candidato.content && candidato.content.parts && candidato.content.parts[0] && candidato.content.parts[0].text;
+      if (!respuesta) {
+        felixAppendMsg('No pude obtener una respuesta. Por favor intenta de nuevo.', 'felix error');
+        felixHistory.pop();
+        felixFinish();
+        return;
+      }
+
+      respuesta = respuesta.trim();
+      felixAppendMsg(respuesta, 'felix');
+      felixHistory.push({ role: 'model', parts: [{ text: respuesta }] });
+      felixFinish();
+
+    } catch (e) {
+      felixAppendMsg('⚠️ Error al procesar la respuesta. Intenta de nuevo.', 'felix error');
+      felixHistory.pop();
+      felixFinish();
     }
+  };
+
+  xhr.send(payload);
+}
+
+// ── Agrega un mensaje al chat ────────────────────────────────
+function felixAppendMsg(html, tipo) {
+  var container = document.getElementById('felixMessages');
+  if (!container) return;
+
+  var wrap = document.createElement('div');
+  wrap.className = 'felix-msg-wrap ' + tipo;
+
+  if (tipo === 'felix' || tipo === 'felix error') {
+    var avatar = document.createElement('div');
+    avatar.className = 'felix-msg-avatar';
+    avatar.textContent = '🤖';
+    wrap.appendChild(avatar);
   }
 
-  sendBtn.addEventListener("click", handleSend);
+  var bubble = document.createElement('div');
+  bubble.className = tipo === 'user' ? 'felix-msg-user' : (tipo === 'felix error' ? 'felix-msg-bot felix-msg-error' : 'felix-msg-bot');
+  bubble.innerHTML = felixFormatText(html);
+  wrap.appendChild(bubble);
 
-  userInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+  container.appendChild(wrap);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── Muestra/oculta el indicador de escritura ────────────────
+function felixShowTyping(show) {
+  var typing = document.getElementById('felixTyping');
+  if (!typing) return;
+  typing.style.display = show ? 'flex' : 'none';
+  if (show) {
+    var container = document.getElementById('felixMessages');
+    if (container) container.scrollTop = container.scrollHeight;
+  }
+}
+
+// ── Activa/desactiva el botón de envío ──────────────────────
+function felixSetBtnState(disabled) {
+  var btn   = document.getElementById('felixSendBtn');
+  var input = document.getElementById('felixInput');
+  if (btn)   btn.disabled   = disabled;
+  if (input) input.disabled = disabled;
+}
+
+// ── Finaliza el procesamiento ────────────────────────────────
+function felixFinish() {
+  felixProcessing = false;
+  felixSetBtnState(false);
+  var input = document.getElementById('felixInput');
+  if (input) {
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+// ── Formatea texto: negritas y saltos de línea ───────────────
+function felixFormatText(texto) {
+  // Si ya tiene HTML (respuesta del proxy con listas), lo deja pasar con cuidado
+  // Solo escapa si es texto plano
+  if (!texto.includes('<')) {
+    texto = texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+  return texto
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
+// ── Auto-resize del textarea ─────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  var input = document.getElementById('felixInput');
+  if (!input) return;
+  input.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
   });
 
-  clearBtn?.addEventListener("click", () => {
-    felix.clearHistory();
-    chatMessages.innerHTML = "";
-    appendMessage(
-      "¡Hola! Soy Félix, tu asistente de Fondo UNE. ¿En qué puedo ayudarte hoy?",
-      "felix"
-    );
-  });
-
-  appendMessage(
-    "¡Hola! Soy Félix, tu asistente de Fondo UNE. ¿En qué puedo ayudarte hoy?",
-    "felix"
-  );
-  userInput.focus();
+  // Ocultar typing al inicio
+  felixShowTyping(false);
 });
