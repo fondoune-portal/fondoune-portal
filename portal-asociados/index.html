@@ -1,945 +1,406 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<script>(function(){var m=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||window.innerWidth<=768;if(m)window.location.replace("./portal-asociado-mobile.html");})();</script>
-<meta name="mobile-web-app-capable" content="yes"><!-- Reemplaza apple-mobile-web-app-capable (deprecated) -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#2D1A0E">
-<title>FondoUne — Portal Asociados · Desembolso de Crédito</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23E8511A'/><text y='.9em' font-size='80' x='10'>🏦</text></svg>">
-<script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<link rel="stylesheet" href="style.css">
-<script src="firebase-config.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Félix IA — Fondo UNE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Variables ─────────────────────────────────── */
+    :root {
+      --bg:         #f4f6f9;
+      --surface:    #ffffff;
+      --surface-2:  #eef1f6;
+      --brand:      #003087;   /* azul UNE */
+      --brand-mid:  #0051cc;
+      --brand-lite: #e8eef9;
+      --accent:     #f5a800;   /* amarillo UNE */
+      --text:       #1a1f2e;
+      --text-2:     #5a6279;
+      --border:     #dde2ec;
+      --felix-bubble: #003087;
+      --user-bubble:  #f0f4ff;
+      --error:      #d94040;
+      --radius:     16px;
+      --shadow:     0 4px 24px rgba(0,48,135,0.08);
+    }
+
+    /* ── Reset ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* ── Layout shell ──────────────────────────────── */
+    .app-wrapper {
+      width: 100%;
+      max-width: 820px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    /* ── Header ────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px;
+      background: var(--brand);
+      color: #fff;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--brand);
+      font-weight: 400;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.2);
+    }
+
+    .header-info h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    .header-info p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.68);
+      margin-top: 2px;
+      font-weight: 300;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4cde80;
+      margin-right: 5px;
+      vertical-align: middle;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .btn-icon:hover { background: rgba(255,255,255,0.22); }
+    .btn-icon svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* ── Chat área ─────────────────────────────────── */
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    #chat-messages::-webkit-scrollbar { width: 5px; }
+    #chat-messages::-webkit-scrollbar-track { background: transparent; }
+    #chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    /* ── Mensajes ──────────────────────────────────── */
+    .message {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      animation: fadeUp 0.22s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message.felix::before {
+      content: 'F';
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--brand);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-bottom: 2px;
+    }
+
+    .bubble {
+      max-width: 72%;
+      padding: 13px 18px;
+      border-radius: var(--radius);
+      line-height: 1.65;
+      font-size: 14.5px;
+    }
+
+    .message.felix .bubble {
+      background: var(--brand-lite);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.user .bubble {
+      background: var(--brand);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.error .bubble {
+      background: #fff0f0;
+      color: var(--error);
+      border: 1px solid #ffd0d0;
+    }
+
+    .bubble strong { font-weight: 600; }
+    .bubble em     { font-style: italic; }
+
+    /* ── Typing indicator ──────────────────────────── */
+    .typing-indicator .bubble {
+      padding: 16px 20px;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .typing-indicator .bubble span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--brand);
+      animation: bounce 1.2s infinite ease-in-out;
+      opacity: 0.6;
+    }
+
+    .typing-indicator .bubble span:nth-child(2) { animation-delay: 0.18s; }
+    .typing-indicator .bubble span:nth-child(3) { animation-delay: 0.36s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+      40%            { transform: scale(1.1); opacity: 1;   }
+    }
+
+    /* ── Footer / Input ────────────────────────────── */
+    .chat-footer {
+      padding: 16px 24px 20px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 10px 10px 18px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .input-row:focus-within {
+      border-color: var(--brand-mid);
+      box-shadow: 0 0 0 3px rgba(0,81,204,0.1);
+    }
+
+    #user-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14.5px;
+      color: var(--text);
+      resize: none;
+      outline: none;
+      min-height: 24px;
+      max-height: 120px;
+      line-height: 1.5;
+    }
+
+    #user-input::placeholder { color: var(--text-2); }
+
+    #user-input:disabled { cursor: not-allowed; opacity: 0.5; }
+
+    #send-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      background: var(--brand);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    #send-btn:hover:not(:disabled) {
+      background: var(--brand-mid);
+      transform: scale(1.04);
+    }
+
+    #send-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    #send-btn svg { width: 18px; height: 18px; }
+
+    /* Loading spinner en el botón */
+    #send-btn.loading svg { display: none; }
+    #send-btn.loading::after {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .input-hint {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* ── Responsive ────────────────────────────────── */
+    @media (max-width: 600px) {
+      .header { padding: 14px 18px; }
+      .header-info h1 { font-size: 17px; }
+      #chat-messages { padding: 18px 14px; }
+      .chat-footer { padding: 12px 14px 16px; }
+      .bubble { max-width: 88%; font-size: 14px; }
+      .btn-icon span { display: none; }
+    }
+  </style>
 </head>
-<!-- ═══════════════════════════════════════════════════════
-     PANTALLA DE BIENVENIDA — FONDOUNE PORTAL ASOCIADO
-     Se inyecta en el DOM antes de cualquier otro contenido.
-     Se oculta con animación de salida cuando el asociado
-     ingresa su nombre y hace clic en "Ingresar".
-     ══════════════════════════════════════════════════════ -->
-
-
-<!-- ══ HTML: PANTALLA DE BIENVENIDA ══ -->
-<div id="fu-welcome" role="dialog" aria-modal="true" aria-label="Bienvenida al Portal FondoUne">
-  <!-- Orbes decorativos -->
-  <div class="fu-w-orb fu-w-orb-1" aria-hidden="true"></div>
-  <div class="fu-w-orb fu-w-orb-2" aria-hidden="true"></div>
-  <div class="fu-w-orb fu-w-orb-3" aria-hidden="true"></div>
-
-  <div class="fu-w-card">
-    <!-- Logo -->
-    <div class="fu-w-logo">
-      <div class="fu-w-logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <polyline points="9 22 9 12 15 12 15 22" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="fu-w-logo-text">
-        <div class="fu-w-logo-name">Fondo<span>Une</span></div>
-        <div class="fu-w-logo-sub">Portal Asociados</div>
-      </div>
-    </div>
-
-    <!-- Divider -->
-    <div class="fu-w-divider" aria-hidden="true"></div>
-
-    <!-- Textos de bienvenida -->
-    <h1 class="fu-w-title">¡Bienvenido a tu<br><span class="accent">portal de desembolso</span>!</h1>
-    <p class="fu-w-subtitle">Genera tu lista de chequeo para el desembolso de crédito vivienda de forma rápida y segura. Ingresa tu nombre para personalizar tu experiencia.</p>
-
-    <!-- Campo nombre -->
-    <div class="fu-w-field">
-      <label class="fu-w-field-label" for="fu-w-name-input">Tu nombre</label>
-      <input
-        id="fu-w-name-input"
-        class="fu-w-input"
-        type="text"
-        placeholder="Ej: María García"
-        maxlength="50"
-        autocomplete="name"
-        autocapitalize="words"
-        spellcheck="false"
-      >
-      <div class="fu-w-greeting" id="fu-w-greeting" aria-live="polite"></div>
-    </div>
-
-    <!-- Botón ingresar -->
-    <button class="fu-w-btn" id="fu-w-enter-btn" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-        <polyline points="10 17 15 12 10 7"/>
-        <line x1="15" y1="12" x2="3" y2="12"/>
-      </svg>
-      Ingresar al portal
-    </button>
-
-    <!-- Badges de confianza -->
-    <div class="fu-w-badges" aria-label="Indicadores de seguridad">
-      <div class="fu-w-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-        Conexión segura
-      </div>
-      <div class="fu-w-badge" aria-hidden="true">·</div>
-      <div class="fu-w-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-        Datos protegidos
-      </div>
-      <div class="fu-w-badge" aria-hidden="true">·</div>
-      <div class="fu-w-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-        Disponible 24/7
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <p class="fu-w-footer">
-      Solo empleados y asociados de <strong style="color:rgba(255,255,255,.36)">UNE</strong> y empresas vinculadas.<br>
-      ¿Tienes dudas? <a href="/cdn-cgi/l/email-protection#d6b0b9b8b2b9a3b8b396b0b9b8b2b9a3b8b3f8b5b9bb"><span class="__cf_email__" data-cfemail="63050c0d070c160d0623050c0d070c160d064d000c0e">[email&#160;protected]</span></a>
-    </p>
-  </div>
-</div>
-
-<script src="welcome.js"></script>
 
 <body>
-<!-- ── Mesh background layers ── -->
-<div class="mesh-grain" aria-hidden="true"></div>
-<div class="mesh-orb-1" aria-hidden="true"></div>
-<div class="mesh-orb-2" aria-hidden="true"></div>
-<div class="mesh-orb-3" aria-hidden="true"></div>
+  <div class="app-wrapper">
 
-<header class="hdr">
-  <div style="display:flex;align-items:center;">
-    <div class="logo">
-      <div class="logo-pill"><img src="img/img-1.jpeg" alt="FondoUne" class="logo-img-oficial"></div>
-    </div>
-    <div class="hdr-div"></div>
-    <div class="hdr-app">
-      <div class="hdr-app-title">Desembolso de Crédito</div>
-      <div class="hdr-app-sub">Portal del Asociado</div>
-    </div>
-  </div>
-  <div class="hdr-div"></div>
-  <div class="hdr-portals">
-    <div class="hdr-pill">🏠 Portal Asociados</div>
-    <a href="portal-empleados.html" class="emp-link">🔐 Portal Empleados →</a>
-        <!-- Botón Cerrar Sesión -->
-<button id="btn-cerrar-sesion" class="btn-cerrar-sesion" title="Cerrar sesión y cambiar nombre" onclick="if(window.FU_CerrarSesionNombre) window.FU_CerrarSesionNombre();">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-    <polyline points="16 17 21 12 16 7"/>
-    <line x1="21" y1="12" x2="9" y2="12"/>
-  </svg>
-  <span>Cerrar sesión</span>
-</button></div>
-   </div>
-</header>
-
-<div class="hero">
-    <div class="hero-carousel" id="heroCarousel">
-    <div class="hero-slide active" style="background-image:url('https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1400&q=85')"></div>
-    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1400&q=85')"></div>
-        <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1400&q=85')"></div>
-    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1400&q=85')"></div>
-  </div>
-  <div class="hero-dots">
-    <button class="hero-dot active" onclick="CAROUSEL.goTo(0)" aria-label="Imagen 1"></button>
-    <button class="hero-dot" onclick="CAROUSEL.goTo(1)" aria-label="Imagen 2"></button>
-    <button class="hero-dot" onclick="CAROUSEL.goTo(3)" aria-label="Imagen 3"></button>
-    <button class="hero-dot" onclick="CAROUSEL.goTo(4)" aria-label="Imagen 4"></button>
-  </div>
-    <div class="hero-overlay"></div>
-    <div class="hero-body">
-      <div class="hero-text">
-        <div class="hero-eyebrow">📄 Desembolso de Crédito · FondoUne</div>
-        <h1 id="heroTitle" class="hero-text-fade">Genera tu lista de chequeo<br><span class="hi">para el desembolso</span></h1>
-        <p class="hero-desc hero-text-fade" id="heroDesc">¿Ya tienes un radicado asignado? Completa el formulario y genera al instante tu lista de documentos en formato Word, lista para entregar.</p>
-      </div>
-      <div class="hero-stats">
-        <div class="hero-stat-item">
-          <div class="hero-stat-num">3</div>
-          <div class="hero-stat-lbl">Tipos de crédito</div>
-        </div>
-        <div class="hero-stat-item">
-          <div class="hero-stat-num">100%</div>
-          <div class="hero-stat-lbl">Digital y sin papel</div>
-        </div>
-        <div class="hero-stat-item">
-          <div class="hero-stat-num">2 min</div>
-          <div class="hero-stat-lbl">Para generar tu checklist</div>
+    <!-- ── Header ── -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="header-avatar">F</div>
+        <div class="header-info">
+          <h1>Félix</h1>
+          <p><span class="status-dot"></span>Asistente Virtual · Fondo UNE</p>
         </div>
       </div>
-      <div class="hero-cta-wrap">
-        <a href="#formDesembolso" class="hero-cta-btn" onclick="event.preventDefault();document.getElementById('formDesembolso').scrollIntoView({behavior:'smooth',block:'start'});">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          Generar lista de chequeo Word
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
-      </div>
-    </div>
-  </div>
-<div class="wrap">
-
-  <!-- BANNER GUIA DE PASOS -->
-  <div class="guide-banner">
-    <div class="guide-banner-head">
-      <div class="guide-banner-head-icon">&#x1F9ED;</div>
-      <div>
-        <div class="guide-banner-title">&#xBF;Por donde empezar?</div>
-        <div class="guide-banner-sub">Selecciona el tramite que necesitas realizar hoy</div>
-      </div>
-    </div>
-    <div class="guide-cards">
-
-      <!-- Tarjeta 1: Desembolso / Checklist -->
-      <div class="guide-card guide-card--credito">
-        <div class="guide-card-bar"></div>
-        <span class="guide-card-badge">Opcion 1</span>
-        <span class="guide-card-ico">📄</span>
-        <div class="guide-card-name">Formulario de Desembolso</div>
-        <div class="guide-card-tag">⚡ Lista de chequeo Word — Recomendado</div>
-        <div class="guide-card-desc">Ingresa tu número de radicado, selecciona el tipo de crédito y genera al instante la lista de documentos requeridos para el desembolso, lista en formato Word.</div>
-        <div class="guide-card-steps">
-          <div class="guide-step"><span class="guide-step-n">1</span><span>Selecciona el tipo: Compra, Construcción o Gravamen</span></div>
-          <div class="guide-step"><span class="guide-step-n">2</span><span>Completa los datos del solicitante</span></div>
-          <div class="guide-step"><span class="guide-step-n">3</span><span>Descarga tu checklist en Word y entrégalo</span></div>
-        </div>
-        <button class="guide-card-btn" onclick="document.getElementById('formDesembolso').scrollIntoView({behavior:'smooth',block:'start'});">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Ir al formulario →
+      <div class="header-actions">
+        <button class="btn-icon" id="clear-chat" title="Nueva conversación">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+          </svg>
+          <span>Nueva consulta</span>
         </button>
       </div>
+    </header>
 
-      <!-- Tarjeta 2: Datos del Asociado -->
-      <div class="guide-card guide-card--asociado">
-        <div class="guide-card-bar"></div>
-        <span class="guide-card-badge">Opcion 2</span>
-        <span class="guide-card-ico">&#x1F464;</span>
-        <div class="guide-card-name">Datos del Asociado</div>
-        <div class="guide-card-desc">Registra o actualiza tu informacion personal y laboral para pre-llenar tus solicitudes.</div>
-        <div class="guide-card-steps">
-          <div class="guide-step"><span class="guide-step-n">1</span><span>Desplazate al formulario <strong>azul</strong> mas abajo en la pagina</span></div>
-          <div class="guide-step"><span class="guide-step-n">2</span><span>Completa datos personales, laborales y bancarios</span></div>
-          <div class="guide-step"><span class="guide-step-n">3</span><span>Haz clic en <strong>Guardar mis datos</strong></span></div>
-        </div>
-        <button class="guide-card-btn" onclick="document.getElementById('asocSection').scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(function(){ if(!document.getElementById('asocSection').classList.contains('open')) ASOC.toggle(); }, 500);">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Ir a mis datos
-        </button>
-      </div>
+    <!-- ── Mensajes ── -->
+    <div id="chat-messages" role="log" aria-live="polite" aria-label="Conversación con Félix"></div>
 
-      <!-- Tarjeta 3: PQRS -->
-      <div class="guide-card guide-card--pqrs">
-        <div class="guide-card-bar"></div>
-        <span class="guide-card-badge">Opcion 3</span>
-        <span class="guide-card-ico">&#x1F4AC;</span>
-        <div class="guide-card-name">PQRS / Otras Solicitudes</div>
-        <div class="guide-card-desc">Cancelacion de hipoteca, certificados tributarios, paz y salvos u otras inquietudes.</div>
-        <div class="guide-card-steps">
-          <div class="guide-step"><span class="guide-step-n">1</span><span>Desplazate al formulario <strong>naranja</strong> al final</span></div>
-          <div class="guide-step"><span class="guide-step-n">2</span><span>Selecciona el tipo de solicitud que necesitas</span></div>
-          <div class="guide-step"><span class="guide-step-n">3</span><span>Describe tu caso y haz clic en <strong>Enviar Solicitud</strong></span></div>
-        </div>
-        <button class="guide-card-btn" onclick="document.getElementById('pqrsSection').scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(function(){ if(!document.getElementById('pqrsSection').classList.contains('open')) PQRS.togglePanel(); }, 500);">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Ir a PQRS
-        </button>
-      </div>
-
-    </div>
-  </div>
-  <!-- FIN BANNER GUIA -->
-
-  <!-- ══ SEPARADOR: HERRAMIENTA DE CHECKLIST ══ -->
-  <div id="formDesembolso" class="section-divider">
-    <div class="section-divider-inner">
-      <div class="section-divider-icon">📄</div>
-      <div class="section-divider-text">
-        <div class="section-divider-title">Generador de Checklist Word</div>
-        <div class="section-divider-sub">¿Ya tienes un radicado asignado por el área? Usa esta herramienta para generar e imprimir tu lista de documentos en formato Word.</div>
-      </div>
-      <div class="section-divider-badge">Herramienta complementaria</div>
-    </div>
-  </div>
-
-  <div class="type-row">
-    <div class="tc on" id="tc-compra" onclick="APP.selTipo('compra')">
-      <div class="tc-bar"></div>
-      <span class="tc-ico">🏡</span>
-      <div class="tc-num">14 docs</div>
-      <div class="tc-name">Compra de Vivienda</div>
-      <div class="tc-desc">Desembolso para adquisición de inmueble nuevo o usado</div>
-    </div>
-    <div class="tc" id="tc-construccion" onclick="APP.selTipo('construccion')">
-      <div class="tc-bar"></div>
-      <span class="tc-ico">🏗️</span>
-      <div class="tc-num">19 docs</div>
-      <div class="tc-name">Construcción y Mejoras</div>
-      <div class="tc-desc">Construcción, ampliación o mejoras en vivienda propia</div>
-    </div>
-    <div class="tc" id="tc-gravamen" onclick="APP.selTipo('gravamen')">
-      <div class="tc-bar"></div>
-      <span class="tc-ico">📜</span>
-      <div class="tc-num">11 docs</div>
-      <div class="tc-name">Gravamen Hipotecario</div>
-      <div class="tc-desc">Registro y pago del gravamen sobre el inmueble</div>
-    </div>
-  </div>
-
-  <div class="fc">
-    <div class="fc-head">
-      <div class="fc-head-ico" id="fIco">🏡</div>
-      <div>
-        <div class="fc-head-t" id="fTit">Compra de Vivienda</div>
-        <div class="fc-head-s" id="fSub">Completa los datos para generar la lista de chequeo</div>
-      </div>
-      <div style="margin-left:auto;flex-shrink:0;background:rgba(26,108,168,0.10);border:1px solid rgba(26,108,168,0.22);color:#1A6CA8;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.3px;white-space:nowrap;">📄 Genera checklist Word</div>
-    </div>
-
-    <div class="fc-body">
-      <div class="fsec">
-        <div class="slbl">📋 Información del Crédito</div>
-        <div class="fg fg3">
-          <div class="fld">
-            <label>N° Radicado / Crédito <span class="req">*</span></label>
-            <input id="radicado" placeholder="Ej: CR-2025-00123" autocomplete="off">
-          </div>
-          <div class="fld">
-            <label>Fecha Límite de Documentos</label>
-            <input type="date" id="fechaLimite">
-          </div>
-          <div class="fld">
-            <label>Asesor Responsable</label>
-            <input id="asesor" placeholder="Nombre completo del asesor">
-          </div>
-        </div>
-      </div>
-
-      <div class="fsec">
-        <div class="slbl" id="titLbl">👤 Datos del Solicitante / Comprador</div>
-        <div class="fg fg2">
-          <div class="fld">
-            <label>Nombre Completo <span class="req">*</span></label>
-            <input id="nombreTitular" placeholder="Nombre completo del titular">
-          </div>
-          <div class="fld">
-            <label>Número de Cédula <span class="req">*</span></label>
-            <input id="cedula" placeholder="Ej: 1.234.567.890">
-          </div>
-          <div class="fld">
-            <label>Fecha de Expedición Cédula <span class="req">*</span></label>
-            <input type="date" id="fechaExpCedula">
-          </div>
-          <div class="fld">
-            <label>Lugar de Expedición Cédula</label>
-            <input id="lugarExpCedula" placeholder="Ej: Medellín, Antioquia">
-          </div>
-          <div class="fld">
-            <label>Teléfono de Contacto</label>
-            <input id="telefono" placeholder="Ej: 310 000 0000" maxlength="20">
-          </div>
-          <div class="fld">
-            <label>Correo Electrónico</label>
-            <input type="email" id="correo" placeholder="correo@ejemplo.com">
-          </div>
-          <div class="fld s2">
-            <label id="dirLbl">Dirección del Inmueble por Comprar</label>
-            <input id="direccion" placeholder="Ej: Calle 50 # 30-40, Medellín">
-          </div>
-          <div class="fld s2">
-            <label>RUT — Número de NIT / RUT del Asociado</label>
-            <div style="display:flex;gap:10px;align-items:center;">
-              <input id="rutTitular" placeholder="Ej: 900.123.456-7" style="flex:1">
-              <input type="checkbox" id="rutNoAplica" class="rut-na-chk" onchange="toggleRut(this,'rutTitular')"><label for="rutNoAplica" class="rut-na-label"><span class="rut-na-box"><i class="rut-na-icon">✓</i></span>No aplica / No tengo RUT</label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="extraFields"></div>
-    </div>
-
-    <div class="sbar" id="sbar">
-      <div class="spin" id="spin"></div>
-      <span id="sbarTxt"></span>
-    </div>
-
-    <div class="dl-card" id="dlCard">
-      <div class="dl-ico">📄</div>
-      <div class="dl-info">
-        <div class="dl-fn" id="dlName">documento.docx</div>
-        <div class="dl-meta">Documento Word generado — listo para descargar</div>
-      </div>
-      <a class="btn-dl" id="dlBtn" href="#">⬇ Descargar</a>
-    </div>
-
-    <div class="fc-foot">
-      <button class="btn-gen" id="btnGen" onclick="APP.generar()">
-        <svg class="btn-gen-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="12" y1="18" x2="12" y2="12"/>
-          <line x1="9" y1="15" x2="15" y2="15"/>
-        </svg>
-        <span class="btn-spinner"></span>
-        Registrar y Generar Documento
-      </button>
-      <button class="btn-clr" onclick="APP.limpiar()">↺ Limpiar campos</button>
-    </div>
-  </div>
-
-  <div class="hist" id="histSec" style="display:none">
-    <div class="hist-title">📁 Documentos Generados en esta Sesión</div>
-    <div class="hist-list" id="histList"></div>
-  </div>
-
-
-  <!-- ══ SECCIÓN: DATOS DEL ASOCIADO ══ -->
-  <div class="asoc-section" id="asocSection">
-
-    <!-- Header -->
-    <div class="asoc-head">
-      <div class="asoc-head-ico">👤</div>
-      <div>
-        <div class="asoc-head-title">Datos del Asociado</div>
-        <div class="asoc-head-sub">Información personal y laboral del asociado</div>
-      </div>
-      <div class="asoc-badge">🔒 Datos seguros</div>
-    </div>
-
-    <!-- Toggle -->
-    <button class="asoc-toggle-btn" onclick="ASOC.toggle()" id="asocToggleBtn">
-      <span id="asocToggleTxt">Completar o actualizar mis datos personales</span>
-      <span class="asoc-toggle-ico">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-      </span>
-    </button>
-
-    <!-- Cuerpo colapsable -->
-    <div class="asoc-body" id="asocBody">
-      <div class="asoc-body-inner">
-        <p class="asoc-req-note">Los campos marcados con <span>*</span> son obligatorios para radicar la solicitud de crédito.</p>
-
-        <!-- ── 1. IDENTIFICACIÓN ── -->
-        <div class="asoc-sep">Identificación</div>
-        <div class="fg fg3">
-          <div class="fld">
-            <label>Tipo de Identificación <span class="req">*</span></label>
-            <select id="asocTipoId">
-              <option value="">Seleccionar…</option>
-              <option value="CC">Cédula de Ciudadanía</option>
-              <option value="CE">Cédula de Extranjería</option>
-              <option value="PA">Pasaporte</option>
-              <option value="NIT">NIT</option>
-            </select>
-          </div>
-          <div class="fld">
-            <label>Número de Identificación <span class="req">*</span></label>
-            <input id="asocCedula" placeholder="Ej: 1.234.567.890" autocomplete="off">
-          </div>
-          <div class="fld">
-            <label>Relación con FondoUne <span class="req">*</span></label>
-            <select id="asocRelacion">
-              <option value="Asociado">Asociado</option>
-              <option value="Beneficiario">Beneficiario</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ── 2. NOMBRE COMPLETO ── -->
-        <div class="asoc-sep">Nombre Completo</div>
-        <div class="fg fg2">
-          <div class="fld">
-            <label>Primer Apellido <span class="req">*</span></label>
-            <input id="asocApe1" placeholder="Primer apellido">
-          </div>
-          <div class="fld">
-            <label>Segundo Apellido</label>
-            <input id="asocApe2" placeholder="Segundo apellido">
-          </div>
-          <div class="fld">
-            <label>Primer Nombre <span class="req">*</span></label>
-            <input id="asocNom1" placeholder="Primer nombre">
-          </div>
-          <div class="fld">
-            <label>Segundo Nombre</label>
-            <input id="asocNom2" placeholder="Segundo nombre">
-          </div>
-        </div>
-
-        <!-- ── 3. DATOS DE NACIMIENTO Y DOCUMENTO ── -->
-        <div class="asoc-sep">Nacimiento y Documento</div>
-        <div class="fg fg3">
-          <div class="fld">
-            <label>Fecha de Nacimiento <span class="req">*</span></label>
-            <input type="date" id="asocFechaNac">
-          </div>
-          <div class="fld">
-            <label>Lugar de Expedición del Doc.</label>
-            <input id="asocLugarExp" placeholder="Ej: Medellín, Antioquia">
-          </div>
-          <div class="fld">
-            <label>Fecha de Expedición del Doc.</label>
-            <input type="date" id="asocFechaExp">
-          </div>
-          <div class="fld">
-            <label>Sexo <span class="req">*</span></label>
-            <select id="asocSexo">
-              <option value="">Seleccionar…</option>
-              <option value="M">Masculino</option>
-              <option value="F">Femenino</option>
-            </select>
-          </div>
-          <div class="fld">
-            <label>Estado Civil <span class="req">*</span></label>
-            <select id="asocEstadoCivil">
-              <option value="">Seleccionar…</option>
-              <option value="S">Soltero(a)</option>
-              <option value="C">Casado(a)</option>
-              <option value="U">Unión Libre</option>
-              <option value="D">Divorciado(a)</option>
-              <option value="V">Viudo(a)</option>
-            </select>
-          </div>
-          <div class="fld">
-            <label>Estudios</label>
-            <select id="asocEstudios">
-              <option value="">Seleccionar…</option>
-              <option value="P">Primaria</option>
-              <option value="S">Secundaria</option>
-              <option value="T">Técnico</option>
-              <option value="U">Universitario</option>
-              <option value="E">Especialización</option>
-              <option value="M">Maestría / Doctorado</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ── 4. CONTACTO Y DOMICILIO ── -->
-        <div class="asoc-sep">Contacto y Domicilio</div>
-        <div class="fg fg2">
-          <div class="fld">
-            <label>Teléfono 1 <span class="req">*</span></label>
-            <input id="asocTel1" placeholder="Ej: 604 123 4567" maxlength="20">
-          </div>
-          <div class="fld">
-            <label>Celular <span class="req">*</span></label>
-            <input id="asocCelular" placeholder="Ej: 310 000 0000" maxlength="15">
-          </div>
-          <div class="fld">
-            <label>Teléfono 2</label>
-            <input id="asocTel2" placeholder="Opcional" maxlength="20">
-          </div>
-          <div class="fld">
-            <label>Correo Electrónico <span class="req">*</span></label>
-            <input type="email" id="asocEmail" placeholder="correo@ejemplo.com">
-          </div>
-          <div class="fld s2">
-            <label>Dirección de Domicilio <span class="req">*</span></label>
-            <input id="asocDireccion" placeholder="Ej: Calle 50 # 30-40, Barrio El Poblado">
-          </div>
-          <div class="fld">
-            <label>Ciudad / Municipio <span class="req">*</span></label>
-            <input id="asocCiudad" placeholder="Ej: Medellín">
-          </div>
-          <div class="fld">
-            <label>Departamento</label>
-            <input id="asocDepto" placeholder="Ej: Antioquia" value="Antioquia">
-          </div>
-          <div class="fld">
-            <label>Barrio</label>
-            <input id="asocBarrio" placeholder="Barrio o sector">
-          </div>
-          <div class="fld">
-            <label>Estrato Socioeconómico</label>
-            <select id="asocEstrato">
-              <option value="">–</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ── 5. INFORMACIÓN LABORAL ── -->
-        <div class="asoc-sep">Información Laboral</div>
-        <div class="fg fg2">
-          <div class="fld">
-            <label>Empresa / Entidad <span class="req">*</span></label>
-            <input id="asocEmpresa" placeholder="Nombre de la empresa donde trabaja">
-          </div>
-          <div class="fld">
-            <label>Período de Deducción</label>
-            <select id="asocPeriodo">
-              <option value="Quincenal">Quincenal</option>
-              <option value="Mensual">Mensual</option>
-              <option value="Semanal">Semanal</option>
-            </select>
-          </div>
-          <div class="fld">
-            <label>Dependencia / Área</label>
-            <input id="asocDependencia" placeholder="Ej: Recursos Humanos">
-          </div>
-          <div class="fld">
-            <label>Tipo de Contrato</label>
-            <select id="asocTipoContrato">
-              <option value="">Seleccionar…</option>
-              <option value="T">Término Fijo</option>
-              <option value="I">Indefinido</option>
-              <option value="P">Prestación de Servicios</option>
-              <option value="A">Aprendizaje (SENA)</option>
-              <option value="O">Obra o Labor</option>
-            </select>
-          </div>
-          <div class="fld">
-            <label>Cargo / Profesión</label>
-            <input id="asocCargo" placeholder="Cargo actual">
-          </div>
-          <div class="fld">
-            <label>Fecha de Ingreso a la Empresa</label>
-            <input type="date" id="asocFechaIngreso">
-          </div>
-          <div class="fld">
-            <label>Salario Mensual <span class="req">*</span></label>
-            <div class="campo-peso">
-              <div class="peso-box">
-                <div class="peso-symbol">$</div>
-                <input class="peso-input" id="asocSalario" placeholder="0" inputmode="numeric" autocomplete="off">
-              </div>
-            </div>
-          </div>
-          <div class="fld">
-            <label>Deducción Ocasional</label>
-            <select id="asocDeduccion">
-              <option value="No">No</option>
-              <option value="Si">Sí</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ── 6. INFORMACIÓN BANCARIA ── -->
-        <div class="asoc-sep">Información Bancaria</div>
-        <div class="fg fg3">
-          <div class="fld">
-            <label>Banco</label>
-            <select id="asocBanco">
-              <option value="">Seleccionar banco…</option>
-              <optgroup label="Bancos Tradicionales">
-                <option>Bancolombia</option>
-                <option>Banco de Bogotá</option>
-                <option>Davivienda</option>
-                <option>DaviBank</option>
-                <option>BBVA Colombia</option>
-                <option>Banco Popular</option>
-                <option>AV Villas</option>
-                <option>Banco de Occidente</option>
-                <option>Banco Caja Social</option>
-                <option>GNB Sudameris</option>
-                <option>Banco Agrario de Colombia</option>
-                <option>Banco WWB</option>
-                <option>Banco Falabella</option>
-                <option>Banco Pichincha</option>
-                <option>Banco Finandina</option>
-                <option>Banco Serfinanza</option>
-                <option>Banco Multibank</option>
-                <option>Banco Coopcentral</option>
-                <option>Itaú Colombia</option>
-                <option>Bancamía</option>
-                <option>Credifamilia</option>
-                <option>Mibanco Colombia</option>
-              </optgroup>
-              <optgroup label="Neobancos y Bancos Digitales">
-                <option>Nequi</option>
-                <option>Daviplata</option>
-                <option>Lulo Bank</option>
-                <option>Nubank Colombia</option>
-                <option>RappiPay</option>
-                <option>Movii</option>
-                <option>Iris (Coopcentral)</option>
-                <option>Powwi</option>
-                <option>Tpaga</option>
-              </optgroup>
-              <optgroup label="Cooperativas y Fondos">
-                <option>Confiar Cooperativa</option>
-                <option>Coofinep</option>
-                <option>Coltefinanciera</option>
-                <option>Juriscoop</option>
-                <option>Cotrafa Cooperativa Financiera</option>
-                <option>CFA Cooperativa Financiera</option>
-              </optgroup>
-              <optgroup label="Otro">
-                <option value="Otro">Otro banco / entidad</option>
-              </optgroup>
-            </select>
-          </div>
-          <div class="fld">
-            <label>Número de Cuenta</label>
-            <input id="asocNroCuenta" placeholder="Número de cuenta bancaria">
-          </div>
-          <div class="fld">
-            <label>Tipo de Cuenta</label>
-            <select id="asocTipoCuenta">
-              <option value="">Seleccionar…</option>
-              <option value="AH">Ahorros</option>
-              <option value="CC">Corriente</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ── 7. RUT ── -->
-        <div class="asoc-sep">RUT</div>
-        <div class="fg fg2">
-          <div class="fld s2">
-            <label>Número de NIT / RUT</label>
-            <div style="display:flex;gap:10px;align-items:center;">
-              <input id="asocRut" placeholder="Ej: 900.123.456-7" style="flex:1">
-              <input type="checkbox" id="asocRutNA" class="rut-na-chk" onchange="ASOC.toggleRut(this)"><label for="asocRutNA" class="rut-na-label"><span class="rut-na-box"><i class="rut-na-icon">✓</i></span>No tengo / No aplica</label>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /asoc-body-inner -->
-
-      <!-- Barra de confirmación guardado -->
-      <div class="asoc-saved-bar" id="asocSavedBar">
-        ✅ Datos guardados correctamente. Se pre-llenarán en tu próxima solicitud.
-      </div>
-
-      <!-- Footer botones -->
-      <div class="asoc-foot">
-        <button class="asoc-btn-save" onclick="ASOC.guardar()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Guardar mis datos
-        </button>
-        <button class="asoc-btn-clr" onclick="ASOC.limpiar()">↺ Limpiar</button>
-      </div>
-    </div><!-- /asoc-body -->
-
-  </div><!-- /asoc-section -->
-
-
-<!-- SECCIÓN SEGUIMIENTO -->
-<div class="seg-section" id="segSection">
-  <div class="seg-head">
-    <div class="seg-head-ico">🔍</div>
-    <div>
-      <div class="seg-head-title">Consultar estado de mi solicitud</div>
-      <div class="seg-head-sub">Ingresa tu cédula o número de radicado para ver el estado</div>
-    </div>
-    <div class="seg-badge">Consulta en línea</div>
-  </div>
-  <div class="seg-search-bar">
-    <input id="segInput" class="seg-input" type="text"
-      placeholder="Ej: 1.234.567.890  ó  SOL-ABC123-XY01"
-      autocomplete="off" maxlength="40"
-      onkeydown="if(event.key==='Enter') SEG.consultar()" />
-    <button class="seg-btn" onclick="SEG.consultar()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-        <circle cx="11" cy="11" r="8"/>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      Consultar
-    </button>
-  </div>
-  <div class="seg-msg" id="segMsg" style="display:none"></div>
-  <div class="seg-results" id="segResults" style="display:none"></div>
-</div>
-<!-- FIN SECCIÓN SEGUIMIENTO -->
-
-  <!-- ══ SECCIÓN PQRS / OTRAS SOLICITUDES ══ -->
-  <div class="pqrs-section" id="pqrsSection">
-    <div class="pqrs-header" onclick="PQRS.togglePanel()" role="button" aria-expanded="false" id="pqrsHeader">
-      <div class="pqrs-header-ico">💬</div>
-      <div>
-        <div class="pqrs-title">¿Tienes otra solicitud o inquietud?</div>
-        <div class="pqrs-sub">Cancela tu hipoteca, solicita certificados o resuelve cualquier duda con tu asesor</div>
-      </div>
-      <div class="pqrs-toggle-ico">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-    </div>
-    <div class="pqrs-body" id="pqrsBody">
-      <div class="pqrs-body-inner">
-      <div class="pqrs-tipos">
-        <div class="pqrs-tipo" onclick="PQRS.selTipo(this,'credito_vivienda')">🏠 Crédito de Vivienda</div>
-        <div class="pqrs-tipo" onclick="PQRS.selTipo(this,'cancelacion_hipoteca')">📜 Cancelación de Hipoteca</div>
-        <div class="pqrs-tipo" onclick="PQRS.selTipo(this,'certificado_tributario')">🧾 Certificado Tributario</div>
-        <div class="pqrs-tipo" onclick="PQRS.selTipo(this,'paz_y_salvo')">✅ Certificado Paz y Salvo</div>
-        <div class="pqrs-tipo" onclick="PQRS.selTipo(this,'abono_libre_inversion')">💳 Abono Crédito Libre Inversión</div>
-        <div class="pqrs-tipo" onclick="PQRS.selTipo(this,'otra')">📝 Otra inquietud</div>
-      </div>
-      <input type="hidden" id="pqrsTipoSel" value="">
-
-      <div class="fg fg2" style="margin-top:18px;">
-        <div class="fld">
-          <label>Nombre Completo <span class="req">*</span></label>
-          <input id="pqrsNombre" placeholder="Tu nombre completo">
-        </div>
-        <div class="fld">
-          <label>Número de Documento <span class="req">*</span></label>
-          <input id="pqrsDocumento" placeholder="Ej: 1.234.567.890">
-        </div>
-        <div class="fld">
-          <label>Número de Contacto <span class="req">*</span></label>
-          <input id="pqrsTelefono" placeholder="Ej: 310 000 0000" maxlength="20">
-        </div>
-        <div class="fld">
-          <label>Correo Electrónico</label>
-          <input type="email" id="pqrsCorreo" placeholder="correo@ejemplo.com">
-        </div>
-        <div class="fld s2">
-          <label>Cuéntanos tu inquietud <span class="req">*</span></label>
-          <textarea id="pqrsInquietud" rows="4" placeholder="Describe detalladamente tu solicitud o pregunta. Si requerimos más información, nos comunicaremos contigo." style="width:100%;padding:12px 14px;border:1.5px solid rgba(240,216,204,0.9);border-radius:12px;font-family:'Inter',sans-serif;font-size:16px;resize:vertical;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;background:rgba(255,255,255,0.75);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--text);line-height:1.6;" onfocus="this.style.borderColor='#E8511A';this.style.boxShadow='0 0 0 3px rgba(232,81,26,0.15)';this.style.background='rgba(255,255,255,0.95)'" onblur="this.style.borderColor='rgba(240,216,204,0.9)';this.style.boxShadow='none';this.style.background='rgba(255,255,255,0.75)'"></textarea>
-        </div>
-      </div>
-
-      <div class="sbar" id="pqrsSbar" style="margin:12px 0 0;">
-        <span id="pqrsSbarTxt"></span>
-      </div>
-
-      <div class="pqrs-footer-btns">
-        <button class="btn-gen" onclick="PQRS.enviar()" id="pqrsBtn">
-          <svg class="btn-gen-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          <span class="btn-spinner"></span>
-          Enviar Solicitud
-        </button>
-        <button class="btn-clr" onclick="PQRS.limpiar()">↺ Limpiar</button>
-      </div>
-      </div><!-- /pqrs-body-inner -->
-    </div><!-- /pqrs-body -->
-  </div>
-
-  <div class="page-foot">
-    <b>FondoUne</b> · Fondo de Empleados UNE · Desembolso de Crédito · Portal del Asociado
-  </div>
-</div>
-
-<!-- TOAST CONFIRMACION -->
-<div class="toast-overlay" id="toastOverlay">
-  <div class="toast-box">
-    <span class="toast-ico">✅</span>
-    <div class="toast-title">¡Solicitud Registrada!</div>
-    <div class="toast-num" id="toastNum">#CR-000</div>
-    <div class="toast-msg">Tu solicitud ha sido guardada exitosamente en el sistema de FondoUne. El equipo de asesores podrá verla y darte seguimiento en breve.</div>
-    <button class="toast-btn" onclick="APP.cerrarToast()">Entendido</button>
-  </div>
-</div>
-
-<script src="app.js"></script>
-
-<!-- ══════════════════════════════════════
-     BOTÓN AYUDA FLOTANTE + PANEL FAQ
-     ══════════════════════════════════════ -->
-<!-- Félix — asistente flotante animado (2 capas) -->
-<div class="fab-felix-wrap" id="fabWrap">
-  <div class="fab-bubble" id="fabBubble">
-    ¡Hola! ¿Tienes alguna<br><strong>duda o inquietud?</strong> 👋
-  </div>
-  <button class="fab-help" id="fabHelp" onclick="toggleFAQ()" aria-label="Abrir Centro de Ayuda FondoUne">
-    <img class="fab-felix-video" src="img/img-2.gif" alt="Félix FondoUne" draggable="false">
-  </button>
-</div>
-
-
-<!-- Overlay -->
-<div class="faq-overlay" id="faqOverlay" onclick="cerrarFAQ()"></div>
-
-<!-- Panel FAQ -->
-<div class="faq-panel" id="faqPanel">
-  <div class="felix-chat-wrap">
-    <!-- Header -->
-    <div class="felix-chat-header">
-      <div class="felix-chat-header-top">
-        <div class="felix-chat-brand">
-          <div class="felix-avatar-sm">🤖</div>
-          <div>
-            <div class="felix-chat-name">Félix · FondoUne IA</div>
-            <div class="felix-chat-status">
-              <span class="felix-status-dot"></span>
-              Asistente activo · Gemini 2.5 Flash
-            </div>
-          </div>
-        </div>
-        <button class="felix-close-btn" onclick="cerrarFAQ()" aria-label="Cerrar">✕</button>
-      </div>
-      <div class="felix-chips">
-        <button class="felix-chip" onclick="felixChipClick('¿Qué documentos necesito para solicitar un crédito?')">📄 Documentos</button>
-        <button class="felix-chip" onclick="felixChipClick('¿Cuáles son los tipos de crédito disponibles?')">🏠 Tipos de crédito</button>
-        <button class="felix-chip" onclick="felixChipClick('¿Cómo es el proceso de solicitud?')">📋 Proceso</button>
-        <button class="felix-chip" onclick="felixChipClick('¿Cuánto tiempo tarda la aprobación?')">⏱️ Tiempos</button>
-      </div>
-    </div>
-
-    <!-- Mensajes -->
-    <div class="felix-messages" id="felixMessages">
-      <!-- Los mensajes se insertan dinámicamente -->
-    </div>
-
-    <!-- Typing indicator -->
-    <div class="felix-typing" id="felixTyping">
-      <div class="felix-msg-avatar">🤖</div>
-      <div class="felix-typing-bubble">
-        <div class="felix-dot"></div>
-        <div class="felix-dot"></div>
-        <div class="felix-dot"></div>
-      </div>
-    </div>
-
-    <!-- Input -->
-    <div class="felix-input-area">
-      <div class="felix-input-row">
+    <!-- ── Input ── -->
+    <footer class="chat-footer">
+      <div class="input-row">
         <textarea
-          id="felixInput"
-          class="felix-input"
-          placeholder="Escribe tu pregunta a Félix..."
+          id="user-input"
+          placeholder="Escribe tu consulta aquí…"
           rows="1"
-          onkeydown="felixKeydown(event)"
-          aria-label="Mensaje para Félix"
+          aria-label="Escribe tu mensaje"
+          autocomplete="off"
+          spellcheck="true"
         ></textarea>
-        <button class="felix-send-btn" onclick="felixSend()" id="felixSendBtn" aria-label="Enviar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        <button id="send-btn" aria-label="Enviar mensaje">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </button>
       </div>
-      <div class="felix-input-hint">
-        Powered by Gemini 2.5 Flash · <a href="/cdn-cgi/l/email-protection#04677661606d706b77726d726d616a606544626b6a606b716a612a676b69">¿Necesitas más ayuda?</a>
-      </div>
-    </div>
+      <p class="input-hint">Presiona <strong>Enter</strong> para enviar · <strong>Shift + Enter</strong> para nueva línea</p>
+    </footer>
+
   </div>
-</div>
 
-<script src="faq.js"></script>
-
-
-  <!-- Anchor scroll suave nativo -->
-  
-
-  <script src="security.js"></script>
-
+  <!-- ── Félix IA lógica ── -->
   <script src="felix-ia.js"></script>
 
-<script src="sound-system.js"></script>
-
+  <!-- Auto-resize del textarea -->
+  <script>
+    const ta = document.getElementById('user-input');
+    ta.addEventListener('input', () => {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+    });
+  </script>
 </body>
 </html>
