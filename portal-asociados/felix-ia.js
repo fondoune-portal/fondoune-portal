@@ -278,13 +278,7 @@ function felixAppendMsg(html, tipo) {
   bubble.innerHTML = felixFmt(html);
   wrap.appendChild(bubble);
 
-  // Insertar ANTES del typing indicator para que siempre quede al final
-  var typing = document.getElementById('felixTyping');
-  if (typing) {
-    container.insertBefore(wrap, typing);
-  } else {
-    container.appendChild(wrap);
-  }
+  container.appendChild(wrap);
   container.scrollTop = container.scrollHeight;
 }
 
