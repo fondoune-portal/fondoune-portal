@@ -1,5 +1,5 @@
 // ============================================================
-//  FÉLIX IA — FondoUne Portal
+//  FÉLIX IA — FondoUne Portal | Visual upgrade completo
 // ============================================================
 
 var FELIX_PROXY_URL = "https://script.google.com/macros/s/AKfycbwgDStwEkcC4i-OgTXMN5XCfHoM_M6_Lfr_03o_qs12lNLFYr5fmWYmnv2EHFrMSMne/exec";
@@ -19,85 +19,155 @@ var FELIX_SYSTEM_PROMPT =
   "4. Sé conciso: máximo 3 párrafos o una lista corta. " +
   "5. Empieza directo, sin repetir saludos en cada mensaje.";
 
-// ── Inyecta estilos de burbujas + typing animation ───────────
+// Preguntas rápidas iniciales
+var FELIX_CHIPS = [
+  "¿Qué documentos necesito?",
+  "¿Cuánto tiempo tarda el desembolso?",
+  "¿Cuáles son los tipos de crédito?"
+];
+
+// ── Estilos ──────────────────────────────────────────────────
 (function injectStyles() {
   var css = `
-    /* ── Burbujas de chat ── */
+    /* ── Burbujas ── */
     .fx-wrap {
       display: flex;
       align-items: flex-end;
       gap: 8px;
-      margin-bottom: 12px;
-      animation: fxFadeUp .22s ease;
+      margin-bottom: 14px;
+      animation: fxFadeUp .25s ease;
     }
     @keyframes fxFadeUp {
-      from { opacity:0; transform:translateY(7px); }
+      from { opacity:0; transform:translateY(10px); }
       to   { opacity:1; transform:translateY(0); }
     }
     .fx-wrap.user { flex-direction: row-reverse; }
 
+    /* Avatar de Félix */
     .fx-avatar {
-      width: 30px; height: 30px;
+      width: 32px; height: 32px;
       border-radius: 50%;
-      background: #E8511A;
+      background: linear-gradient(135deg, #E8511A, #ff7043);
       display: flex; align-items: center; justify-content: center;
-      font-size: 15px; flex-shrink: 0;
+      font-size: 16px; flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(232,81,26,0.35);
     }
+
+    /* Burbuja base */
+    .fx-bubble-wrap { display: flex; flex-direction: column; max-width: 78%; }
+    .fx-wrap.user .fx-bubble-wrap { align-items: flex-end; }
+
     .fx-bubble {
-      max-width: 78%;
-      padding: 10px 14px;
-      border-radius: 16px;
+      padding: 11px 15px;
+      border-radius: 18px;
       font-size: 13.5px;
-      line-height: 1.6;
+      line-height: 1.65;
       word-break: break-word;
     }
     .fx-bubble strong { font-weight: 600; }
     .fx-bubble em     { font-style: italic; }
     .fx-bubble ul     { margin: 6px 0 2px 18px; }
-    .fx-bubble li     { margin-bottom: 3px; }
+    .fx-bubble li     { margin-bottom: 4px; }
 
-    /* Burbuja Félix */
+    /* Félix */
     .fx-wrap.felix .fx-bubble {
       background: #fff;
       color: #2D1A0E;
-      border: 1px solid rgba(232,81,26,0.15);
+      border: 1px solid rgba(232,81,26,0.12);
       border-bottom-left-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
     }
-    /* Burbuja usuario */
+    /* Usuario */
     .fx-wrap.user .fx-bubble {
-      background: #E8511A;
+      background: linear-gradient(135deg, #E8511A, #ff6b35);
       color: #fff;
       border-bottom-right-radius: 4px;
-      box-shadow: 0 2px 8px rgba(232,81,26,0.25);
+      box-shadow: 0 3px 12px rgba(232,81,26,0.3);
     }
-    /* Burbuja error */
+    /* Error */
     .fx-wrap.felix.error .fx-bubble {
       background: #fff4f2;
       color: #c0392b;
       border-color: #f5c6c0;
     }
 
-    /* ── Typing indicator (overrides / fallback) ── */
+    /* ── Timestamp ── */
+    .fx-time {
+      font-size: 10.5px;
+      color: #aaa;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+    .fx-wrap.user .fx-time { text-align: right; }
+
+    /* ── Check de entregado (usuario) ── */
+    .fx-check {
+      font-size: 11px;
+      color: rgba(255,255,255,0.75);
+      margin-top: 3px;
+      text-align: right;
+      padding-right: 2px;
+      display: none;
+    }
+    .fx-check.visible { display: block; }
+
+    /* ── Chips de acceso rápido ── */
+    .fx-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      padding: 4px 0 12px 40px;
+      animation: fxFadeUp .3s ease .1s both;
+    }
+    .fx-chip {
+      background: #fff;
+      border: 1.5px solid #E8511A;
+      color: #E8511A;
+      border-radius: 20px;
+      padding: 6px 13px;
+      font-size: 12.5px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .15s ease;
+      white-space: nowrap;
+    }
+    .fx-chip:hover {
+      background: #E8511A;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(232,81,26,0.3);
+    }
+
+    /* ── Typing indicator ── */
     .felix-typing {
       display: none;
       align-items: center;
       gap: 8px;
       padding: 0 0 10px 8px;
     }
-    .felix-typing.visible {
-      display: flex !important;
+    .felix-typing.visible { display: flex !important; }
+
+    .felix-typing-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
     .felix-typing-bubble {
       background: #fff;
       border: 1px solid rgba(232,81,26,0.15);
-      border-radius: 16px;
+      border-radius: 18px;
       border-bottom-left-radius: 4px;
-      padding: 12px 16px;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       gap: 5px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .felix-typing-label {
+      font-size: 11px;
+      color: #aaa;
+      padding-left: 4px;
+      font-style: italic;
     }
     .felix-dot {
       width: 7px; height: 7px;
@@ -119,20 +189,45 @@ var FELIX_SYSTEM_PROMPT =
 })();
 
 // ── Estado ───────────────────────────────────────────────────
-var felixHistory = [];
-var felixProcessing = false;
+var felixHistory       = [];
+var felixProcessing    = false;
 var felixWelcomeMostrado = false;
+var felixLastUserWrap  = null; // referencia para poner el check
 
-// ── Bienvenida ───────────────────────────────────────────────
+// ── Bienvenida + chips ───────────────────────────────────────
 function showFelixWelcome() {
   if (felixWelcomeMostrado) return;
   felixWelcomeMostrado = true;
+
   felixAppendMsg(
-    '¡Hola! Soy <strong>Félix</strong>, tu asistente de FondoUne. ' +
-    'Puedo ayudarte con <strong>créditos, documentos, tiempos y procesos</strong>. ' +
-    '¿En qué puedo ayudarte hoy?',
+    '¡Hola! Soy <strong>Félix</strong>, tu asistente especializado en ' +
+    '<strong>Créditos de Vivienda</strong> de FondoUne. ¿En qué puedo ayudarte hoy?',
     'felix'
   );
+
+  // Chips de acceso rápido
+  var container = document.getElementById('felixMessages');
+  if (!container) return;
+
+  var chipsRow = document.createElement('div');
+  chipsRow.className = 'fx-chips';
+  chipsRow.id = 'felixChipsRow';
+
+  FELIX_CHIPS.forEach(function(texto) {
+    var btn = document.createElement('button');
+    btn.className = 'fx-chip';
+    btn.textContent = texto;
+    btn.onclick = function() {
+      // Oculta chips al usar uno
+      var row = document.getElementById('felixChipsRow');
+      if (row) row.style.display = 'none';
+      felixEnviar(texto);
+    };
+    chipsRow.appendChild(btn);
+  });
+
+  container.appendChild(chipsRow);
+  container.scrollTop = container.scrollHeight;
 }
 
 // ── Funciones globales del HTML ──────────────────────────────
@@ -143,6 +238,9 @@ function felixSend() {
   if (!texto || felixProcessing) return;
   input.value = '';
   input.style.height = 'auto';
+  // Oculta chips al escribir manualmente
+  var row = document.getElementById('felixChipsRow');
+  if (row) row.style.display = 'none';
   felixEnviar(texto);
 }
 
@@ -154,6 +252,8 @@ function felixKeydown(e) {
 }
 
 function felixChipClick(texto) {
+  var row = document.getElementById('felixChipsRow');
+  if (row) row.style.display = 'none';
   felixEnviar(texto);
 }
 
@@ -162,7 +262,7 @@ function felixEnviar(texto) {
   if (!texto || felixProcessing) return;
   felixProcessing = true;
   felixSetUI(true);
-  felixAppendMsg(texto, 'user');
+  felixLastUserWrap = felixAppendMsg(texto, 'user');
   felixHistory.push({ role: 'user', parts: [{ text: texto }] });
   felixShowTyping(true);
   felixCallProxy(0);
@@ -188,7 +288,7 @@ function felixCallProxy(intento) {
   }, 25000);
 
   xhr.open('POST', FELIX_PROXY_URL, true);
-  xhr.setRequestHeader('Content-Type', 'text/plain');  // text/plain evita preflight CORS
+  xhr.setRequestHeader('Content-Type', 'text/plain');
 
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
@@ -228,7 +328,7 @@ function felixCallProxy(intento) {
       }
 
       if (candidato.finishReason === 'SAFETY') {
-        var safe = 'Lo siento, no puedo responder esa consulta. ¿Te ayudo con algo relacionado con FondoUne?';
+        var safe = 'Lo siento, no puedo responder esa consulta. ¿Te ayudo con algo de crédito de vivienda?';
         felixAppendMsg(safe, 'felix');
         felixHistory.push({ role: 'model', parts: [{ text: safe }] });
         felixDone();
@@ -243,6 +343,9 @@ function felixCallProxy(intento) {
         felixDone();
         return;
       }
+
+      // Muestra check ✓✓ en el mensaje del usuario al recibir respuesta
+      felixMarkDelivered();
 
       respTxt = respTxt.trim();
       felixAppendMsg(respTxt, 'felix');
@@ -259,21 +362,19 @@ function felixCallProxy(intento) {
   xhr.send(JSON.stringify({
     system_instruction: { parts: [{ text: FELIX_SYSTEM_PROMPT }] },
     contents: felixHistory,
-    generationConfig: {
-      maxOutputTokens: 1024,
-      temperature: 0.7
-    }
+    generationConfig: { maxOutputTokens: 1024, temperature: 0.7 }
   }));
 }
 
-// ── Agrega burbuja ───────────────────────────────────────────
+// ── Agrega burbuja con timestamp ─────────────────────────────
 function felixAppendMsg(html, tipo) {
   var container = document.getElementById('felixMessages');
-  if (!container) return;
+  if (!container) return null;
 
   var wrap = document.createElement('div');
   wrap.className = 'fx-wrap ' + (tipo === 'user' ? 'user' : 'felix') + (tipo === 'error' ? ' error' : '');
 
+  // Avatar solo en mensajes de Félix
   if (tipo !== 'user') {
     var av = document.createElement('div');
     av.className = 'fx-avatar';
@@ -281,24 +382,64 @@ function felixAppendMsg(html, tipo) {
     wrap.appendChild(av);
   }
 
+  // Contenedor de burbuja + metadata
+  var bubbleWrap = document.createElement('div');
+  bubbleWrap.className = 'fx-bubble-wrap';
+
   var bubble = document.createElement('div');
   bubble.className = 'fx-bubble';
   bubble.innerHTML = felixFmt(html);
-  wrap.appendChild(bubble);
+  bubbleWrap.appendChild(bubble);
 
+  // Timestamp
+  var timeEl = document.createElement('div');
+  timeEl.className = 'fx-time';
+  timeEl.textContent = felixNow();
+  bubbleWrap.appendChild(timeEl);
+
+  // Check (solo usuario, empieza oculto)
+  if (tipo === 'user') {
+    var checkEl = document.createElement('div');
+    checkEl.className = 'fx-check';
+    checkEl.textContent = '✓✓ Recibido';
+    bubbleWrap.appendChild(checkEl);
+  }
+
+  wrap.appendChild(bubbleWrap);
   container.appendChild(wrap);
   container.scrollTop = container.scrollHeight;
+  return wrap;
 }
 
-// ── Typing indicator ─────────────────────────────────────────
+// ── Muestra ✓✓ en el último mensaje del usuario ──────────────
+function felixMarkDelivered() {
+  if (!felixLastUserWrap) return;
+  var check = felixLastUserWrap.querySelector('.fx-check');
+  if (check) check.classList.add('visible');
+}
+
+// ── Typing indicator con texto ───────────────────────────────
 function felixShowTyping(show) {
   var el = document.getElementById('felixTyping');
   if (!el) return;
+
   if (show) {
+    // Reconstruye el typing con avatar + texto
+    el.innerHTML =
+      '<div class="fx-avatar" style="flex-shrink:0">🤖</div>' +
+      '<div class="felix-typing-inner">' +
+        '<div class="felix-typing-bubble">' +
+          '<div class="felix-dot"></div>' +
+          '<div class="felix-dot"></div>' +
+          '<div class="felix-dot"></div>' +
+        '</div>' +
+        '<div class="felix-typing-label">Félix está escribiendo…</div>' +
+      '</div>';
     el.classList.add('visible');
   } else {
     el.classList.remove('visible');
   }
+
   var c = document.getElementById('felixMessages');
   if (c) c.scrollTop = c.scrollHeight;
 }
@@ -313,9 +454,19 @@ function felixSetUI(disabled) {
 
 function felixDone() {
   felixProcessing = false;
+  felixLastUserWrap = null;
   felixSetUI(false);
   var inp = document.getElementById('felixInput');
   if (inp) { inp.disabled = false; inp.focus(); }
+}
+
+// ── Hora actual formateada ────────────────────────────────────
+function felixNow() {
+  var d = new Date();
+  var h = d.getHours(), m = d.getMinutes();
+  var ampm = h >= 12 ? 'p.m.' : 'a.m.';
+  h = h % 12 || 12;
+  return h + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
 }
 
 // ── Formato markdown básico ──────────────────────────────────
