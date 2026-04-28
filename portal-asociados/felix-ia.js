@@ -253,8 +253,10 @@ function felixCallProxy(intento) {
   xhr.send(JSON.stringify({
     system_instruction: { parts: [{ text: FELIX_SYSTEM_PROMPT }] },
     contents: felixHistory,
-    maxOutputTokens: 1024,
-    temperature: 0.7
+    generationConfig: {
+      maxOutputTokens: 1024,
+      temperature: 0.7
+    }
   }));
 }
 
