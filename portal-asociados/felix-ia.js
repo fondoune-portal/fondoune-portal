@@ -182,7 +182,7 @@ function felixCallProxy(intento) {
   }, 25000);
 
   xhr.open('POST', FELIX_PROXY_URL, true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('Content-Type', 'text/plain');  // text/plain evita preflight CORS
 
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
