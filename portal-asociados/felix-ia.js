@@ -1,43 +1,41 @@
 // ============================================================
-//  FÉLIX IA — FondoUne Portal  (v2 — mejoras visuales)
+//  FÉLIX IA — FondoUne Portal
 // ============================================================
 
 var FELIX_PROXY_URL = "https://script.google.com/macros/s/AKfycbwgDStwEkcC4i-OgTXMN5XCfHoM_M6_Lfr_03o_qs12lNLFYr5fmWYmnv2EHFrMSMne/exec";
 
-// ── System Prompt (restringido a Créditos de Vivienda) ───────
 var FELIX_SYSTEM_PROMPT =
-  "Eres Félix, el asistente virtual oficial del Fondo de Empleados de UNE (Fondo UNE). " +
-  "Tu especialidad es EXCLUSIVAMENTE créditos de vivienda. Solo puedes responder preguntas sobre: " +
-  "créditos de vivienda VIS y NO VIS, leasing habitacional, tasas hipotecarias, plazos y cuotas, " +
-  "subsidios de vivienda, requisitos y documentación para crédito de vivienda, tiempos del proceso " +
-  "hipotecario y educación financiera relacionada con vivienda. " +
-  "Si el asociado pregunta sobre cualquier otro tema (créditos de consumo, libre inversión, recreación, " +
-  "seguros, auxilios, etc.), responde exactamente: 'Solo puedo orientarte sobre créditos de vivienda. " +
-  "Para otros servicios de Fondo UNE, comunícate directamente con nuestro equipo.' " +
-  "Lineamientos: responde siempre en español, con tono cálido, profesional y cercano. " +
-  "Sé conciso pero completo. Si no tienes la información exacta, indícalo honestamente y sugiere " +
-  "contactar al equipo de Fondo UNE. Nunca inventes datos financieros, tasas o montos específicos. " +
-  "Empieza tus respuestas de forma directa, sin saludos repetitivos.";
+  "Eres Félix, el asistente virtual especializado en Créditos de Vivienda del Fondo de Empleados de UNE (FondoUne). " +
+  "Tu ÚNICO tema es el crédito de vivienda de FondoUne: requisitos, documentos para solicitud y desembolso, " +
+  "tipos de crédito (compra, construcción, remodelación, libre inversión con garantía hipotecaria), " +
+  "tiempos del proceso, condiciones generales y orientación sobre trámites. " +
+  "REGLAS ESTRICTAS: " +
+  "1. Si el asociado pregunta sobre cualquier tema que NO sea crédito de vivienda de FondoUne, responde amablemente: " +
+  "'Estoy especializado únicamente en créditos de vivienda de FondoUne. Para otras consultas, comunícate con nuestro equipo directamente.' " +
+  "No te disculpes en exceso ni des más explicaciones. " +
+  "2. Nunca inventes tasas de interés, montos, plazos ni valores específicos que no conozcas con certeza. " +
+  "Si no tienes el dato exacto, di que el equipo de FondoUne puede confirmarlo. " +
+  "3. Responde en español, con tono cálido, profesional y cercano. " +
+  "4. Sé conciso: máximo 3 párrafos o una lista corta. " +
+  "5. Empieza directo, sin repetir saludos en cada mensaje.";
 
-
-// ── Inyecta estilos ──────────────────────────────────────────
+// ── Inyecta estilos de burbujas + typing animation ───────────
 (function injectStyles() {
   var css = `
-    /* ── Entrada de cada mensaje ── */
+    /* ── Burbujas de chat ── */
     .fx-wrap {
       display: flex;
       align-items: flex-end;
       gap: 8px;
-      margin-bottom: 10px;
-      animation: fxFadeUp .24s cubic-bezier(0.16,1,0.3,1);
+      margin-bottom: 12px;
+      animation: fxFadeUp .22s ease;
     }
     @keyframes fxFadeUp {
-      from { opacity:0; transform:translateY(8px) scale(0.97); }
-      to   { opacity:1; transform:translateY(0)   scale(1);    }
+      from { opacity:0; transform:translateY(7px); }
+      to   { opacity:1; transform:translateY(0); }
     }
     .fx-wrap.user { flex-direction: row-reverse; }
 
-    /* ── Avatar ── */
     .fx-avatar {
       width: 30px; height: 30px;
       border-radius: 50%;
@@ -45,18 +43,8 @@ var FELIX_SYSTEM_PROMPT =
       display: flex; align-items: center; justify-content: center;
       font-size: 15px; flex-shrink: 0;
     }
-
-    /* ── Wrap burbuja + timestamp ── */
-    .fx-bbl-wrap {
-      display: flex;
-      flex-direction: column;
-      max-width: 78%;
-    }
-    .fx-wrap.user .fx-bbl-wrap { align-items: flex-end; }
-
-    /* ── Burbuja ── */
     .fx-bubble {
-      position: relative;
+      max-width: 78%;
       padding: 10px 14px;
       border-radius: 16px;
       font-size: 13.5px;
@@ -68,7 +56,7 @@ var FELIX_SYSTEM_PROMPT =
     .fx-bubble ul     { margin: 6px 0 2px 18px; }
     .fx-bubble li     { margin-bottom: 3px; }
 
-    /* Félix — burbuja blanca + cola izquierda estilo WhatsApp */
+    /* Burbuja Félix */
     .fx-wrap.felix .fx-bubble {
       background: #fff;
       color: #2D1A0E;
@@ -76,78 +64,40 @@ var FELIX_SYSTEM_PROMPT =
       border-bottom-left-radius: 4px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
-    .fx-wrap.felix .fx-bubble::before {
-      content: '';
-      position: absolute;
-      left: -8px; bottom: 0;
-      width: 0; height: 0;
-      border-style: solid;
-      border-width: 0 0 10px 10px;
-      border-color: transparent transparent #fff transparent;
-      filter: drop-shadow(-1px 0 1px rgba(232,81,26,0.12));
-    }
-
-    /* Usuario — burbuja naranja + cola derecha estilo WhatsApp */
+    /* Burbuja usuario */
     .fx-wrap.user .fx-bubble {
       background: #E8511A;
       color: #fff;
       border-bottom-right-radius: 4px;
       box-shadow: 0 2px 8px rgba(232,81,26,0.25);
     }
-    .fx-wrap.user .fx-bubble::after {
-      content: '';
-      position: absolute;
-      right: -8px; bottom: 0;
-      width: 0; height: 0;
-      border-style: solid;
-      border-width: 0 10px 10px 0;
-      border-color: transparent #E8511A transparent transparent;
-    }
-
-    /* Error */
+    /* Burbuja error */
     .fx-wrap.felix.error .fx-bubble {
       background: #fff4f2;
       color: #c0392b;
       border-color: #f5c6c0;
     }
-    .fx-wrap.felix.error .fx-bubble::before {
-      border-color: transparent transparent #fff4f2 transparent;
-    }
 
-    /* ── Timestamp ── */
-    .fx-ts {
-      font-size: 10.5px;
-      color: #9CA3AF;
-      margin-top: 3px;
-      padding: 0 4px;
-    }
-    .fx-wrap.user .fx-ts { text-align: right; }
-
-    /* ── Typing indicator ── */
+    /* ── Typing indicator (overrides / fallback) ── */
     .felix-typing {
       display: none;
       align-items: center;
       gap: 8px;
       padding: 0 0 10px 8px;
     }
-    .felix-typing.visible { display: flex !important; }
-
+    .felix-typing.visible {
+      display: flex !important;
+    }
     .felix-typing-bubble {
       background: #fff;
       border: 1px solid rgba(232,81,26,0.15);
       border-radius: 16px;
       border-bottom-left-radius: 4px;
-      padding: 10px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    }
-    .felix-typing-dots {
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       gap: 5px;
-      height: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
     .felix-dot {
       width: 7px; height: 7px;
@@ -162,56 +112,28 @@ var FELIX_SYSTEM_PROMPT =
       0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
       40%            { transform: scale(1.1); opacity: 1; }
     }
-    /* Texto de estado bajo los puntos */
-    .felix-typing-label {
-      font-size: 11px;
-      color: #9CA3AF;
-      white-space: nowrap;
-    }
-
-    /* ── Animación de apertura del panel ──────────────────────
-       Agrega la clase "felix-panel" al div contenedor del chat
-       en tu HTML y llama a felixTogglePanel('idDelPanel')      */
-    .felix-panel {
-      transform: translateY(16px) scale(0.97);
-      opacity: 0;
-      pointer-events: none;
-      transition: transform 320ms cubic-bezier(0.16,1,0.3,1),
-                  opacity   280ms cubic-bezier(0.16,1,0.3,1);
-      transform-origin: bottom right;
-    }
-    .felix-panel.felix-panel--open {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-      pointer-events: all;
-    }
   `;
   var style = document.createElement('style');
-  style.id = 'felix-styles-v2';
   style.textContent = css;
   document.head.appendChild(style);
 })();
 
-
 // ── Estado ───────────────────────────────────────────────────
-var felixHistory         = [];
-var felixProcessing      = false;
+var felixHistory = [];
+var felixProcessing = false;
 var felixWelcomeMostrado = false;
-var _felixAudioCtx       = null;
-
 
 // ── Bienvenida ───────────────────────────────────────────────
 function showFelixWelcome() {
   if (felixWelcomeMostrado) return;
   felixWelcomeMostrado = true;
   felixAppendMsg(
-    '¡Hola! Soy <strong>Félix</strong>, tu asesor de <strong>crédito de vivienda</strong> en FondoUne. ' +
-    'Puedo orientarte sobre financiación, tasas, subsidios y trámites. ' +
+    '¡Hola! Soy <strong>Félix</strong>, tu asistente de FondoUne. ' +
+    'Puedo ayudarte con <strong>créditos, documentos, tiempos y procesos</strong>. ' +
     '¿En qué puedo ayudarte hoy?',
     'felix'
   );
 }
-
 
 // ── Funciones globales del HTML ──────────────────────────────
 function felixSend() {
@@ -235,7 +157,6 @@ function felixChipClick(texto) {
   felixEnviar(texto);
 }
 
-
 // ── Lógica de envío ──────────────────────────────────────────
 function felixEnviar(texto) {
   if (!texto || felixProcessing) return;
@@ -246,7 +167,6 @@ function felixEnviar(texto) {
   felixShowTyping(true);
   felixCallProxy(0);
 }
-
 
 // ── Proxy GAS con reintentos ─────────────────────────────────
 function felixCallProxy(intento) {
@@ -268,7 +188,7 @@ function felixCallProxy(intento) {
   }, 25000);
 
   xhr.open('POST', FELIX_PROXY_URL, true);
-  xhr.setRequestHeader('Content-Type', 'text/plain');  // evita preflight CORS
+  xhr.setRequestHeader('Content-Type', 'text/plain');  // text/plain evita preflight CORS
 
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
@@ -308,7 +228,7 @@ function felixCallProxy(intento) {
       }
 
       if (candidato.finishReason === 'SAFETY') {
-        var safe = 'Lo siento, no puedo responder esa consulta. ¿Te ayudo con algo de crédito de vivienda?';
+        var safe = 'Lo siento, no puedo responder esa consulta. ¿Te ayudo con algo relacionado con FondoUne?';
         felixAppendMsg(safe, 'felix');
         felixHistory.push({ role: 'model', parts: [{ text: safe }] });
         felixDone();
@@ -346,17 +266,14 @@ function felixCallProxy(intento) {
   }));
 }
 
-
-// ── Agrega burbuja + timestamp ───────────────────────────────
+// ── Agrega burbuja ───────────────────────────────────────────
 function felixAppendMsg(html, tipo) {
   var container = document.getElementById('felixMessages');
   if (!container) return;
 
   var wrap = document.createElement('div');
-  wrap.className = 'fx-wrap ' + (tipo === 'user' ? 'user' : 'felix') +
-                   (tipo === 'error' ? ' error' : '');
+  wrap.className = 'fx-wrap ' + (tipo === 'user' ? 'user' : 'felix') + (tipo === 'error' ? ' error' : '');
 
-  // Avatar (solo mensajes de Félix — sin cambios al emoji actual)
   if (tipo !== 'user') {
     var av = document.createElement('div');
     av.className = 'fx-avatar';
@@ -364,110 +281,27 @@ function felixAppendMsg(html, tipo) {
     wrap.appendChild(av);
   }
 
-  // Wrap interno: burbuja + timestamp
-  var bblWrap = document.createElement('div');
-  bblWrap.className = 'fx-bbl-wrap';
-
   var bubble = document.createElement('div');
   bubble.className = 'fx-bubble';
   bubble.innerHTML = felixFmt(html);
-  bblWrap.appendChild(bubble);
+  wrap.appendChild(bubble);
 
-  // Timestamp
-  var ts = document.createElement('div');
-  ts.className = 'fx-ts';
-  ts.textContent = felixNowTime();
-  bblWrap.appendChild(ts);
-
-  wrap.appendChild(bblWrap);
   container.appendChild(wrap);
   container.scrollTop = container.scrollHeight;
-
-  // Sonido ping al recibir respuesta de Félix
-  if (tipo === 'felix') felixPlayPing();
 }
-
 
 // ── Typing indicator ─────────────────────────────────────────
 function felixShowTyping(show) {
   var el = document.getElementById('felixTyping');
   if (!el) return;
-
   if (show) {
-    // Inyecta el texto de estado la primera vez
-    var bubble = el.querySelector('.felix-typing-bubble');
-    if (bubble && !bubble.querySelector('.felix-typing-label')) {
-      // Envuelve los dots en .felix-typing-dots si aún no existe
-      if (!bubble.querySelector('.felix-typing-dots')) {
-        var dotsWrap = document.createElement('div');
-        dotsWrap.className = 'felix-typing-dots';
-        var dots = bubble.querySelectorAll('.felix-dot');
-        dots.forEach(function(d) { dotsWrap.appendChild(d); });
-        bubble.insertBefore(dotsWrap, bubble.firstChild);
-      }
-      var label = document.createElement('span');
-      label.className = 'felix-typing-label';
-      label.textContent = 'Félix está buscando la mejor respuesta\u2026';
-      bubble.appendChild(label);
-    }
     el.classList.add('visible');
   } else {
     el.classList.remove('visible');
   }
-
   var c = document.getElementById('felixMessages');
   if (c) c.scrollTop = c.scrollHeight;
 }
-
-
-// ── Animación de apertura del panel (opcional) ───────────────
-// Agrega class="felix-panel" al div del chat en tu HTML y
-// llama a felixTogglePanel('idDeTuPanel') en el botón de apertura.
-// Si ya manejas la visibilidad del panel con otro mecanismo,
-// solo agrega/quita la clase felix-panel--open manualmente.
-function felixTogglePanel(panelId) {
-  var panel = document.getElementById(panelId);
-  if (!panel) return;
-  var abriendo = panel.classList.toggle('felix-panel--open');
-  if (abriendo) {
-    showFelixWelcome();
-    setTimeout(function() {
-      var inp = document.getElementById('felixInput');
-      if (inp) inp.focus();
-    }, 340);
-  }
-}
-
-
-// ── Sonido ping suave (Web Audio API) ────────────────────────
-function felixPlayPing() {
-  try {
-    if (!_felixAudioCtx) {
-      _felixAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    var ctx  = _felixAudioCtx;
-    var osc  = ctx.createOscillator();
-    var gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.38);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.4);
-  } catch(e) { /* no disponible en algunos contextos — silencioso */ }
-}
-
-
-// ── Hora actual formateada ───────────────────────────────────
-function felixNowTime() {
-  return new Date().toLocaleTimeString('es-CO', {
-    hour: '2-digit', minute: '2-digit', hour12: true
-  });
-}
-
 
 // ── UI helpers ───────────────────────────────────────────────
 function felixSetUI(disabled) {
@@ -484,7 +318,6 @@ function felixDone() {
   if (inp) { inp.disabled = false; inp.focus(); }
 }
 
-
 // ── Formato markdown básico ──────────────────────────────────
 function felixFmt(t) {
   if (!/<[a-z][\s\S]*>/i.test(t)) {
@@ -495,7 +328,6 @@ function felixFmt(t) {
     .replace(/\*(.*?)\*/g,     '<em>$1</em>')
     .replace(/\n/g,            '<br>');
 }
-
 
 // ── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
