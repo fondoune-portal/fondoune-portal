@@ -397,10 +397,11 @@ function felixAppendMsg(html, tipo) {
   timeEl.textContent = felixNow();
   bubbleWrap.appendChild(timeEl);
 
-  // Check (solo usuario, empieza oculto)
+  // Check (solo usuario, empieza oculto con inline style)
   if (tipo === 'user') {
     var checkEl = document.createElement('div');
     checkEl.className = 'fx-check';
+    checkEl.style.cssText = 'display:none;font-size:10.5px;color:rgba(255,255,255,0.75);margin-top:3px;text-align:right;padding-right:2px;';
     checkEl.textContent = '✓✓ Recibido';
     bubbleWrap.appendChild(checkEl);
   }
@@ -415,7 +416,9 @@ function felixAppendMsg(html, tipo) {
 function felixMarkDelivered() {
   if (!felixLastUserWrap) return;
   var check = felixLastUserWrap.querySelector('.fx-check');
-  if (check) check.classList.add('visible');
+  if (check) {
+    check.style.display = 'block';  // inline style directo, ignora CSS externo
+  }
 }
 
 // ── Typing indicator con texto ───────────────────────────────
@@ -424,20 +427,40 @@ function felixShowTyping(show) {
   if (!el) return;
 
   if (show) {
-    // Reconstruye el typing con avatar + texto
-    el.innerHTML =
-      '<div class="fx-avatar" style="flex-shrink:0">🤖</div>' +
-      '<div class="felix-typing-inner">' +
-        '<div class="felix-typing-bubble">' +
-          '<div class="felix-dot"></div>' +
-          '<div class="felix-dot"></div>' +
-          '<div class="felix-dot"></div>' +
-        '</div>' +
-        '<div class="felix-typing-label">Félix está escribiendo…</div>' +
-      '</div>';
-    el.classList.add('visible');
+    // Muestra con display directo (evita conflictos con style.css externo)
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.gap = '8px';
+    el.style.padding = '0 0 10px 8px';
+
+    // Agrega label "Félix está escribiendo..." si no existe
+    var label = document.getElementById('felixTypingLabel');
+    if (!label) {
+      // Busca el felix-typing-bubble para insertar label debajo
+      var bubble = el.querySelector('.felix-typing-bubble');
+      if (bubble) {
+        // Crea wrapper vertical si no existe
+        var wrapper = document.getElementById('felixTypingWrapper');
+        if (!wrapper) {
+          wrapper = document.createElement('div');
+          wrapper.id = 'felixTypingWrapper';
+          wrapper.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+          // Mueve el bubble al wrapper
+          el.insertBefore(wrapper, bubble);
+          wrapper.appendChild(bubble);
+        }
+        label = document.createElement('div');
+        label.id = 'felixTypingLabel';
+        label.style.cssText = 'font-size:11px;color:#aaa;font-style:italic;padding-left:4px;';
+        label.textContent = 'Félix está escribiendo…';
+        wrapper.appendChild(label);
+      }
+    }
+    if (label) label.style.display = 'block';
   } else {
-    el.classList.remove('visible');
+    el.style.display = 'none';
+    var label = document.getElementById('felixTypingLabel');
+    if (label) label.style.display = 'none';
   }
 
   var c = document.getElementById('felixMessages');
@@ -482,7 +505,8 @@ function felixFmt(t) {
 
 // ── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  felixShowTyping(false);
+  var tyEl = document.getElementById('felixTyping');
+  if (tyEl) tyEl.style.display = 'none';  // ocultar directo al cargar
   var inp = document.getElementById('felixInput');
   if (!inp) return;
   inp.addEventListener('input', function() {
