@@ -63,6 +63,23 @@ var FELIX_CHIPS = [
       justify-content: center !important;
       font-size: 18px !important;
       box-shadow: none !important;
+      overflow: hidden !important;
+      padding: 0 !important;
+    }
+    .felix-avatar-sm img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: 50% !important;
+    }
+    .felix-msg-avatar {
+      overflow: hidden !important;
+    }
+    .felix-msg-avatar img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: 50% !important;
     }
     .felix-chat-name {
       font-size: 15px !important;
@@ -123,8 +140,8 @@ var FELIX_CHIPS = [
     .fx-wrap.user { flex-direction: row-reverse; }
 
     .fx-avatar {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: #fff5f0;
       border: 1.5px solid #E8511A;
@@ -133,6 +150,7 @@ var FELIX_CHIPS = [
       justify-content: center;
       font-size: 14px;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     .fx-bubble-wrap {
@@ -365,7 +383,9 @@ function showFelixWelcome() {
     btn.className = 'fx-chip-btn';
     btn.textContent = txt;
     btn.onclick = function() {
-      document.getElementById('felixChipsRow') && (document.getElementById('felixChipsRow').style.display = 'none');
+      if (felixProcessing) return;
+      var row = document.getElementById('felixChipsRow');
+      if (row) row.style.display = 'none';
       felixEnviar(txt);
     };
     row.appendChild(btn);
@@ -507,7 +527,11 @@ function felixAppendMsg(html, tipo) {
   if (tipo !== 'user') {
     var av = document.createElement('div');
     av.className = 'fx-avatar';
-    av.textContent = '🤖';
+    var avImg = document.createElement('img');
+    avImg.src = 'img/img-2.gif';
+    avImg.alt = 'Félix';
+    avImg.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+    av.appendChild(avImg);
     wrap.appendChild(av);
   }
 

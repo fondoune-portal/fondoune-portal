@@ -870,12 +870,12 @@
     <div class="felix-chat-header">
       <div class="felix-chat-header-top">
         <div class="felix-chat-brand">
-          <div class="felix-avatar-sm">🤖</div>
+          <div class="felix-avatar-sm"><img src="img/img-2.gif" alt="Félix" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
           <div>
-            <div class="felix-chat-name">Félix · FondoUne IA</div>
+            <div class="felix-chat-name">Félix</div>
             <div class="felix-chat-status">
               <span class="felix-status-dot"></span>
-              Asistente activo · Gemini 2.5 Flash
+              Créditos de vivienda · FondoUne
             </div>
           </div>
         </div>
@@ -891,11 +891,14 @@
 
     <!-- Typing indicator -->
     <div class="felix-typing" id="felixTyping">
-      <div class="felix-msg-avatar">🤖</div>
-      <div class="felix-typing-bubble">
-        <div class="felix-dot"></div>
-        <div class="felix-dot"></div>
-        <div class="felix-dot"></div>
+      <div class="felix-msg-avatar"><img src="img/img-2.gif" alt="Félix" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
+      <div class="felix-typing-inner">
+        <div class="felix-typing-bubble">
+          <div class="felix-dot"></div>
+          <div class="felix-dot"></div>
+          <div class="felix-dot"></div>
+        </div>
+        <div class="felix-typing-label" id="felixTypingLabel">Félix está escribiendo…</div>
       </div>
     </div>
 
@@ -905,7 +908,7 @@
         <textarea
           id="felixInput"
           class="felix-input"
-          placeholder="Escribe tu pregunta a Félix..."
+          placeholder="Escribe tu consulta aquí..."
           rows="1"
           onkeydown="felixKeydown(event)"
           aria-label="Mensaje para Félix"
