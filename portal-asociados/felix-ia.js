@@ -78,26 +78,32 @@ var FELIX_CHIPS = [
       overflow: hidden !important;
       padding: 0 !important;
     }
+    .felix-avatar-sm {
+      position: relative !important;
+    }
     .felix-avatar-sm img {
-      width: 160% !important;
-      height: 160% !important;
-      object-fit: cover !important;
-      object-position: 50% 5% !important;
-      border-radius: 50% !important;
-      margin-left: -30% !important;
-      margin-top: -8% !important;
+      position: absolute !important;
+      width: 380% !important;
+      height: auto !important;
+      left: 50% !important;
+      top: -2% !important;
+      transform: translateX(-50%) !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
     }
     .felix-msg-avatar {
       overflow: hidden !important;
+      position: relative !important;
     }
     .felix-msg-avatar img {
-      width: 160% !important;
-      height: 160% !important;
-      object-fit: cover !important;
-      object-position: 50% 5% !important;
-      border-radius: 50% !important;
-      margin-left: -30% !important;
-      margin-top: -8% !important;
+      position: absolute !important;
+      width: 380% !important;
+      height: auto !important;
+      left: 50% !important;
+      top: -2% !important;
+      transform: translateX(-50%) !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
     }
     .felix-chat-name {
       font-size: 15px !important;
@@ -169,14 +175,17 @@ var FELIX_CHIPS = [
       font-size: 14px;
       flex-shrink: 0;
       overflow: hidden;
+      position: relative;
     }
     .fx-avatar img {
-      width: 160%;
-      height: 160%;
-      object-fit: cover;
-      object-position: 50% 5%;
-      margin-left: -30%;
-      margin-top: -8%;
+      position: absolute;
+      width: 380%;
+      height: auto;
+      left: 50%;
+      top: -2%;
+      transform: translateX(-50%);
+      border-radius: 0;
+      margin: 0;
     }
 
     .fx-bubble-wrap {
@@ -556,7 +565,7 @@ function felixAppendMsg(html, tipo) {
     var avImg = document.createElement('img');
     avImg.src = 'img/img-2.gif';
     avImg.alt = 'Félix';
-    avImg.style.cssText = 'width:160%;height:160%;object-fit:cover;object-position:50% 5%;margin-left:-30%;margin-top:-8%;';
+    avImg.style.cssText = 'position:absolute;width:380%;height:auto;left:50%;top:-2%;transform:translateX(-50%);border-radius:0;margin:0;';
     av.appendChild(avImg);
     wrap.appendChild(av);
   }
