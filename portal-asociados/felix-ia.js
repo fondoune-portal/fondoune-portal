@@ -280,6 +280,8 @@ var FELIX_CHIPS = [
       justify-content: center;
       font-size: 14px;
       flex-shrink: 0;
+      overflow: hidden !important;
+      position: relative;
     }
     .felix-typing-inner {
       display: flex;
@@ -381,11 +383,6 @@ var FELIX_CHIPS = [
     }
     .felix-input-hint a { color: #E8511A !important; text-decoration: none !important; opacity: 0.8 !important; }
     .felix-input-hint a:hover { opacity: 1 !important; }
-    /* ════ MASCOT FLOTANTE ════ */
-    img[src*="img-2.gif"]:not(.fx-avatar img) {
-      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.18)) !important;
-      transition: filter 0.3s ease !important;
-    }
   `;
   style.id = 'felix-style-c';
   style.textContent = css;
