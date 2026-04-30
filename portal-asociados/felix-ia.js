@@ -549,7 +549,7 @@ function felixAppendMsg(html, tipo) {
     var av = document.createElement('div');
     av.className = 'fx-avatar';
     var avImg = document.createElement('img');
-    avImg.src = 'img/felix-avatar.png';
+    avImg.src = 'img/img-2.gif';
     avImg.alt = 'Félix';
     avImg.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:50% 12%;';
     av.appendChild(avImg);
