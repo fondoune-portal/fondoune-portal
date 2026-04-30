@@ -79,19 +79,25 @@ var FELIX_CHIPS = [
       padding: 0 !important;
     }
     .felix-avatar-sm img {
-      width: 100% !important;
-      height: 100% !important;
+      width: 160% !important;
+      height: 160% !important;
       object-fit: cover !important;
+      object-position: 50% 5% !important;
       border-radius: 50% !important;
+      margin-left: -30% !important;
+      margin-top: -8% !important;
     }
     .felix-msg-avatar {
       overflow: hidden !important;
     }
     .felix-msg-avatar img {
-      width: 100% !important;
-      height: 100% !important;
+      width: 160% !important;
+      height: 160% !important;
       object-fit: cover !important;
+      object-position: 50% 5% !important;
       border-radius: 50% !important;
+      margin-left: -30% !important;
+      margin-top: -8% !important;
     }
     .felix-chat-name {
       font-size: 15px !important;
@@ -163,6 +169,14 @@ var FELIX_CHIPS = [
       font-size: 14px;
       flex-shrink: 0;
       overflow: hidden;
+    }
+    .fx-avatar img {
+      width: 160%;
+      height: 160%;
+      object-fit: cover;
+      object-position: 50% 5%;
+      margin-left: -30%;
+      margin-top: -8%;
     }
 
     .fx-bubble-wrap {
@@ -542,7 +556,7 @@ function felixAppendMsg(html, tipo) {
     var avImg = document.createElement('img');
     avImg.src = 'img/img-2.gif';
     avImg.alt = 'Félix';
-    avImg.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+    avImg.style.cssText = 'width:160%;height:160%;object-fit:cover;object-position:50% 5%;margin-left:-30%;margin-top:-8%;';
     av.appendChild(avImg);
     wrap.appendChild(av);
   }
