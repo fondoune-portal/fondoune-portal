@@ -78,32 +78,22 @@ var FELIX_CHIPS = [
       overflow: hidden !important;
       padding: 0 !important;
     }
-    .felix-avatar-sm {
-      position: relative !important;
-    }
     .felix-avatar-sm img {
-      position: absolute !important;
-      width: 380% !important;
-      height: auto !important;
-      left: 50% !important;
-      top: -2% !important;
-      transform: translateX(-50%) !important;
-      border-radius: 0 !important;
-      margin: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: 50% 12% !important;
+      border-radius: 50% !important;
     }
     .felix-msg-avatar {
       overflow: hidden !important;
-      position: relative !important;
     }
     .felix-msg-avatar img {
-      position: absolute !important;
-      width: 380% !important;
-      height: auto !important;
-      left: 50% !important;
-      top: -2% !important;
-      transform: translateX(-50%) !important;
-      border-radius: 0 !important;
-      margin: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: 50% 12% !important;
+      border-radius: 50% !important;
     }
     .felix-chat-name {
       font-size: 15px !important;
@@ -175,17 +165,13 @@ var FELIX_CHIPS = [
       font-size: 14px;
       flex-shrink: 0;
       overflow: hidden;
-      position: relative;
     }
     .fx-avatar img {
-      position: absolute;
-      width: 380%;
-      height: auto;
-      left: 50%;
-      top: -2%;
-      transform: translateX(-50%);
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 12%;
       border-radius: 0;
-      margin: 0;
     }
 
     .fx-bubble-wrap {
@@ -563,9 +549,9 @@ function felixAppendMsg(html, tipo) {
     var av = document.createElement('div');
     av.className = 'fx-avatar';
     var avImg = document.createElement('img');
-    avImg.src = 'img/img-2.gif';
+    avImg.src = 'img/felix-avatar.png';
     avImg.alt = 'Félix';
-    avImg.style.cssText = 'position:absolute;width:380%;height:auto;left:50%;top:-2%;transform:translateX(-50%);border-radius:0;margin:0;';
+    avImg.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:50% 12%;';
     av.appendChild(avImg);
     wrap.appendChild(av);
   }
