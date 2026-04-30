@@ -127,7 +127,7 @@ var FELIX_CHIPS = [
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      transition: background 0.15s !important;
+      transition: background 0.25s ease !important;
     }
     .felix-close-btn:hover { background: #eee !important; }
 
@@ -143,10 +143,10 @@ var FELIX_CHIPS = [
       align-items: flex-end;
       gap: 7px;
       margin-bottom: 14px;
-      animation: fxIn .22s ease;
+      animation: fxIn .48s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
     @keyframes fxIn {
-      from { opacity:0; transform:translateY(8px); }
+      from { opacity:0; transform:translateY(5px); }
       to   { opacity:1; transform:translateY(0); }
     }
     .fx-wrap.user { flex-direction: row-reverse; }
@@ -225,7 +225,7 @@ var FELIX_CHIPS = [
       flex-wrap: wrap;
       gap: 6px;
       padding: 2px 0 10px 35px;
-      animation: fxIn .25s ease .05s both;
+      animation: fxIn .55s cubic-bezier(0.22, 1, 0.36, 1) .08s both;
     }
     .fx-chip-btn {
       background: #fff;
@@ -290,14 +290,14 @@ var FELIX_CHIPS = [
       height: 6px;
       border-radius: 50%;
       background: #E8511A;
-      animation: fxDot 1.2s infinite ease-in-out;
-      opacity: 0.5;
+      animation: fxDot 1.5s infinite cubic-bezier(0.45, 0, 0.55, 1);
+      opacity: 0.4;
     }
-    .felix-dot:nth-child(2) { animation-delay: 0.18s; }
-    .felix-dot:nth-child(3) { animation-delay: 0.36s; }
+    .felix-dot:nth-child(2) { animation-delay: 0.22s; }
+    .felix-dot:nth-child(3) { animation-delay: 0.44s; }
     @keyframes fxDot {
-      0%, 80%, 100% { transform: scale(0.7); opacity: 0.35; }
-      40%            { transform: scale(1.15); opacity: 1; }
+      0%, 70%, 100% { transform: translateY(0) scale(0.85); opacity: 0.3; }
+      35%            { transform: translateY(-4px) scale(1.1); opacity: 0.9; }
     }
 
     /* ════ INPUT ÁREA ════ */
@@ -314,7 +314,7 @@ var FELIX_CHIPS = [
       display: flex !important;
       align-items: flex-end !important;
       gap: 8px !important;
-      transition: border-color .15s !important;
+      transition: border-color .25s ease, background .25s ease !important;
     }
     .felix-input-row:focus-within {
       border-color: #E8511A !important;
@@ -345,7 +345,7 @@ var FELIX_CHIPS = [
       align-items: center !important;
       justify-content: center !important;
       flex-shrink: 0 !important;
-      transition: background .15s, transform .1s !important;
+      transition: background .25s ease, transform .2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
       color: #fff !important;
     }
     .felix-send-btn:hover:not(:disabled) {
