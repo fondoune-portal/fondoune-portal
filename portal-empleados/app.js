@@ -239,6 +239,7 @@ function showPanel(id){
   if(id==='dashboard') renderDashboard();
   if(id==='pqrs') renderPQRS();
   if(id==='usuarios') renderUsrTable();
+  if(id==='cancelaciones') { if(window.Cancelaciones) window.Cancelaciones.init(); }
 }
 
 /* ═══ NOTIFICACIONES ═══ */
