@@ -45,7 +45,12 @@ var FELIX_CHIPS = [
     .felix-chat-wrap {
       border-radius: 20px !important;
       overflow: hidden !important;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.12) !important;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.14) !important;
+      animation: felixWidgetIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes felixWidgetIn {
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     /* ════ HEADER ════ */
@@ -78,32 +83,22 @@ var FELIX_CHIPS = [
       overflow: hidden !important;
       padding: 0 !important;
     }
-    .felix-avatar-sm {
-      position: relative !important;
-    }
     .felix-avatar-sm img {
-      position: absolute !important;
-      width: 380% !important;
-      height: auto !important;
-      left: 50% !important;
-      top: -2% !important;
-      transform: translateX(-50%) !important;
-      border-radius: 0 !important;
-      margin: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: 50% 12% !important;
+      border-radius: 50% !important;
     }
     .felix-msg-avatar {
       overflow: hidden !important;
-      position: relative !important;
     }
     .felix-msg-avatar img {
-      position: absolute !important;
-      width: 380% !important;
-      height: auto !important;
-      left: 50% !important;
-      top: -2% !important;
-      transform: translateX(-50%) !important;
-      border-radius: 0 !important;
-      margin: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: 50% 12% !important;
+      border-radius: 50% !important;
     }
     .felix-chat-name {
       font-size: 15px !important;
@@ -175,17 +170,13 @@ var FELIX_CHIPS = [
       font-size: 14px;
       flex-shrink: 0;
       overflow: hidden;
-      position: relative;
     }
     .fx-avatar img {
-      position: absolute;
-      width: 380%;
-      height: auto;
-      left: 50%;
-      top: -2%;
-      transform: translateX(-50%);
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 12%;
       border-radius: 0;
-      margin: 0;
     }
 
     .fx-bubble-wrap {
@@ -196,11 +187,12 @@ var FELIX_CHIPS = [
     .fx-wrap.user .fx-bubble-wrap { align-items: flex-end; }
 
     .fx-bubble {
-      padding: 10px 14px;
+      padding: 11px 16px;
       border-radius: 16px;
       font-size: 13.5px;
-      line-height: 1.65;
+      line-height: 1.7;
       word-break: break-word;
+      letter-spacing: 0.01em;
     }
     .fx-bubble strong { font-weight: 600; }
     .fx-bubble em     { font-style: italic; }
@@ -265,7 +257,9 @@ var FELIX_CHIPS = [
     .fx-chip-btn:hover {
       border-color: #E8511A;
       color: #E8511A;
-      background: #fff5f0;
+      background: #FFF0E8;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(232,81,26,0.15);
     }
 
     /* ════ TYPING INDICATOR ════ */
@@ -286,6 +280,8 @@ var FELIX_CHIPS = [
       justify-content: center;
       font-size: 14px;
       flex-shrink: 0;
+      overflow: hidden !important;
+      position: relative;
     }
     .felix-typing-inner {
       display: flex;
@@ -378,13 +374,16 @@ var FELIX_CHIPS = [
     .felix-send-btn:disabled { opacity: 0.45 !important; cursor: not-allowed !important; }
     .felix-input-hint {
       font-size: 10.5px !important;
-      color: #ccc !important;
+      color: #C8BAB0 !important;
       text-align: center !important;
-      margin-top: 7px !important;
+      margin-top: 8px !important;
+      padding-top: 8px !important;
+      border-top: 1px solid #f0e8e0 !important;
+      letter-spacing: 0.02em !important;
     }
-    .felix-input-hint a { color: #E8511A !important; text-decoration: none !important; }
+    .felix-input-hint a { color: #E8511A !important; text-decoration: none !important; opacity: 0.8 !important; }
+    .felix-input-hint a:hover { opacity: 1 !important; }
   `;
-  var style = document.createElement('style');
   style.id = 'felix-style-c';
   style.textContent = css;
   document.head.appendChild(style);
@@ -565,7 +564,7 @@ function felixAppendMsg(html, tipo) {
     var avImg = document.createElement('img');
     avImg.src = 'img/img-2.gif';
     avImg.alt = 'Félix';
-    avImg.style.cssText = 'position:absolute;width:380%;height:auto;left:50%;top:-2%;transform:translateX(-50%);border-radius:0;margin:0;';
+    avImg.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:50% 12%;';
     av.appendChild(avImg);
     wrap.appendChild(av);
   }
