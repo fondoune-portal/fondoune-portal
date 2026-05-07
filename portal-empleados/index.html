@@ -331,6 +331,10 @@ function mostrarRecuperar(){ /* placeholder — auth.js no ha cargado aún */ }
     <div class="nav-item" onclick="showPanel('aprobados')" id="nav-aprobados">
       <span class="ni">✅</span> Aprobados
     </div>
+    <div class="nav-item" onclick="showPanel('cancelaciones')" id="nav-cancelaciones">
+      <span class="ni">🏦</span> Cancelaciones
+      <span class="nav-cnt" id="cnt-cancelaciones" style="display:none">0</span>
+    </div>
     <div class="nav-section">Base de Datos</div>
     <div class="nav-item" onclick="showPanel('asociados')" id="nav-asociados">
       <span class="ni">🧑‍💼</span> Datos de Asociados
@@ -697,6 +701,19 @@ function mostrarRecuperar(){ /* placeholder — auth.js no ha cargado aún */ }
       </div>
     </div><!-- /panel-asociados -->
 
+    <!-- ════ CANCELACIONES HIPOTECARIAS ════ -->
+    <div class="panel" id="panel-cancelaciones">
+      <div class="pg-head">
+        <div>
+          <div class="pg-title">🏦 Cancelaciones Hipotecarias</div>
+          <div class="pg-sub">Gestión y seguimiento de cancelaciones · Colección Firestore: cancelaciones</div>
+        </div>
+      </div>
+      <div id="cancelaciones-root" style="padding:4px 0;">
+        <div style="text-align:center;padding:60px;color:#9CA3AF;">Selecciona este panel para cargar los datos.</div>
+      </div>
+    </div><!-- /panel-cancelaciones -->
+
     <!-- Modal detalle de asociado -->
     <div id="asoc-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(45,26,14,.55);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;" onclick="asocCerrarModal(event)">
       <div id="asoc-modal" style="background:#fff;border-radius:20px;width:min(680px,96vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(45,26,14,.22);padding:32px;position:relative;">
@@ -704,6 +721,11 @@ function mostrarRecuperar(){ /* placeholder — auth.js no ha cargado aún */ }
         <div id="asoc-modal-body"></div>
       </div>
     </div>
+
+  <!-- Modal cancelaciones -->
+  <div id="can-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(45,26,14,.55);backdrop-filter:blur(6px);z-index:600;align-items:center;justify-content:center;" onclick="if(event.target===this)Cancelaciones._cerrarModal()">
+    <div id="can-modal-body" style="background:#fff;border-radius:20px;width:min(640px,96vw);max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(45,26,14,.22);padding:28px 32px;position:relative;"></div>
+  </div>
 
   </div><!-- /content -->
 </div><!-- /main-layout -->
@@ -798,6 +820,7 @@ function mostrarRecuperar(){ /* placeholder — auth.js no ha cargado aún */ }
 
 
 <script src="app.js"></script>
+<script src="cancelaciones.js"></script>
 <script src="docx-builder.js"></script>
 
   <script src="security.js"></script>

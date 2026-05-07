@@ -1,519 +1,424 @@
-/* ═══════════════════════════════════════════════════════════════
-   cancelaciones.js  —  Panel de Cancelaciones Hipotecarias
-   FondoUne Portal Empleados  |  v1.0  Mayo 2026
-   Depende de: firebase-config.js (window._fbDB), app.js (showToast, registrarAudit)
-   ═══════════════════════════════════════════════════════════════ */
+// ============================================================
+//  CANCELACIONES.JS — Panel de Cancelaciones Hipotecarias
+//  FondoUne · Portal Empleados
+//  Conectado a Firestore · Colección: cancelaciones
+// ============================================================
 
-(function () {
-  'use strict';
+window.Cancelaciones = (function () {
 
-  /* ── Estado interno del módulo ──────────────────────────────── */
-  var _casos        = [];          // todos los expedientes de Firestore
-  var _filtrados    = [];          // después de aplicar filtros
-  var _unsubscribe  = null;        // detener listener al salir
-  var _modalDocId   = null;        // doc en edición
-  var _chartEstados = null;
-  var _chartCausas  = null;
-  var _chartJsReady = false;
+  var _iniciado = false;
+  var _unsub    = null; // listener Firestore en tiempo real
 
-  /* ── SLA máximo por estado (días hábiles) ───────────────────── */
-  var SLA = {
-    'Radicada': 1, 'Docs incompletos': 3, 'En preparación': 5,
-    'En notaría': 15, 'En registro ORIP': 5,
-    'Completada': 0, 'Archivada': 0
+  // ── Estados del proceso ──────────────────────────────────
+  var ESTADOS = {
+    activo:     { lbl: 'Activo',       color: '#6B7280', bg: '#F3F4F6' },
+    en_proceso: { lbl: 'En Proceso',   color: '#D97706', bg: '#FEF3C7' },
+    etapa_final:{ lbl: 'Etapa Final',  color: '#EA580C', bg: '#FFF7ED' },
+    completado: { lbl: 'Completado',   color: '#16A34A', bg: '#F0FDF4' },
+    bloqueado:  { lbl: 'Bloqueado',    color: '#DC2626', bg: '#FEF2F2' },
   };
 
-  var PASOS = {
-    'Radicada': 1, 'Docs incompletos': 2, 'En preparación': 3,
-    'En notaría': 5, 'En registro ORIP': 7,
-    'Completada': 9, 'Archivada': 0
-  };
+  // ── Etapas ───────────────────────────────────────────────
+  var ETAPAS = [
+    'Paz y Salvo',
+    'Solicitud Documentos',
+    'Envío Minuta',
+    'Recepción Minuta',
+    'VB Minuta',
+    'Escrituración',
+    'CTL Actualizado',
+  ];
 
-  var BADGE = {
-    'Radicada': 'canc-badge-rad', 'Docs incompletos': 'canc-badge-docs',
-    'En preparación': 'canc-badge-prep', 'En notaría': 'canc-badge-not',
-    'En registro ORIP': 'canc-badge-orip', 'Completada': 'canc-badge-comp',
-    'Archivada': 'canc-badge-arch'
-  };
+  // ── Helpers DOM ──────────────────────────────────────────
+  function $id(id) { return document.getElementById(id); }
+  function fmt(d)  { if (!d) return '—'; try { return new Date(d).toLocaleDateString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric' }); } catch(e){ return d; } }
+  function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  /* ── Festivos Colombia 2026 ─────────────────────────────────── */
-  var FESTIVOS = {
-    '2026-01-01':1,'2026-01-12':1,'2026-03-23':1,'2026-04-02':1,'2026-04-03':1,
-    '2026-05-01':1,'2026-05-18':1,'2026-06-08':1,'2026-06-15':1,'2026-06-29':1,
-    '2026-07-20':1,'2026-08-07':1,'2026-08-17':1,'2026-10-12':1,'2026-11-02':1,
-    '2026-11-16':1,'2026-12-08':1,'2026-12-25':1
-  };
-
-  function diasHabiles(fechaIso) {
-    if (!fechaIso) return 0;
-    var inicio = new Date(fechaIso);
-    var hoy    = new Date();
-    inicio.setHours(0,0,0,0);
-    hoy.setHours(0,0,0,0);
-    var dias = 0, cur = new Date(inicio);
-    while (cur < hoy) {
-      var d = cur.getDay();
-      var k = cur.toISOString().slice(0, 10);
-      if (d !== 0 && d !== 6 && !FESTIVOS[k]) dias++;
-      cur.setDate(cur.getDate() + 1);
-    }
-    return dias;
+  // ── Estado badge ─────────────────────────────────────────
+  function estadoBadge(estado) {
+    var e = ESTADOS[estado] || ESTADOS['activo'];
+    return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;color:'+e.color+';background:'+e.bg+';">'+e.lbl+'</span>';
   }
 
-  function getSla(caso) {
-    var max = SLA[caso.estadoActual];
-    if (max === undefined) max = 5;
-    if (max === 0) return 'ok';
-    var dias = typeof caso.diasEtapa === 'number'
-      ? caso.diasEtapa
-      : diasHabiles(caso.fechaUltimoMovimiento);
-    var pct = dias / max;
-    if (pct >= 1)   return 'danger';
-    if (pct >= 0.8) return 'warn';
-    return 'ok';
+  // ── Barra de progreso etapas ─────────────────────────────
+  function etapaBar(etapaActual) {
+    var n = parseInt(etapaActual) || 0;
+    var pct = Math.round((n / 7) * 100);
+    var color = n >= 7 ? '#16A34A' : n >= 5 ? '#EA580C' : '#D97706';
+    return '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<div style="flex:1;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden;">'
+      + '<div style="width:'+pct+'%;height:100%;background:'+color+';border-radius:3px;transition:width .3s;"></div>'
+      + '</div>'
+      + '<span style="font-size:11px;color:#6B7280;white-space:nowrap;">'+n+'/7</span>'
+      + '</div>';
   }
 
-  function diasTotales(caso) {
-    return diasHabiles(caso.fechaRadicado);
+  // ── Calcular estado automático por etapas ────────────────
+  function calcEstado(etapa) {
+    var n = parseInt(etapa) || 0;
+    if (n >= 7)  return 'completado';
+    if (n >= 5)  return 'etapa_final';
+    if (n >= 1)  return 'en_proceso';
+    return 'activo';
   }
 
-  /* ── Iniciar escucha Firestore ──────────────────────────────── */
-  function iniciarEscucha() {
-    if (!window._fbDB) {
-      _renderTabla([]);
-      _toast('Firebase no disponible. Recargue el portal.', 'warn');
-      return;
-    }
-    if (_unsubscribe) return; // ya está escuchando
+  // ── KPIs ─────────────────────────────────────────────────
+  function renderKPIs(docs) {
+    var total      = docs.length;
+    var completado = docs.filter(function(d){ return d.estado === 'completado'; }).length;
+    var enProceso  = docs.filter(function(d){ return d.estado === 'en_proceso'; }).length;
+    var etapaFinal = docs.filter(function(d){ return d.estado === 'etapa_final'; }).length;
+    var bloqueado  = docs.filter(function(d){ return d.estado === 'bloqueado'; }).length;
+    var pct        = total ? Math.round((completado / total) * 100) : 0;
 
-    _unsubscribe = window._fbDB
-      .collection('cancelaciones')
-      .orderBy('fechaRadicado', 'desc')
-      .onSnapshot(function (snap) {
-        _casos = [];
-        snap.forEach(function (doc) {
-          _casos.push(Object.assign({ _docId: doc.id }, doc.data()));
-        });
-        _poblarFiltrosCiudad();
-        _aplicarFiltros();
-        // Si el tab de Junta está activo, refrescar
-        var tabJunta = document.getElementById('canc-tab-junta');
-        if (tabJunta && tabJunta.classList.contains('canc-tab-active')) {
-          _renderJunta();
-        }
-      }, function (err) {
-        console.error('cancelaciones onSnapshot:', err);
-        _toast('Error al leer cancelaciones: ' + err.message, 'error');
-      });
-  }
-
-  function detenerEscucha() {
-    if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
-  }
-
-  /* ── Filtros ────────────────────────────────────────────────── */
-  function _poblarFiltrosCiudad() {
-    var sel = document.getElementById('canc-fil-ciudad');
-    if (!sel) return;
-    var actual = sel.value;
-    var ciudades = [];
-    _casos.forEach(function (c) {
-      if (c.ciudadInmueble && ciudades.indexOf(c.ciudadInmueble) === -1) {
-        ciudades.push(c.ciudadInmueble);
-      }
-    });
-    ciudades.sort();
-    sel.innerHTML = '<option value="">Todas las ciudades</option>' +
-      ciudades.map(function (c) {
-        return '<option value="' + c + '"' + (c === actual ? ' selected' : '') + '>' + c + '</option>';
-      }).join('');
-  }
-
-  function _aplicarFiltros() {
-    var fe = (document.getElementById('canc-fil-estado') || {}).value || '';
-    var fs = (document.getElementById('canc-fil-sla')    || {}).value || '';
-    var fc = (document.getElementById('canc-fil-ciudad') || {}).value || '';
-
-    _filtrados = _casos.filter(function (c) {
-      if (fe && c.estadoActual !== fe) return false;
-      if (fc && c.ciudadInmueble !== fc) return false;
-      if (fs && getSla(c) !== fs) return false;
-      return true;
-    });
-
-    var cnt = document.getElementById('canc-fil-count');
-    if (cnt) cnt.textContent = _filtrados.length + ' expediente' + (_filtrados.length !== 1 ? 's' : '');
-    _renderTabla(_filtrados);
-  }
-
-  /* ── Render tabla operativa ─────────────────────────────────── */
-  function _renderTabla(lista) {
-    var tbody = document.getElementById('canc-tbody');
-    if (!tbody) return;
-
-    if (!lista || lista.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="11" class="canc-empty"><span>📂</span>No hay expedientes con estos filtros.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = lista.map(function (c) {
-      var sla      = getSla(c);
-      var badge    = BADGE[c.estadoActual] || 'canc-badge-rad';
-      var pasos    = PASOS[c.estadoActual] || 0;
-      var diasVal  = typeof c.diasEtapa === 'number' ? c.diasEtapa : diasHabiles(c.fechaUltimoMovimiento);
-      var esCrit   = sla === 'danger' && c.estadoActual !== 'Completada' && c.estadoActual !== 'Archivada';
-      var radicado = c.radicado || c._docId;
-
-      var progreso = pasos > 0
-        ? '<div class="canc-prog">' +
-            [1,2,3,4,5,6,7,8,9].map(function (i) {
-              return '<div class="canc-prog-step ' + (i <= pasos ? 'done' : '') + '"></div>';
-            }).join('') +
-          '</div>'
-        : '<span class="canc-muted">Archivado</span>';
-
-      var slaHtml  = '<span class="canc-sla ' + sla + '">' +
-        '<span class="canc-sla-dot"></span>' +
-        (sla === 'danger' ? 'Vencido' : sla === 'warn' ? 'Próximo' : 'En tiempo') +
-        '</span>';
-
-      var causaRaw = c.causaDemora || '';
-      var causaHtml = (causaRaw && causaRaw !== '—' && causaRaw !== '-')
-        ? '<span class="canc-causa" title="Causa de demora">' + causaRaw + '</span>'
-        : '<span class="canc-muted">—</span>';
-
-      var critTag = esCrit
-        ? '&nbsp;<span class="canc-crit-tag">⚠</span>'
-        : '';
-
-      var asesorShort = (c.asesorEmail || '').split('@')[0] || '—';
-
-      return '<tr>' +
-        '<td><strong>' + radicado + '</strong>' + critTag + '</td>' +
-        '<td>' + (c.nombreAsociado || '—') + '</td>' +
-        '<td><span class="canc-badge ' + badge + '">' + (c.estadoActual || '—') + '</span></td>' +
-        '<td>' + (c.ciudadInmueble || '—') + '</td>' +
-        '<td>' + progreso + '</td>' +
-        '<td>' + slaHtml + '</td>' +
-        '<td class="' + (diasVal > 10 ? 'canc-dias-alerta' : '') + '">' + diasVal + 'd</td>' +
-        '<td>' + causaHtml + '</td>' +
-        '<td class="canc-cell-sm">' + (c.apoderadoAsignado || '—') + '</td>' +
-        '<td class="canc-cell-sm">' + asesorShort + '</td>' +
-        '<td><button class="canc-btn-sm" onclick="Cancelaciones.abrirModal(\'' + c._docId + '\')">Actualizar</button></td>' +
-        '</tr>';
-    }).join('');
-  }
-
-  /* ── MODAL: actualizar estado ───────────────────────────────── */
-  function abrirModal(docId) {
-    var caso = _casos.filter(function (c) { return c._docId === docId; })[0];
-    if (!caso) return;
-    _modalDocId = docId;
-
-    var el = function (id) { return document.getElementById(id); };
-    el('canc-modal-radicado').value  = caso.radicado || docId;
-    el('canc-modal-estado').value    = caso.estadoActual || 'Radicada';
-    el('canc-modal-causa').value     = caso.causaDemora  || '—';
-    el('canc-modal-apoderado').value = caso.apoderadoAsignado || '';
-    el('canc-modal-obs').value       = '';
-
-    el('canc-modal-overlay').classList.add('open');
-  }
-
-  function cerrarModal() {
-    _modalDocId = null;
-    var o = document.getElementById('canc-modal-overlay');
-    if (o) o.classList.remove('open');
-  }
-
-  function guardarCambioEstado() {
-    if (!_modalDocId || !window._fbDB) return;
-
-    var estado    = document.getElementById('canc-modal-estado').value;
-    var causa     = document.getElementById('canc-modal-causa').value;
-    var apoderado = document.getElementById('canc-modal-apoderado').value.trim();
-    var obs       = document.getElementById('canc-modal-obs').value.trim();
-
-    var update = {
-      estadoActual:          estado,
-      causaDemora:           causa,
-      apoderadoAsignado:     apoderado || '—',
-      fechaUltimoMovimiento: new Date().toISOString(),
-      diasEtapa:             0,
-      slaVencido:            false
-    };
-    if (obs) update.ultimaObservacion = obs;
-
-    window._fbDB.collection('cancelaciones').doc(_modalDocId).update(update)
-      .then(function () {
-        // Registrar en auditoría del portal
-        try {
-          var caso = _casos.filter(function (c) { return c._docId === _modalDocId; })[0] || {};
-          registrarAudit(
-            'Cambio de estado cancelación: ' + estado,
-            { id: _modalDocId, radicado: caso.radicado || _modalDocId },
-            getUsuarioSesion()
-          );
-        } catch (e) { /* auditoría opcional */ }
-
-        cerrarModal();
-        _toast('Estado actualizado: ' + estado, 'ok');
-      })
-      .catch(function (e) {
-        _toast('Error al guardar: ' + e.message, 'error');
-      });
-  }
-
-  /* ── MODAL: nuevo expediente ────────────────────────────────── */
-  function abrirModalNuevo() {
-    var o = document.getElementById('canc-modal-nuevo-overlay');
-    if (o) o.classList.add('open');
-  }
-
-  function cerrarModalNuevo() {
-    var o = document.getElementById('canc-modal-nuevo-overlay');
-    if (o) o.classList.remove('open');
-  }
-
-  function crearExpediente() {
-    if (!window._fbDB) return;
-
-    var radicado = (document.getElementById('canc-nuevo-radicado').value || '').trim();
-    var nombre   = (document.getElementById('canc-nuevo-nombre').value   || '').trim();
-    var email    = (document.getElementById('canc-nuevo-email').value    || '').trim();
-    var ciudad   = (document.getElementById('canc-nuevo-ciudad').value   || '').trim();
-    var asesor   = (document.getElementById('canc-nuevo-asesor').value   || '').trim();
-
-    if (!radicado || !nombre || !email) {
-      _toast('Radicado, nombre y correo son obligatorios.', 'warn');
-      return;
-    }
-
-    var ahora = new Date().toISOString();
-    var doc = {
-      radicado:              radicado,
-      nombreAsociado:        nombre,
-      emailAsociado:         email,
-      ciudadInmueble:        ciudad || 'Medellín',
-      asesorEmail:           asesor,
-      estadoActual:          'Radicada',
-      causaDemora:           '—',
-      apoderadoAsignado:     '—',
-      fechaRadicado:         ahora,
-      fechaUltimoMovimiento: ahora,
-      diasEtapa:             0,
-      slaVencido:            false,
-      requiereApoderado:     false,
-      recordatoriosEnviados: 0
-    };
-
-    window._fbDB.collection('cancelaciones').add(doc)
-      .then(function () {
-        cerrarModalNuevo();
-        _toast('Expediente ' + radicado + ' creado.', 'ok');
-        ['canc-nuevo-radicado','canc-nuevo-nombre','canc-nuevo-email',
-         'canc-nuevo-ciudad','canc-nuevo-asesor'].forEach(function (id) {
-          var el = document.getElementById(id);
-          if (el) el.value = '';
-        });
-      })
-      .catch(function (e) {
-        _toast('Error al crear: ' + e.message, 'error');
-      });
-  }
-
-  /* ── Dashboard Junta ────────────────────────────────────────── */
-  function _renderJunta() {
-    var activas     = _casos.filter(function (c) { return c.estadoActual !== 'Completada' && c.estadoActual !== 'Archivada'; });
-    var completadas = _casos.filter(function (c) { return c.estadoActual === 'Completada'; });
-    var archivadas  = _casos.filter(function (c) { return c.estadoActual === 'Archivada'; });
-    var criticos    = activas.filter(function (c) { return getSla(c) === 'danger'; });
-    var backlog     = activas.filter(function (c) { return diasTotales(c) > 45; });
-
-    var tiempos = completadas.map(function (c) { return diasTotales(c); }).filter(function (d) { return d > 0; });
-    var prom = tiempos.length ? Math.round(tiempos.reduce(function (a, b) { return a + b; }, 0) / tiempos.length) : 0;
-    var dentroPlazo = completadas.filter(function (c) { return diasTotales(c) <= 45; }).length;
-    var pct = completadas.length ? Math.round(dentroPlazo / completadas.length * 100) : 0;
-
-    // Semáforo
-    var semColor = 'canc-sem-green', semTxt = 'Verde — Gestión dentro de parámetros.';
-    if (prom > 55 || pct < 70) { semColor = 'canc-sem-red'; semTxt = 'Rojo — Requiere atención inmediata.'; }
-    else if (prom > 45 || pct < 80) { semColor = 'canc-sem-yellow'; semTxt = 'Amarillo — Seguimiento necesario.'; }
-
-    var semBar = document.getElementById('canc-sem-bar');
-    if (semBar) {
-      semBar.className = 'canc-sem-bar ' + semColor;
-      semBar.innerHTML = '<span class="canc-sem-dot"></span>' +
-        '<div><strong id="canc-sem-label">Estado del período: ' + semTxt.split('—')[0].trim() + '</strong>' +
-        '<span class="canc-sem-desc"> — ' + pct + '% de casos dentro del plazo. Tiempo promedio: ' + (prom || '—') + ' días hábiles.</span></div>';
-    }
-
-    // KPIs
     var kpis = [
-      { l:'Expedientes activos',   v: activas.length,     s:'Total en proceso',    c:'' },
-      { l:'Completadas',           v: completadas.length, s:'Trámite finalizado',  c:'ok' },
-      { l:'Tiempo prom. cierre',   v: prom ? prom+'d.h.' : '—', s:'Meta: ≤45 d.h.', c: prom > 45 ? 'warn' : prom > 0 ? 'ok' : '' },
-      { l:'% dentro del plazo',    v: pct+'%',            s:'Meta: ≥80%',          c: pct >= 80 ? 'ok' : pct >= 70 ? 'warn' : 'danger' },
-      { l:'Alertas críticas',      v: criticos.length,    s:'SLA vencido',         c: criticos.length > 0 ? 'danger' : '' },
-      { l:'Archivadas (inactividad)', v: archivadas.length, s:'Sin respuesta del asociado', c: archivadas.length > 2 ? 'warn' : '' },
-      { l:'Backlog >45 días',      v: backlog.length,     s:'Sin cerrar',          c: backlog.length > 3 ? 'warn' : '' },
-      { l:'Total histórico',       v: _casos.length,      s:'Desde el inicio',     c:'' }
+      { val: total,      lbl: 'Total casos',          ico: '📁', color: '#2C3E50' },
+      { val: completado, lbl: 'Completados',           ico: '✅', color: '#16A34A' },
+      { val: enProceso,  lbl: 'En proceso',            ico: '⏳', color: '#D97706' },
+      { val: etapaFinal, lbl: 'Etapa final',           ico: '🔜', color: '#EA580C' },
+      { val: bloqueado,  lbl: 'Bloqueados',            ico: '🚫', color: '#DC2626' },
+      { val: pct + '%',  lbl: 'Tasa de finalización', ico: '📊', color: '#7C3AED' },
     ];
 
-    var kpiGrid = document.getElementById('canc-kpi-grid');
-    if (kpiGrid) {
-      kpiGrid.innerHTML = kpis.map(function (k) {
-        return '<div class="canc-kpi ' + k.c + '">' +
-          '<div class="canc-kpi-label">' + k.l + '</div>' +
-          '<div class="canc-kpi-val">' + k.v + '</div>' +
-          '<div class="canc-kpi-sub">' + k.s + '</div>' +
-        '</div>';
-      }).join('');
-    }
-
-    // Tabla críticos
-    var tcrit = document.getElementById('canc-tbody-criticos');
-    if (tcrit) {
-      if (criticos.length === 0) {
-        tcrit.innerHTML = '<tr><td colspan="6" class="canc-empty"><span>✅</span>Sin casos críticos.</td></tr>';
-      } else {
-        tcrit.innerHTML = criticos.map(function (c) {
-          var badge = BADGE[c.estadoActual] || 'canc-badge-rad';
-          var d = diasTotales(c);
-          return '<tr>' +
-            '<td><strong>' + (c.radicado || c._docId) + '</strong></td>' +
-            '<td>' + (c.nombreAsociado || '—') + '</td>' +
-            '<td><span class="canc-badge ' + badge + '">' + c.estadoActual + '</span></td>' +
-            '<td class="canc-dias-alerta">' + d + ' d.h.</td>' +
-            '<td>' + (c.causaDemora || '—') + '</td>' +
-            '<td class="canc-cell-sm">' + ((c.asesorEmail || '—').split('@')[0]) + '</td>' +
-          '</tr>';
-        }).join('');
-      }
-    }
-
-    // Gráficas — requieren Chart.js
-    if (typeof Chart === 'undefined') {
-      _cargarChartJs(function () { _dibujarGraficas(activas); });
-    } else {
-      _dibujarGraficas(activas);
-    }
+    return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;">'
+      + kpis.map(function(k){
+          return '<div style="background:#fff;border-radius:12px;padding:16px 14px;border:1px solid #E5E7EB;text-align:center;">'
+            + '<div style="font-size:20px;margin-bottom:4px;">'+k.ico+'</div>'
+            + '<div style="font-size:26px;font-weight:700;color:'+k.color+';">'+k.val+'</div>'
+            + '<div style="font-size:11px;color:#6B7280;margin-top:2px;">'+k.lbl+'</div>'
+            + '</div>';
+        }).join('')
+      + '</div>';
   }
 
-  function _cargarChartJs(cb) {
-    if (_chartJsReady) { cb(); return; }
-    var s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
-    s.onload = function () { _chartJsReady = true; cb(); };
-    document.head.appendChild(s);
-  }
-
-  function _dibujarGraficas(activas) {
-    // Conteo por estado
-    var estadoCounts = {};
-    activas.forEach(function (c) {
-      estadoCounts[c.estadoActual] = (estadoCounts[c.estadoActual] || 0) + 1;
+  // ── Tabla principal ──────────────────────────────────────
+  function renderTabla(docs, filtroEstado, filtroTexto) {
+    var filtrados = docs.filter(function(d) {
+      var okEstado = !filtroEstado || filtroEstado === 'todos' || d.estado === filtroEstado;
+      var txt = (filtroTexto || '').toLowerCase();
+      var okTexto = !txt
+        || (d.nombre  || '').toLowerCase().includes(txt)
+        || (d.cedula  || '').toLowerCase().includes(txt)
+        || (d.empresa || '').toLowerCase().includes(txt)
+        || (d.id      || '').toLowerCase().includes(txt);
+      return okEstado && okTexto;
     });
 
-    // Conteo por causa
-    var causaCounts = {};
-    _casos.forEach(function (c) {
-      var ca = c.causaDemora;
-      if (ca && ca !== '—' && ca !== '-' && ca !== '') {
-        causaCounts[ca] = (causaCounts[ca] || 0) + 1;
-      }
-    });
-
-    var colEstado = { 'Radicada':'#185FA5','Docs incompletos':'#BA7517','En preparación':'#534AB7','En notaría':'#0F6E56','En registro ORIP':'#633806','Archivada':'#5F5E5A' };
-    var colCausa  = ['#BA7517','#185FA5','#3B6D11','#854F0B','#533AB7','#A32D2D','#5F5E5A'];
-
-    var c1 = document.getElementById('canc-chart-estados');
-    var c2 = document.getElementById('canc-chart-causas');
-    if (!c1 || !c2) return;
-
-    if (_chartEstados) _chartEstados.destroy();
-    if (_chartCausas)  _chartCausas.destroy();
-
-    _chartEstados = new Chart(c1, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(estadoCounts),
-        datasets: [{ data: Object.values(estadoCounts), backgroundColor: Object.keys(estadoCounts).map(function (k) { return colEstado[k] || '#888'; }), borderWidth: 0 }]
-      },
-      options: { responsive:true, maintainAspectRatio:false, cutout:'60%', plugins:{ legend:{ labels:{ font:{size:11}, boxWidth:10, padding:8 } } } }
-    });
-
-    var causaLabels = Object.keys(causaCounts).length ? Object.keys(causaCounts) : ['Sin datos'];
-    var causaVals   = Object.values(causaCounts).length ? Object.values(causaCounts) : [1];
-    _chartCausas = new Chart(c2, {
-      type: 'doughnut',
-      data: { labels: causaLabels, datasets: [{ data: causaVals, backgroundColor: colCausa, borderWidth: 0 }] },
-      options: { responsive:true, maintainAspectRatio:false, cutout:'60%', plugins:{ legend:{ labels:{ font:{size:11}, boxWidth:10, padding:8 } } } }
-    });
-  }
-
-  /* ── Tabs del panel ─────────────────────────────────────────── */
-  function switchTab(tab) {
-    var tabs  = document.querySelectorAll('.canc-tab');
-    var views = document.querySelectorAll('.canc-view');
-    tabs.forEach(function (t) { t.classList.remove('canc-tab-active'); });
-    views.forEach(function (v) { v.classList.remove('active'); });
-
-    var selTab  = document.getElementById('canc-tab-' + tab);
-    var selView = document.getElementById('canc-view-' + tab);
-    if (selTab)  selTab.classList.add('canc-tab-active');
-    if (selView) selView.classList.add('active');
-
-    if (tab === 'junta') _renderJunta();
-  }
-
-  /* ── Toast interno (fallback al del portal si existe) ───────── */
-  function _toast(msg, tipo) {
-    if (typeof showToast === 'function') {
-      var ico = tipo === 'ok' ? '✅' : tipo === 'warn' ? '⚠️' : tipo === 'error' ? '❌' : 'ℹ️';
-      showToast(msg, ico);
-    } else {
-      console.log('[Cancelaciones]', msg);
+    if (!filtrados.length) {
+      return '<div style="text-align:center;padding:48px;color:#9CA3AF;">No hay casos que coincidan con el filtro.</div>';
     }
+
+    var rows = filtrados.map(function(d, i) {
+      var bgRow = i % 2 === 0 ? '#fff' : '#F9FAFB';
+      return '<tr style="background:'+bgRow+';border-bottom:1px solid #E5E7EB;">'
+        + '<td style="padding:12px 10px;font-size:13px;font-weight:600;color:#111;">'+escHtml(d.nombre||'—')+'</td>'
+        + '<td style="padding:12px 10px;font-size:12px;color:#6B7280;">'+escHtml(d.cedula||'—')+'</td>'
+        + '<td style="padding:12px 10px;font-size:12px;color:#6B7280;">'+escHtml(d.empresa||'—')+'</td>'
+        + '<td style="padding:12px 10px;">'+estadoBadge(d.estado)+'</td>'
+        + '<td style="padding:12px 10px;min-width:160px;">'+etapaBar(d.etapaActual)+'</td>'
+        + '<td style="padding:12px 10px;font-size:11px;color:#9CA3AF;">'+fmt(d.fechaIngreso)+'</td>'
+        + '<td style="padding:12px 10px;font-size:11px;color:#9CA3AF;">'+fmt(d.fechaUltGestion)+'</td>'
+        + '<td style="padding:12px 10px;">'
+            + '<button onclick="Cancelaciones.abrirDetalle(\''+d.id+'\')" style="background:#E8511A;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Ver</button>'
+        + '</td>'
+        + '</tr>';
+    }).join('');
+
+    return '<div style="overflow-x:auto;border-radius:12px;border:1px solid #E5E7EB;background:#fff;">'
+      + '<table style="width:100%;border-collapse:collapse;">'
+      + '<thead><tr style="background:#2C3E50;">'
+      + '<th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;">Nombre</th>'
+      + '<th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#fff;">Cédula</th>'
+      + '<th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#fff;">Empresa</th>'
+      + '<th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#fff;">Estado</th>'
+      + '<th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#fff;min-width:160px;">Progreso</th>'
+      + '<th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;">F. Ingreso</th>'
+      + '<th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;">Últ. Gestión</th>'
+      + '<th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#fff;"></th>'
+      + '</tr></thead>'
+      + '<tbody>'+rows+'</tbody>'
+      + '</table>'
+      + '</div>';
   }
 
-  /* ── Inicialización del panel ───────────────────────────────── */
-  function init() {
-    // Bindear filtros
-    var bindChange = function (id, fn) {
-      var el = document.getElementById(id);
-      if (el) el.onchange = fn;
+  // ── Render principal del panel ───────────────────────────
+  function render(docs) {
+    var container = $id('cancelaciones-root');
+    if (!container) return;
+
+    var filtroEstado = ($id('can-filtro-estado') || {}).value || 'todos';
+    var filtroTexto  = ($id('can-filtro-texto')  || {}).value || '';
+
+    container.innerHTML =
+      // KPIs
+      renderKPIs(docs) +
+
+      // Barra de filtros
+      '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">'
+        + '<input id="can-filtro-texto" placeholder="🔍 Buscar por nombre, cédula, empresa…" value="'+escHtml(filtroTexto)+'"'
+          + ' style="flex:1;min-width:200px;padding:9px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:13px;font-family:inherit;outline:none;"'
+          + ' oninput="Cancelaciones._filtrar()" />'
+        + '<select id="can-filtro-estado" onchange="Cancelaciones._filtrar()"'
+          + ' style="padding:9px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:13px;font-family:inherit;background:#fff;outline:none;">'
+          + '<option value="todos"'+(filtroEstado==='todos'?' selected':'')+'>Todos los estados</option>'
+          + Object.keys(ESTADOS).map(function(k){
+              return '<option value="'+k+'"'+(filtroEstado===k?' selected':'')+'>'+ESTADOS[k].lbl+'</option>';
+            }).join('')
+        + '</select>'
+        + '<button onclick="Cancelaciones.abrirNuevo()" style="background:#E8511A;color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Nuevo caso</button>'
+      + '</div>'
+
+      // Tabla
+      + renderTabla(docs, filtroEstado, filtroTexto);
+
+    // Restaurar listeners de filtro con datos actuales
+    var inp = $id('can-filtro-texto');
+    var sel = $id('can-filtro-estado');
+    if (inp) inp.oninput = function() { _filtrar(docs); };
+    if (sel) sel.onchange = function() { _filtrar(docs); };
+  }
+
+  // Filtrar sin recargar Firestore
+  var _cachedDocs = [];
+  function _filtrar(docs) {
+    var d = docs || _cachedDocs;
+    var filtroEstado = ($id('can-filtro-estado') || {}).value || 'todos';
+    var filtroTexto  = ($id('can-filtro-texto')  || {}).value || '';
+    var tabla = $id('can-tabla-wrap');
+    if (!tabla) return;
+    tabla.innerHTML = renderTabla(d, filtroEstado, filtroTexto);
+  }
+
+  // ── Cargar datos desde Firestore ─────────────────────────
+  function cargar() {
+    var container = $id('cancelaciones-root');
+    if (!container) return;
+    container.innerHTML = '<div style="text-align:center;padding:60px;color:#9CA3AF;">Cargando datos…</div>';
+
+    if (!window._fbDB) {
+      container.innerHTML = '<div style="padding:40px;text-align:center;color:#DC2626;">Firebase no está inicializado. Verifica la configuración.</div>';
+      return;
+    }
+
+    // Listener en tiempo real
+    if (_unsub) _unsub();
+    _unsub = window._fbDB.collection('cancelaciones')
+      .orderBy('fechaIngreso', 'desc')
+      .onSnapshot(function(snap) {
+        _cachedDocs = [];
+        snap.forEach(function(doc) { _cachedDocs.push(doc.data()); });
+        render(_cachedDocs);
+        // Restaurar listeners de filtro
+        var inp = $id('can-filtro-texto');
+        var sel = $id('can-filtro-estado');
+        if (inp) inp.oninput  = function() { _filtrar(); };
+        if (sel) sel.onchange = function() { _filtrar(); };
+      }, function(e) {
+        var container2 = $id('cancelaciones-root');
+        if (container2) container2.innerHTML = '<div style="padding:40px;text-align:center;color:#DC2626;">Error al cargar datos: '+e.message+'</div>';
+      });
+  }
+
+  // ── Modal: Ver / Editar detalle ──────────────────────────
+  function abrirDetalle(id) {
+    var doc = _cachedDocs.find(function(d){ return d.id === id; });
+    if (!doc) return;
+
+    var etapasSel = ETAPAS.map(function(e, i) {
+      var n = i + 1;
+      var chk = parseInt(doc.etapaActual) >= n;
+      return '<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;cursor:pointer;background:'+(chk?'#F0FDF4':'#F9FAFB')+';border:1px solid '+(chk?'#BBF7D0':'#E5E7EB')+';">'
+        + '<input type="checkbox" data-etapa="'+n+'" '+(chk?'checked':'')+' onchange="Cancelaciones._toggleEtapa(\''+id+'\',this)">'
+        + '<span style="font-size:12px;font-weight:'+(chk?'600':'400')+';color:'+(chk?'#16A34A':'#374151')+';">'+n+'. '+e+'</span>'
+        + '</label>';
+    }).join('');
+
+    var body = ''
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">'
+        + '<div>'
+          + '<h2 style="font-size:18px;font-weight:700;color:#111;margin:0 0 4px;">'+escHtml(doc.nombre||'—')+'</h2>'
+          + '<div style="font-size:12px;color:#6B7280;">CC '+escHtml(doc.cedula||'—')+' · '+escHtml(doc.empresa||'—')+'</div>'
+        + '</div>'
+        + estadoBadge(doc.estado)
+      + '</div>'
+
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">'
+        + _campo('Fecha ingreso', fmt(doc.fechaIngreso))
+        + _campo('Últ. gestión', fmt(doc.fechaUltGestion))
+        + _campo('Responsable', doc.responsable || '—')
+        + _campo('Observaciones', doc.observaciones || '—')
+      + '</div>'
+
+      + '<div style="margin-bottom:20px;">'
+        + '<div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:10px;">Progreso por etapas</div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+etapasSel+'</div>'
+      + '</div>'
+
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">'
+        + '<div>'
+          + '<label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Estado</label>'
+          + '<select id="can-det-estado" style="width:100%;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-family:inherit;font-size:13px;">'
+          + Object.keys(ESTADOS).map(function(k){
+              return '<option value="'+k+'"'+(doc.estado===k?' selected':'')+'>'+ESTADOS[k].lbl+'</option>';
+            }).join('')
+          + '</select>'
+        + '</div>'
+        + '<div>'
+          + '<label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Responsable</label>'
+          + '<input id="can-det-resp" value="'+escHtml(doc.responsable||'')+'" style="width:100%;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;">'
+        + '</div>'
+      + '</div>'
+
+      + '<div style="margin-bottom:20px;">'
+        + '<label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Observaciones</label>'
+        + '<textarea id="can-det-obs" rows="3" style="width:100%;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;">'+escHtml(doc.observaciones||'')+'</textarea>'
+      + '</div>'
+
+      + '<div style="display:flex;gap:10px;justify-content:flex-end;">'
+        + '<button onclick="Cancelaciones._cerrarModal()" style="padding:9px 20px;border:1.5px solid #E5E7EB;background:#fff;border-radius:10px;font-family:inherit;font-size:13px;cursor:pointer;">Cancelar</button>'
+        + '<button onclick="Cancelaciones._guardarDetalle(\''+id+'\')" style="padding:9px 20px;background:#E8511A;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">Guardar cambios</button>'
+      + '</div>';
+
+    _abrirModal(doc.nombre || 'Caso', body);
+  }
+
+  function _campo(lbl, val) {
+    return '<div style="background:#F9FAFB;border-radius:8px;padding:10px 12px;">'
+      + '<div style="font-size:10px;color:#9CA3AF;margin-bottom:2px;">'+lbl+'</div>'
+      + '<div style="font-size:13px;color:#111;font-weight:500;">'+escHtml(val)+'</div>'
+      + '</div>';
+  }
+
+  function _toggleEtapa(docId, chk) {
+    // Calcula la etapa máxima marcada
+    var modal = $id('can-modal-body');
+    if (!modal) return;
+    var checks = Array.from(modal.querySelectorAll('input[data-etapa]'));
+    var max = 0;
+    checks.forEach(function(c) { if (c.checked) max = Math.max(max, parseInt(c.dataset.etapa)); });
+    // Actualiza Firestore
+    if (!window._fbDB) return;
+    window._fbDB.collection('cancelaciones').doc(docId).update({
+      etapaActual: max,
+      estado: calcEstado(max),
+      fechaUltGestion: new Date().toISOString()
+    });
+  }
+
+  function _guardarDetalle(docId) {
+    if (!window._fbDB) return;
+    var estado = ($id('can-det-estado') || {}).value;
+    var resp   = ($id('can-det-resp')   || {}).value;
+    var obs    = ($id('can-det-obs')    || {}).value;
+    window._fbDB.collection('cancelaciones').doc(docId).update({
+      estado: estado,
+      responsable: resp,
+      observaciones: obs,
+      fechaUltGestion: new Date().toISOString()
+    }).then(function() {
+      _cerrarModal();
+    }).catch(function(e) { alert('Error al guardar: ' + e.message); });
+  }
+
+  // ── Modal: Nuevo caso ────────────────────────────────────
+  function abrirNuevo() {
+    var hoy = new Date().toISOString().split('T')[0];
+    var body = ''
+      + '<h2 style="font-size:17px;font-weight:700;color:#111;margin:0 0 20px;">Nuevo caso de cancelación</h2>'
+
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">'
+        + _input('can-n-nombre',    'Nombre completo *',      'text',  'María García López')
+        + _input('can-n-cedula',    'Número de cédula *',     'text',  '1.234.567.890')
+        + _input('can-n-empresa',   'Empresa',                'text',  'UNE / Tigo')
+        + _input('can-n-resp',      'Responsable FondoUne',   'text',  'Jenny Quintero')
+        + _input('can-n-fecha',     'Fecha de ingreso',       'date',  hoy)
+      + '</div>'
+
+      + '<div style="margin-bottom:16px;">'
+        + '<label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Observaciones iniciales</label>'
+        + '<textarea id="can-n-obs" rows="3" style="width:100%;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box;" placeholder="Detalles relevantes del caso…"></textarea>'
+      + '</div>'
+
+      + '<div id="can-n-error" style="color:#DC2626;font-size:12px;margin-bottom:10px;display:none;"></div>'
+
+      + '<div style="display:flex;gap:10px;justify-content:flex-end;">'
+        + '<button onclick="Cancelaciones._cerrarModal()" style="padding:9px 20px;border:1.5px solid #E5E7EB;background:#fff;border-radius:10px;font-family:inherit;font-size:13px;cursor:pointer;">Cancelar</button>'
+        + '<button onclick="Cancelaciones._guardarNuevo()" style="padding:9px 20px;background:#E8511A;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">Crear caso</button>'
+      + '</div>';
+
+    _abrirModal('Nuevo caso', body);
+  }
+
+  function _input(id, lbl, type, placeholder) {
+    return '<div>'
+      + '<label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">'+lbl+'</label>'
+      + '<input id="'+id+'" type="'+type+'" placeholder="'+placeholder+'" style="width:100%;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;">'
+      + '</div>';
+  }
+
+  function _guardarNuevo() {
+    if (!window._fbDB) return;
+    var nombre  = ($id('can-n-nombre')  || {}).value || '';
+    var cedula  = ($id('can-n-cedula')  || {}).value || '';
+    var empresa = ($id('can-n-empresa') || {}).value || '';
+    var resp    = ($id('can-n-resp')    || {}).value || '';
+    var fecha   = ($id('can-n-fecha')   || {}).value || new Date().toISOString().split('T')[0];
+    var obs     = ($id('can-n-obs')     || {}).value || '';
+
+    var errEl = $id('can-n-error');
+    if (!nombre.trim() || !cedula.trim()) {
+      if (errEl) { errEl.textContent = 'Nombre y cédula son obligatorios.'; errEl.style.display = 'block'; }
+      return;
+    }
+
+    var id = 'CAN-' + Date.now();
+    var data = {
+      id: id,
+      nombre:          nombre.trim(),
+      cedula:          cedula.trim(),
+      empresa:         empresa.trim(),
+      responsable:     resp.trim(),
+      fechaIngreso:    new Date(fecha).toISOString(),
+      fechaUltGestion: new Date().toISOString(),
+      etapaActual:     0,
+      estado:          'activo',
+      observaciones:   obs.trim(),
     };
-    bindChange('canc-fil-estado',  _aplicarFiltros);
-    bindChange('canc-fil-sla',     _aplicarFiltros);
-    bindChange('canc-fil-ciudad',  _aplicarFiltros);
 
-    // Cerrar modales con Escape
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { cerrarModal(); cerrarModalNuevo(); }
-    });
-
-    // Cerrar modal al clic en overlay
-    var o1 = document.getElementById('canc-modal-overlay');
-    var o2 = document.getElementById('canc-modal-nuevo-overlay');
-    if (o1) o1.addEventListener('click', function (e) { if (e.target === o1) cerrarModal(); });
-    if (o2) o2.addEventListener('click', function (e) { if (e.target === o2) cerrarModalNuevo(); });
-
-    iniciarEscucha();
+    window._fbDB.collection('cancelaciones').doc(id).set(data)
+      .then(function() { _cerrarModal(); })
+      .catch(function(e) { alert('Error al crear caso: ' + e.message); });
   }
 
-  /* ── API pública ─────────────────────────────────────────────── */
-  window.Cancelaciones = {
-    init:              init,
-    detener:           detenerEscucha,
-    switchTab:         switchTab,
-    abrirModal:        abrirModal,
-    cerrarModal:       cerrarModal,
-    guardar:           guardarCambioEstado,
-    abrirModalNuevo:   abrirModalNuevo,
-    cerrarModalNuevo:  cerrarModalNuevo,
-    crearExpediente:   crearExpediente,
-    aplicarFiltros:    _aplicarFiltros
-  };
+  // ── Modal genérico ───────────────────────────────────────
+  function _abrirModal(titulo, body) {
+    var ov = $id('can-modal-overlay');
+    var bd = $id('can-modal-body');
+    if (!ov || !bd) return;
+    bd.innerHTML = body;
+    ov.style.display = 'flex';
+  }
 
+  function _cerrarModal() {
+    var ov = $id('can-modal-overlay');
+    if (ov) ov.style.display = 'none';
+  }
+
+  // ── Init ─────────────────────────────────────────────────
+  function init() {
+    if (!$id('cancelaciones-root')) return;
+    cargar();
+  }
+
+  // API pública
+  return {
+    init:          init,
+    abrirDetalle:  abrirDetalle,
+    abrirNuevo:    abrirNuevo,
+    _filtrar:      _filtrar,
+    _toggleEtapa:  _toggleEtapa,
+    _guardarDetalle: _guardarDetalle,
+    _guardarNuevo: _guardarNuevo,
+    _cerrarModal:  _cerrarModal,
+  };
 })();
